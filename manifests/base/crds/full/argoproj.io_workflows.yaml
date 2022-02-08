@@ -5640,8 +5640,6 @@ spec:
                     required:
                     - prometheus
                     type: object
-                  multiclusterResource:
-                    type: object
                   name:
                     type: string
                   namespace:
@@ -12118,8 +12116,6 @@ spec:
                           type: array
                       required:
                       - prometheus
-                      type: object
-                    multiclusterResource:
                       type: object
                     name:
                       type: string
@@ -21608,8 +21604,6 @@ spec:
                       required:
                       - prometheus
                       type: object
-                    multiclusterResource:
-                      type: object
                     name:
                       type: string
                     namespace:
@@ -29575,8 +29569,6 @@ spec:
                         required:
                         - prometheus
                         type: object
-                      multiclusterResource:
-                        type: object
                       name:
                         type: string
                       namespace:
@@ -36053,8 +36045,6 @@ spec:
                               type: array
                           required:
                           - prometheus
-                          type: object
-                        multiclusterResource:
                           type: object
                         name:
                           type: string

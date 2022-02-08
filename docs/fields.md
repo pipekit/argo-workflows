@@ -1985,7 +1985,6 @@ Template is a reusable and composable unit of execution in a workflow
 |`memoize`|[`Memoize`](#memoize)|Memoize allows templates to use outputs generated from already executed templates|
 |`metadata`|[`Metadata`](#metadata)|Metdata sets the pods's metadata, i.e. annotations and labels|
 |`metrics`|[`Metrics`](#metrics)|Metrics are a list of metrics emitted from this template|
-|`multiclusterResource`|[`Item`](#item)|MulticlusterResource is a k8s resource declaration that can live on a different cluster|
 |`name`|`string`|Name is the name of the template|
 |`namespace`|`string`|Namespace run the template in. If empty/omitted it'll run in the same namespace as the io.argoproj.workflow.v1alpha1.|
 |`nodeSelector`|`Map< string , string >`|NodeSelector is a selector to schedule this step of the workflow to be run on the selected node(s). Overrides the selector set at the workflow level.|
@@ -3059,10 +3058,6 @@ Memoization enables caching for the Outputs of the template
 |`cache`|[`Cache`](#cache)|Cache sets and configures the kind of cache|
 |`key`|`string`|Key is the key to use as the caching key|
 |`maxAge`|`string`|MaxAge is the maximum age (e.g. "180s", "24h") of an entry that is still considered valid. If an entry is older than the MaxAge, it will be ignored.|
-
-## Item
-
-Item expands a single workflow step into multiple parallel steps The value of Item can be a map, string, bool, or number
 
 ## Plugin
 
@@ -4161,6 +4156,41 @@ ContinueOn defines if a workflow should continue even if a task or step fails/er
 |:----------:|:----------:|---------------|
 |`error`|`boolean`|_No description available_|
 |`failed`|`boolean`|_No description available_|
+
+## Item
+
+Item expands a single workflow step into multiple parallel steps The value of Item can be a map, string, bool, or number
+
+<details>
+<summary>Examples with this field (click to open)</summary>
+<br>
+
+- [`ci-output-artifact.yaml`](https://github.com/argoproj/argo-workflows/blob/master/examples/ci-output-artifact.yaml)
+
+- [`ci.yaml`](https://github.com/argoproj/argo-workflows/blob/master/examples/ci.yaml)
+
+- [`dag-custom-metrics.yaml`](https://github.com/argoproj/argo-workflows/blob/master/examples/dag-custom-metrics.yaml)
+
+- [`dag-diamond-steps.yaml`](https://github.com/argoproj/argo-workflows/blob/master/examples/dag-diamond-steps.yaml)
+
+- [`loops-dag.yaml`](https://github.com/argoproj/argo-workflows/blob/master/examples/loops-dag.yaml)
+
+- [`loops-maps.yaml`](https://github.com/argoproj/argo-workflows/blob/master/examples/loops-maps.yaml)
+
+- [`loops.yaml`](https://github.com/argoproj/argo-workflows/blob/master/examples/loops.yaml)
+
+- [`parallelism-limit.yaml`](https://github.com/argoproj/argo-workflows/blob/master/examples/parallelism-limit.yaml)
+
+- [`parallelism-template-limit.yaml`](https://github.com/argoproj/argo-workflows/blob/master/examples/parallelism-template-limit.yaml)
+
+- [`parameter-aggregation-dag.yaml`](https://github.com/argoproj/argo-workflows/blob/master/examples/parameter-aggregation-dag.yaml)
+
+- [`parameter-aggregation-script.yaml`](https://github.com/argoproj/argo-workflows/blob/master/examples/parameter-aggregation-script.yaml)
+
+- [`parameter-aggregation.yaml`](https://github.com/argoproj/argo-workflows/blob/master/examples/parameter-aggregation.yaml)
+
+- [`timeouts-workflow.yaml`](https://github.com/argoproj/argo-workflows/blob/master/examples/timeouts-workflow.yaml)
+</details>
 
 ## Sequence
 

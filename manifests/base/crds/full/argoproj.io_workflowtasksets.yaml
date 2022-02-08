@@ -4145,8 +4145,6 @@ spec:
                       required:
                       - prometheus
                       type: object
-                    multiclusterResource:
-                      type: object
                     name:
                       type: string
                     namespace:

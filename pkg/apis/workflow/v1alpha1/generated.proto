@@ -1334,10 +1334,6 @@ message Template {
   // Resource template subtype which can run k8s resources
   optional ResourceTemplate resource = 14;
 
-  // MulticlusterResource is a k8s resource declaration that can live on a
-  // different cluster
-  optional Item multiclusterResource = 46;
-
   // DAG template subtype which runs a DAG
   optional DAGTemplate dag = 15;
 

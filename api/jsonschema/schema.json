@@ -6768,10 +6768,6 @@
           "$ref": "#/definitions/io.argoproj.workflow.v1alpha1.Metrics",
           "description": "Metrics are a list of metrics emitted from this template"
         },
-        "multiclusterResource": {
-          "$ref": "#/definitions/io.argoproj.workflow.v1alpha1.Item",
-          "description": "MulticlusterResource is a k8s resource declaration that can live on a different cluster"
-        },
         "name": {
           "description": "Name is the name of the template",
           "type": "string"

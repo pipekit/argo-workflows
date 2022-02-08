@@ -24,7 +24,6 @@ Name | Type | Description | Notes
 **memoize** | [**IoArgoprojWorkflowV1alpha1Memoize**](IoArgoprojWorkflowV1alpha1Memoize.md) |  | [optional] 
 **metadata** | [**IoArgoprojWorkflowV1alpha1Metadata**](IoArgoprojWorkflowV1alpha1Metadata.md) |  | [optional] 
 **metrics** | [**IoArgoprojWorkflowV1alpha1Metrics**](IoArgoprojWorkflowV1alpha1Metrics.md) |  | [optional] 
-**multicluster_resource** | **bool, date, datetime, dict, float, int, list, str, none_type** | Item expands a single workflow step into multiple parallel steps The value of Item can be a map, string, bool, or number | [optional] 
 **name** | **str** | Name is the name of the template | [optional] 
 **namespace** | **str** | Namespace run the template in. If empty/omitted it&#39;ll run in the same namespace as the io.argoproj.workflow.v1alpha1. | [optional] 
 **node_selector** | **{str: (str,)}** | NodeSelector is a selector to schedule this step of the workflow to be run on the selected node(s). Overrides the selector set at the workflow level. | [optional] 

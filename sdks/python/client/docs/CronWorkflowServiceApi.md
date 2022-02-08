@@ -2780,7 +2780,6 @@ with argo_workflows.ApiClient() as api_client:
                                 ),
                             ],
                         ),
-                        multicluster_resource={},
                         name="name_example",
                         namespace="namespace_example",
                         node_selector={
@@ -6188,7 +6187,6 @@ with argo_workflows.ApiClient() as api_client:
                                     ),
                                 ],
                             ),
-                            multicluster_resource={},
                             name="name_example",
                             namespace="namespace_example",
                             node_selector={
@@ -11068,7 +11066,6 @@ with argo_workflows.ApiClient() as api_client:
                                 ),
                             ],
                         ),
-                        multicluster_resource={},
                         name="name_example",
                         namespace="namespace_example",
                         node_selector={
@@ -14476,7 +14473,6 @@ with argo_workflows.ApiClient() as api_client:
                                     ),
                                 ],
                             ),
-                            multicluster_resource={},
                             name="name_example",
                             namespace="namespace_example",
                             node_selector={
@@ -19428,7 +19424,6 @@ with argo_workflows.ApiClient() as api_client:
                                 ),
                             ],
                         ),
-                        multicluster_resource={},
                         name="name_example",
                         namespace="namespace_example",
                         node_selector={
@@ -22836,7 +22831,6 @@ with argo_workflows.ApiClient() as api_client:
                                     ),
                                 ],
                             ),
-                            multicluster_resource={},
                             name="name_example",
                             namespace="namespace_example",
                             node_selector={

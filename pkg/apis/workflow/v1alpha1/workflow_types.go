@@ -26,18 +26,17 @@ type TemplateType string
 
 // Possible template types
 const (
-	TemplateTypeContainer            TemplateType = "Container"
-	TemplateTypeContainerSet         TemplateType = "ContainerSet"
-	TemplateTypeSteps                TemplateType = "Steps"
-	TemplateTypeScript               TemplateType = "Script"
-	TemplateTypeResource             TemplateType = "Resource"
-	TemplateTypeMulticlusterResource TemplateType = "MulticlusterResource"
-	TemplateTypeDAG                  TemplateType = "DAG"
-	TemplateTypeSuspend              TemplateType = "Suspend"
-	TemplateTypeData                 TemplateType = "Data"
-	TemplateTypeHTTP                 TemplateType = "HTTP"
-	TemplateTypePlugin               TemplateType = "Plugin"
-	TemplateTypeUnknown              TemplateType = "Unknown"
+	TemplateTypeContainer    TemplateType = "Container"
+	TemplateTypeContainerSet TemplateType = "ContainerSet"
+	TemplateTypeSteps        TemplateType = "Steps"
+	TemplateTypeScript       TemplateType = "Script"
+	TemplateTypeResource     TemplateType = "Resource"
+	TemplateTypeDAG          TemplateType = "DAG"
+	TemplateTypeSuspend      TemplateType = "Suspend"
+	TemplateTypeData         TemplateType = "Data"
+	TemplateTypeHTTP         TemplateType = "HTTP"
+	TemplateTypePlugin       TemplateType = "Plugin"
+	TemplateTypeUnknown      TemplateType = "Unknown"
 )
 
 // NodePhase is a label for the condition of a node at the current time.
@@ -567,10 +566,6 @@ type Template struct {
 
 	// Resource template subtype which can run k8s resources
 	Resource *ResourceTemplate `json:"resource,omitempty" protobuf:"bytes,14,opt,name=resource"`
-
-	// MulticlusterResource is a k8s resource declaration that can live on a
-	// different cluster
-	MulticlusterResource *Item `json:"multiclusterResource,omitempty" protobuf:"bytes,46,opt,name=multiclusterResource"`
 
 	// DAG template subtype which runs a DAG
 	DAG *DAGTemplate `json:"dag,omitempty" protobuf:"bytes,15,opt,name=dag"`
@@ -2414,9 +2409,6 @@ func (tmpl *Template) GetType() TemplateType {
 	if tmpl.Resource != nil {
 		return TemplateTypeResource
 	}
-	if tmpl.MulticlusterResource != nil {
-		return TemplateTypeMulticlusterResource
-	}
 	if tmpl.Data != nil {
 		return TemplateTypeData
 	}
@@ -2463,7 +2455,7 @@ func (tmpl *Template) IsPodType() bool {
 // IsLeaf returns whether or not the template is a leaf
 func (tmpl *Template) IsLeaf() bool {
 	switch tmpl.GetType() {
-	case TemplateTypeContainer, TemplateTypeContainerSet, TemplateTypeScript, TemplateTypeResource, TemplateTypeData, TemplateTypeHTTP, TemplateTypePlugin, TemplateTypeMulticlusterResource:
+	case TemplateTypeContainer, TemplateTypeContainerSet, TemplateTypeScript, TemplateTypeResource, TemplateTypeData, TemplateTypeHTTP, TemplateTypePlugin:
 		return true
 	}
 	return false

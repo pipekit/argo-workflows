@@ -152,7 +152,6 @@ class IoArgoprojWorkflowV1alpha1Template(ModelNormal):
             'memoize': (IoArgoprojWorkflowV1alpha1Memoize,),  # noqa: E501
             'metadata': (IoArgoprojWorkflowV1alpha1Metadata,),  # noqa: E501
             'metrics': (IoArgoprojWorkflowV1alpha1Metrics,),  # noqa: E501
-            'multicluster_resource': (bool, date, datetime, dict, float, int, list, str, none_type,),  # noqa: E501
             'name': (str,),  # noqa: E501
             'namespace': (str,),  # noqa: E501
             'node_selector': ({str: (str,)},),  # noqa: E501
@@ -202,7 +201,6 @@ class IoArgoprojWorkflowV1alpha1Template(ModelNormal):
         'memoize': 'memoize',  # noqa: E501
         'metadata': 'metadata',  # noqa: E501
         'metrics': 'metrics',  # noqa: E501
-        'multicluster_resource': 'multiclusterResource',  # noqa: E501
         'name': 'name',  # noqa: E501
         'namespace': 'namespace',  # noqa: E501
         'node_selector': 'nodeSelector',  # noqa: E501
@@ -287,7 +285,6 @@ class IoArgoprojWorkflowV1alpha1Template(ModelNormal):
             memoize (IoArgoprojWorkflowV1alpha1Memoize): [optional]  # noqa: E501
             metadata (IoArgoprojWorkflowV1alpha1Metadata): [optional]  # noqa: E501
             metrics (IoArgoprojWorkflowV1alpha1Metrics): [optional]  # noqa: E501
-            multicluster_resource (bool, date, datetime, dict, float, int, list, str, none_type): Item expands a single workflow step into multiple parallel steps The value of Item can be a map, string, bool, or number. [optional]  # noqa: E501
             name (str): Name is the name of the template. [optional]  # noqa: E501
             namespace (str): Namespace run the template in. If empty/omitted it'll run in the same namespace as the io.argoproj.workflow.v1alpha1.. [optional]  # noqa: E501
             node_selector ({str: (str,)}): NodeSelector is a selector to schedule this step of the workflow to be run on the selected node(s). Overrides the selector set at the workflow level.. [optional]  # noqa: E501
@@ -410,7 +407,6 @@ class IoArgoprojWorkflowV1alpha1Template(ModelNormal):
             memoize (IoArgoprojWorkflowV1alpha1Memoize): [optional]  # noqa: E501
             metadata (IoArgoprojWorkflowV1alpha1Metadata): [optional]  # noqa: E501
             metrics (IoArgoprojWorkflowV1alpha1Metrics): [optional]  # noqa: E501
-            multicluster_resource (bool, date, datetime, dict, float, int, list, str, none_type): Item expands a single workflow step into multiple parallel steps The value of Item can be a map, string, bool, or number. [optional]  # noqa: E501
             name (str): Name is the name of the template. [optional]  # noqa: E501
             namespace (str): Namespace run the template in. If empty/omitted it'll run in the same namespace as the io.argoproj.workflow.v1alpha1.. [optional]  # noqa: E501
             node_selector ({str: (str,)}): NodeSelector is a selector to schedule this step of the workflow to be run on the selected node(s). Overrides the selector set at the workflow level.. [optional]  # noqa: E501
