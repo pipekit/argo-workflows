@@ -9,6 +9,7 @@ most users. Note that these environment variables may be removed at any time.
 | Name | Type | Default | Description | 
 |------|------|---------|-------------|
 | `ARGO_AGENT_TASK_WORKERS` | `int` | `16` | The number of task workers for the agent pod. |
+| `ARGO_MULTICLUSTER_ENABLED` | `bool` | `false` | Enable multi-cluster workflows. |
 | `ALL_POD_CHANGES_SIGNIFICANT` | `bool` | `false` | Whether to consider all pod changes as significant during pod reconciliation. |
 | `ALWAYS_OFFLOAD_NODE_STATUS` | `bool` | `false` | Whether to always offload the node status. |
 | `ARCHIVED_WORKFLOW_GC_PERIOD` | `time.Duration` | `24h` | The periodicity for GC of archived workflows. |
@@ -23,7 +24,6 @@ most users. Note that these environment variables may be removed at any time.
 | `CACHE_GC_AFTER_NOT_HIT_DURATION` | `time.Duration` | `30s` | When a memoization cache has not been hit after this duration, it will be deleted. |
 | `CRON_SYNC_PERIOD` | `time.Duration` | `10s` | How often to sync cron workflows. |
 | `DEFAULT_REQUEUE_TIME` | `time.Duration` | `10s` | The requeue time for the rate limiter of the workflow queue. |
-| `ENABLE_MULTICLUSTER` | `bool` | `false` | Enable multi-cluster workflows. |
 | `EXPRESSION_TEMPLATES` | `bool` | `true` | Escape hatch to disable expression templates. |
 | `GRPC_MESSAGE_SIZE` | `string` | Use different GRPC Max message size for Argo server deployment (supporting huge workflows). |
 | `GZIP_IMPLEMENTATION` | `string` | `"PGZip"` | The implementation of compression/decompression. Currently only "PGZip" and "GZip" are supported. |

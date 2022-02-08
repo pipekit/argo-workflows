@@ -7,5 +7,5 @@ import (
 // IsEnabled is a flag for whether the new multi-cluster feature is
 // enabled
 func IsEnabled() bool {
-	return os.Getenv("ENABLE_MULTICLUSTER") == "true"
+	return os.Getenv("ARGO_MULTICLUSTER_ENABLED") == "true"
 }
