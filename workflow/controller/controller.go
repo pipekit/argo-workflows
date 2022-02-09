@@ -1030,7 +1030,11 @@ func (wfc *WorkflowController) newPodInformer(ctx context.Context) cache.SharedI
 	informer.AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
-				wfc.enqueueWfFromPodLabel(obj)
+				err := wfc.enqueueWfFromPodLabel(obj)
+				if err != nil {
+					log.WithError(err).Warnf("could not enqueue workflow from pod label on add: %s", err)
+					return
+				}
 			},
 			UpdateFunc: func(old, newVal interface{}) {
 				key, err := cache.MetaNamespaceKeyFunc(newVal)
@@ -1046,14 +1050,20 @@ func (wfc *WorkflowController) newPodInformer(ctx context.Context) cache.SharedI
 					diff.LogChanges(oldPod, newPod)
 					return
 				}
-				wfc.enqueueWfFromPodLabel(newVal)
+				err = wfc.enqueueWfFromPodLabel(newVal)
+				if err != nil {
+					log.WithError(err).Warnf("could not enqueue workflow from pod label on update: %s", err)
+				}
 			},
 			DeleteFunc: func(obj interface{}) {
 				// IndexerInformer uses a delta queue, therefore for deletes we have to use this
 				// key function.
 
 				// Enqueue the workflow for deleted pod
-				_ = wfc.enqueueWfFromPodLabel(obj)
+				err := wfc.enqueueWfFromPodLabel(obj)
+				if err != nil {
+					log.WithError(err).Warnf("could not enqueue workflow from pod label on delete: %s", err)
+				}
 			},
 		},
 	)
