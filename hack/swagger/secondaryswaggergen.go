@@ -6,8 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-openapi/jsonreference"
-	"github.com/go-openapi/spec"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 )
@@ -24,9 +23,7 @@ import (
 func secondarySwaggerGen() {
 	definitions := make(map[string]interface{})
 	for n, d := range wfv1.GetOpenAPIDefinitions(func(path string) spec.Ref {
-		return spec.Ref{
-			Ref: jsonreference.MustCreateRef("#/definitions/" + strings.ReplaceAll(path, "/", ".")),
-		}
+		return spec.MustCreateRef("#/definitions/" + strings.ReplaceAll(path, "/", "."))
 	}) {
 		n = strings.ReplaceAll(n, "/", ".")
 		println(n)
