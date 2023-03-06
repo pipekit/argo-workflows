@@ -13,7 +13,7 @@ jobs:
     permissions:
       contents: write  # for peter-evans/create-pull-request to create branch
       pull-requests: write  # for peter-evans/create-pull-request to create a PR
-    if: github.repository == 'argoproj/argo-workflows'
+    if: github.repository == 'pipekit/argo-workflows'
     runs-on: ubuntu-latest
     name: Generate changelog
     steps:
@@ -30,4 +30,3 @@ jobs:
           title: 'docs: updated CHANGELOG.md'
           commit-message: 'docs: updated CHANGELOG.md'
           branch: create-pull-request/changelog
-          signoff: true

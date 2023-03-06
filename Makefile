@@ -18,8 +18,9 @@ DEV_BRANCH            := $(shell [ "$(GIT_BRANCH)" = master ] || [ `echo $(GIT_B
 SRC                   := $(GOPATH)/src/github.com/argoproj/argo-workflows
 
 
+
 # docker image publishing options
-IMAGE_NAMESPACE       ?= quay.io/argoproj
+IMAGE_NAMESPACE       ?= quay.io/pipekitdev
 DEV_IMAGE             ?= $(shell [ `uname -s` = Darwin ] && echo true || echo false)
 
 # declares which cluster to import to in case it's not the default name
@@ -102,6 +103,7 @@ override LDFLAGS += \
   -X github.com/argoproj/argo-workflows/v3.buildDate=$(BUILD_DATE) \
   -X github.com/argoproj/argo-workflows/v3.gitCommit=$(GIT_COMMIT) \
   -X github.com/argoproj/argo-workflows/v3.gitTreeState=$(GIT_TREE_STATE)
+
 
 ifneq ($(GIT_TAG),)
 override LDFLAGS += -X github.com/argoproj/argo-workflows/v3.gitTag=${GIT_TAG}
@@ -245,7 +247,7 @@ argoexec-image:
 	[ ! -e $* ] || mv $* dist/
 	docker run --rm -t $(IMAGE_NAMESPACE)/$*:$(VERSION) version
 	if [ $(K3D) = true ]; then k3d image import -c $(K3D_CLUSTER_NAME) $(IMAGE_NAMESPACE)/$*:$(VERSION); fi
-	if [ $(DOCKER_PUSH) = true ] && [ $(IMAGE_NAMESPACE) != argoproj ] ; then docker push $(IMAGE_NAMESPACE)/$*:$(VERSION) ; fi
+	if [ $(DOCKER_PUSH) = true ] && [ $(IMAGE_NAMESPACE) != pipekitdev ] ; then docker push $(IMAGE_NAMESPACE)/$*:$(VERSION) ; fi
 
 .PHONY: codegen
 codegen: types swagger manifests $(GOPATH)/bin/mockery docs/fields.md docs/cli/argo.md
@@ -431,7 +433,7 @@ install: githooks
 	kubectl get ns $(KUBE_NAMESPACE) || kubectl create ns $(KUBE_NAMESPACE)
 	kubectl config set-context --current --namespace=$(KUBE_NAMESPACE)
 	@echo "installing PROFILE=$(PROFILE)"
-	kubectl kustomize --load-restrictor=LoadRestrictionsNone test/e2e/manifests/$(PROFILE) | sed 's|quay.io/argoproj/|$(IMAGE_NAMESPACE)/|' | sed 's/namespace: argo/namespace: $(KUBE_NAMESPACE)/' | kubectl -n $(KUBE_NAMESPACE) apply --prune -l app.kubernetes.io/part-of=argo -f -
+	kubectl kustomize --load-restrictor=LoadRestrictionsNone test/e2e/manifests/$(PROFILE) | sed 's|quay.io/pipekitdev/|$(IMAGE_NAMESPACE)/|' | sed 's/namespace: argo/namespace: $(KUBE_NAMESPACE)/' | kubectl -n $(KUBE_NAMESPACE) apply --prune -l app.kubernetes.io/part-of=argo -f -
 ifeq ($(PROFILE),stress)
 	kubectl -n $(KUBE_NAMESPACE) apply -f test/stress/massive-workflow.yaml
 endif
@@ -682,4 +684,3 @@ release-notes: /dev/null
 .PHONY: checksums
 checksums:
 	sha256sum ./dist/argo-*.gz | awk -F './dist/' '{print $$1 $$2}' > ./dist/argo-workflows-cli-checksums.txt
-
