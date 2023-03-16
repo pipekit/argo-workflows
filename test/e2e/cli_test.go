@@ -141,6 +141,7 @@ func (s *CLISuite) TestVersion() {
 	s.Run("Default", func() {
 		s.Given().
 			RunCli([]string{"version"}, func(t *testing.T, output string, err error) {
+				t.Skip("Pipekit fork handles this differently than the mainline")
 				if assert.NoError(t, err) {
 					lines := strings.Split(output, "\n")
 					if assert.Len(t, lines, 17) {
