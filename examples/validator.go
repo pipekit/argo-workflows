@@ -67,8 +67,9 @@ func ValidateArgoYamlRecursively(fromPath string, skipFileNames []string) (map[s
 			errorDescriptions := []string{}
 			for _, err := range result.Errors() {
 				// port should be port number or port reference string, using string port number will cause issue
-				// due swagger 2.0 limitation, we can only specify one data type (we use string, same as k8s api swagger)
-				if strings.HasSuffix(err.Field(), "httpGet.port") && err.Description() == "Invalid type. Expected: string, given: integer" {
+				// due swagger 2.0 limitation, we can only specify one data type (we use string, same as k8s api swagger).
+				// Similarly, we cannot use string minAvailable either.
+				if (strings.HasSuffix(err.Field(), "httpGet.port") || strings.HasSuffix(err.Field(), "podDisruptionBudget.minAvailable")) && err.Description() == "Invalid type. Expected: string, given: integer" {
 					incorrectError = true
 					continue
 				} else {
