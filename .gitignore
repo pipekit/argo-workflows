@@ -3,7 +3,6 @@ Pipfile
 .idea/
 .node-version
 .DS_Store
-vendor/
 dist/
 # delve debug binaries
 cmd/**/debug
@@ -45,3 +44,5 @@ sdks/python/client/dist/*
 manifests/install.yaml
 manifests/namespace-install.yaml
 /logs
+node_modules 
+result
