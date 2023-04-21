@@ -3,12 +3,111 @@
 
 let 
   pkgs = import<nixpkgs> {};
+  pythonPkgs = pkgs.python310Packages;
+  mkdocs = with pythonPkgs;
+    buildPythonPackage rec {
+      pname = "mkdocs";
+      version = "1.2.4";
+      src = fetchPypi {
+        inherit pname version;
+        hash = "sha256-jnlwomGDSH/ioQQZQMb9A6oNvlVJ5Qw+cZT1Zcs8Z4o=";
+      };
+      propagatedBuildInputs = [
+        mergedeep 
+        markdown 
+        click 
+        pyyaml 
+        pyyaml-env-tag 
+        jinja2 
+        watchdog 
+        importlib-metadata 
+        typing-extensions 
+        packaging 
+        colorama 
+        ghp-import
+      ];
+      doCheck = false;
+    };
+
+  mkdocs-material-extensions = with pythonPkgs;
+    buildPythonPackage rec {
+      pname = "mkdocs_material_extensions";
+      version = "1.1.1";
+      src = fetchPypi {
+        inherit pname version;
+        hash="sha256-nAA9px4swkk9kQI3RIxnLgDO/IANPWrpPS/GmXnjvZM=";
+      };
+      buildInputs = [hatchling babel];
+      format = "pyproject";
+    };     
+  mkdocs-material = with pythonPkgs;
+    buildPythonPackage rec {
+      pname = "mkdocs-material";
+      version = "8.1.9";
+      src = fetchPypi {
+        inherit pname version;
+        hash = "sha256-oVhzpeEWv0YVr0/O3IWgU3SSRkNlKGy6UDENlvsGaVg=";
+      };
+      propagatedBuildInputs = [
+        mkdocs-material-extensions
+        pygments
+        markdown
+        mkdocs
+        pymdown-extensions
+        jinja2 
+        colorama
+        regex 
+        requests
+      ];
+      doCheck = false;
+    };
+  editdistpy = with pythonPkgs;
+    buildPythonPackage rec {
+      pname = "editdistpy";
+      version = "0.1.3";
+      src = fetchPypi {
+        inherit pname version;
+        hash = "sha256-s8rQcxnXn+izumv5IpPelikykX2I6cYk33tqRL3fHcw=";
+      };
+    };
+  symspellpy = with pythonPkgs;
+    buildPythonPackage rec {
+      pname = "symspellpy";
+      version = "6.7.7";
+      src = fetchPypi {
+        inherit pname version;
+        hash = "sha256-9sMVGHeAvC3TD8nKMu8Hb4m7/LKns/mjd5JvH2reAIU=";
+      };
+      buildInputs = [ setuptools ];
+      propagatedBuildInputs = [ editdistpy ];
+      format = "pyproject";
+    };
+  mkdocs-spellcheck = with pythonPkgs;
+    buildPythonPackage rec {
+      pname = "mkdocs-spellcheck";
+      version = "0.2.1";
+      src = fetchPypi {
+        inherit pname version;
+        hash = "sha256-g8neboAWGGN04EWsSBKj4oHyKVN/iKP4wANO+Ba3nI4=";
+      };
+      format = "pyproject";
+      buildInputs = [
+        pdm-pep517
+      ];
+      propagatedBuildInputs = [
+        symspellpy
+      ];
+    };
   pythonEnv = pkgs.python310.withPackages (ps: [
     ps.pytest
     ps.typing-extensions
     ps.mypy
     ps.autopep8
     ps.pip   
+    mkdocs
+    mkdocs-material-extensions
+    mkdocs-material
+    mkdocs-spellcheck
   ]);
   nodejs-19_x = pkgs.nodejs-19_x;
   yarn = pkgs.yarn.override { inherit nodejs-19_x; };
@@ -19,7 +118,10 @@ let
     pname = "workflow-controller";
     version = "0.0.1";
     src = builtins.filterSource
-            (path: type: path != "default.nix")
+          (path: type: 
+          !(type == "directory" && baseNameOf path == "hack")
+          && !(type != "directory" && path == "default.nix")
+          )
             ./.; # avoid recompile when default.nix changes
     vendorHash = null;
     doCheck = false;
@@ -156,7 +258,6 @@ pkgs.stdenv.mkDerivation {
 
   shellHook = ''
     unset GOPATH;
-    alias mkdocs="./venv/bin/python -m mkdocs";
   '';
   nativeBuildInputs = [];
 
@@ -173,6 +274,8 @@ pkgs.stdenv.mkDerivation {
       pkgs.kube3d
       pkgs.git
       pkgs.kubectl
+      pkgs.coreutils-full
+      pkgs.which
       workflow-controller
       mockery
       protoc-gen-gogo-all
@@ -192,9 +295,12 @@ pkgs.stdenv.mkDerivation {
   '';
 
   installPhase = ''
-    mkdir $out
-    cp -r _build/* $out
+    mkdir -p $out/bin
+    cp -r $(which workflow-controller) $out/bin
+    cp -r $(which argoexec) $out/bin
+    cp -r $(which argo) $out/bin
   '';
+
 }
 
 
