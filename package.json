@@ -1,0 +1,13 @@
+{
+  "name": "argo-workflows",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:argoproj/argo-workflows.git",
+  "author": "<isitha@pipekit.io>",
+  "license": "MIT",
+  "dependencies": {
+    "markdown-link-check": "3.11.1",
+    "markdown-spellcheck": "1.3.1",
+    "markdownlint-cli": "0.33.0"
+  }
+}

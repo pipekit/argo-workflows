@@ -1,7 +1,17 @@
-{ pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/06278c77b5d162e62df170fec307e83f1812d94b.tar.gz") {}
-}:
+{ pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/06278c77b5d162e62df170fec307e83f1812d94b.tar.gz") {
+    inherit system;
+  }, system ? builtins.currentSystem, nodejs ? pkgs.nodejs-19_x}:
 
 let 
+  nodeEnv = import ./node-env.nix {
+    inherit (pkgs) stdenv lib python2 runCommand writeTextFile writeShellScript;
+    inherit pkgs nodejs;
+    libtool = if pkgs.stdenv.isDarwin then pkgs.darwin.cctools else null;
+  };
+  nodePackages = import ./node-packages.nix {
+    inherit (pkgs) fetchurl nix-gitignore stdenv lib fetchgit;
+    inherit nodeEnv;
+  };
   pkgs = import<nixpkgs> {};
   pythonPkgs = pkgs.python310Packages;
   mkdocs = with pythonPkgs;
@@ -264,8 +274,8 @@ pkgs.stdenv.mkDerivation {
   buildInputs = [
       pkgs.gcc 
       (pkgs.haskellPackages.ghcWithPackages (ps: [ ps.shake ]))
+      nodePackages.shell.nodeDependencies
       pkgs.go
-      nodejs-19_x
       pkgs.yarn
       pkgs.clang-tools_13
       pkgs.jq
@@ -290,8 +300,6 @@ pkgs.stdenv.mkDerivation {
     ];
 
   buildPhase = '' 
-    python -m venv ./venv;
-    ./venv/bin/pip install -r requirements.txt;
   '';
 
   installPhase = ''
