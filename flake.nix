@@ -7,7 +7,7 @@
 
   outputs = inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin"];
+      systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
       imports = [ inputs.treefmt-nix.flakeModule ];
 
       perSystem = { pkgs, lib, config, ... }:
@@ -37,9 +37,9 @@
                 repo = "mockery";
                 rev = "v${version}";
                 sha256 = "sha256-udzBhCkESd/5GEJf9oVz0nAQDmsk4tenvDP6tbkBIao=";
-              }; 
+              };
               doCheck = false;
-              vendorHash =  "sha256-iuQx2znOh/zsglnJma7Y4YccVArSFul/IOaNh449SpA=";
+              vendorHash = "sha256-iuQx2znOh/zsglnJma7Y4YccVArSFul/IOaNh449SpA=";
             };
 
             default = config.packages.${package.name};
