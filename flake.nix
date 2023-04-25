@@ -1,7 +1,8 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-22.11";
     flake-parts = { url = "github:hercules-ci/flake-parts"; inputs.nixpkgs-lib.follows = "nixpkgs"; };
+    devenv.url = "github:cachix/devenv";
     treefmt-nix.url = "github:numtide/treefmt-nix";
   };
 
@@ -11,19 +12,22 @@
       imports = [ inputs.treefmt-nix.flakeModule ];
       perSystem = { pkgs, lib, config, ... }:
       let
-
+          buildConfig = import ./conf.nix;
+          staticfileBuild = if buildConfig.staticFiles then "STATIC FILES" else "NO STATIC FILES";
           myyarn = pkgs.yarn.override { nodejs = pkgs.nodejs-19_x;};
           src = lib.sourceFilesBySuffices inputs.self [ ".go" ".mod" ".sum" ];
           package = {
             name = "controller";
-            version = "0.0.2";
+            version = buildConfig.version;
           };
+
           nodejs = pkgs.nodejs-19_x;
           nodeEnv = import ./node-env.nix {
             inherit (pkgs) stdenv lib python2 runCommand writeTextFile writeShellScript;
             inherit pkgs nodejs;
             libtool = if pkgs.stdenv.isDarwin then pkgs.darwin.cctools else null;
           };
+
           nodePackages = import ./node-packages.nix {
             inherit (pkgs) fetchurl nix-gitignore stdenv lib fetchgit;
             inherit nodeEnv;
@@ -305,5 +309,6 @@
             programs.gofmt.enable = true;
           };
         };
-    };
+    }; 
+    
 }

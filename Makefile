@@ -20,7 +20,6 @@ GREP_LOGS             := ""
 
 # docker image publishing options
 IMAGE_NAMESPACE       ?= quay.io/pipekitdev
-DEV_IMAGE             ?= $(shell [ `uname -s` = Darwin ] && echo true || echo false)
 
 # declares which cluster to import to in case it's not the default name
 K3D_CLUSTER_NAME      ?= k3s-default
