@@ -11,14 +11,14 @@
       systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
       imports = [ inputs.treefmt-nix.flakeModule ];
       perSystem = { pkgs, lib, config, ... }:
-      let
-          buildConfig = import ./conf.nix;
-          staticfileBuild = if buildConfig.staticFiles then "STATIC FILES" else "NO STATIC FILES";
-          myyarn = pkgs.yarn.override { nodejs = pkgs.nodejs-19_x;};
+        let
+          argoConfig = import ./conf.nix;
+          env = argoConfig.env;
+          myyarn = pkgs.yarn.override { nodejs = pkgs.nodejs-19_x; };
           src = lib.sourceFilesBySuffices inputs.self [ ".go" ".mod" ".sum" ];
           package = {
             name = "controller";
-            version = buildConfig.version;
+            version = argoConfig.version;
           };
 
           nodejs = pkgs.nodejs-19_x;
@@ -137,6 +137,20 @@
             mkdocs-material
             mkdocs-spellcheck
           ]);
+
+          mkEnvSerialize = (envKey: envValue: "export ${envKey}=${envValue};");
+          mkEnv = (envAttrs:
+            lib.concatStrings
+              (lib.mapAttrsToList
+                mkEnvSerialize
+                envAttrs)
+          );
+          mkExec = (execName: envAttrs: execArgs:
+            "${mkEnv envAttrs}${execName} ${execArgs}"
+          );
+          controllerCmd = mkExec "workflow-controller" argoConfig.controller.env argoConfig.controller.args;
+          argoServerCmd = mkExec "argo" argoConfig.argoServer.env argoConfig.argoServer.args;
+          uiCmd = mkExec "yarn" argoConfig.ui.env argoConfig.ui.args;
         in
         {
           packages = {
@@ -300,6 +314,55 @@
                 myyarn
               ];
             };
+
+            devEnv = inputs.devenv.lib.mkShell {
+              inherit inputs pkgs;
+              modules = [
+                ({ pkgs, ... }: {
+                  env = argoConfig.env;
+                  # This is your devenv configuration
+                  packages = with pkgs; [
+                    config.packages.mockery
+                    config.packages.protoc-gen-gogo-all
+                    config.packages.grpc-ecosystem
+                    config.packages.go-swagger
+                    config.packages.controller-tools
+                    config.packages.k8sio-tools
+                    config.packages.goreman
+                    config.packages.stern
+                    config.packages.staticfiles
+                    config.packages.${package.name}
+                    nodePackages.shell.nodeDependencies
+                    gopls
+                    go
+                    jq
+                    nodejs
+                    pythonEnv
+                    clang-tools
+                    protobuf
+                    myyarn
+                  ];
+                  enterShell = ''
+                    ./hack/port-forward.sh;
+                    ./hack/free-port 9090;
+                    ./hack/free-port 2746;
+                    ./hack/free-port 8080;
+                    yarn --cwd ui install;
+                  '';
+                  processes = {
+                    workflow-controller = {
+                      exec = controllerCmd;
+                    };
+                    argo-server = {
+                      exec = argoServerCmd;
+                    };
+                    ui = {
+                      exec = uiCmd;
+                    };
+                  };
+                })
+              ];
+            };
             default = config.devShells.${package.name};
           };
 
@@ -309,6 +372,6 @@
             programs.gofmt.enable = true;
           };
         };
-    }; 
-    
+    };
+
 }
