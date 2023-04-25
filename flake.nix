@@ -9,13 +9,14 @@
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
       imports = [ inputs.treefmt-nix.flakeModule ];
-
       perSystem = { pkgs, lib, config, ... }:
-        let
+      let
+
+          myyarn = pkgs.yarn.override { nodejs = pkgs.nodejs-19_x;};
           src = lib.sourceFilesBySuffices inputs.self [ ".go" ".mod" ".sum" ];
           package = {
             name = "controller";
-            version = "0.0.1";
+            version = "0.0.2";
           };
           nodejs = pkgs.nodejs-19_x;
           nodeEnv = import ./node-env.nix {
@@ -27,7 +28,7 @@
             inherit (pkgs) fetchurl nix-gitignore stdenv lib fetchgit;
             inherit nodeEnv;
           };
-          pythonPkgs = pkgs.python310Packages;        
+          pythonPkgs = pkgs.python310Packages;
           mkdocs = with pythonPkgs;
             buildPythonPackage rec {
               pname = "mkdocs";
@@ -37,32 +38,32 @@
                 hash = "sha256-jnlwomGDSH/ioQQZQMb9A6oNvlVJ5Qw+cZT1Zcs8Z4o=";
               };
               propagatedBuildInputs = [
-                mergedeep 
-                markdown 
-                click 
-                pyyaml 
-                pyyaml-env-tag 
-                jinja2 
-                watchdog 
-                importlib-metadata 
-                typing-extensions 
-                packaging 
-                colorama 
+                mergedeep
+                markdown
+                click
+                pyyaml
+                pyyaml-env-tag
+                jinja2
+                watchdog
+                importlib-metadata
+                typing-extensions
+                packaging
+                colorama
                 ghp-import
               ];
               doCheck = false;
-          };
+            };
           mkdocs-material-extensions = with pythonPkgs;
             buildPythonPackage rec {
               pname = "mkdocs_material_extensions";
               version = "1.1.1";
               src = fetchPypi {
                 inherit pname version;
-                hash="sha256-nAA9px4swkk9kQI3RIxnLgDO/IANPWrpPS/GmXnjvZM=";
+                hash = "sha256-nAA9px4swkk9kQI3RIxnLgDO/IANPWrpPS/GmXnjvZM=";
               };
-              buildInputs = [hatchling babel];
+              buildInputs = [ hatchling babel ];
               format = "pyproject";
-            };     
+            };
           mkdocs-material = with pythonPkgs;
             buildPythonPackage rec {
               pname = "mkdocs-material";
@@ -77,9 +78,9 @@
                 markdown
                 mkdocs
                 pymdown-extensions
-                jinja2 
+                jinja2
                 colorama
-                regex 
+                regex
                 requests
               ];
               doCheck = false;
@@ -126,7 +127,7 @@
             ps.typing-extensions
             ps.mypy
             ps.autopep8
-            ps.pip   
+            ps.pip
             mkdocs
             mkdocs-material-extensions
             mkdocs-material
@@ -167,7 +168,7 @@
                 rev = "v${version}";
                 sha256 = "sha256-CoUqgLFnLNCS9OxKFS7XwjE17SlH6iL1Kgv+0uEK2zU=";
               };
-              doCheck = false; 
+              doCheck = false;
               vendorHash = "sha256-nOL2Ulo9VlOHAqJgZuHl7fGjz/WFAaWPdemplbQWcak=";
             };
             grpc-ecosystem = pkgs.buildGoModule rec {
@@ -180,7 +181,7 @@
                 rev = "v${version}";
                 sha256 = "sha256-jJWqkMEBAJq50KaXccVpmgx/hwTdKgTtNkz8/xYO+Dc=";
               };
-              doCheck = false; 
+              doCheck = false;
               vendorHash = "sha256-jVOb2uHjPley+K41pV+iMPNx67jtb75Rb/ENhw+ZMoM=";
             };
 
@@ -269,6 +270,9 @@
           devShells = {
             ${package.name} = pkgs.mkShell {
               inherit (package) name;
+              shellHook = ''
+                unset GOPATH;
+              '';
               inputsFrom = [ config.packages.${package.name} ];
               packages = with pkgs; [
                 config.packages.mockery
@@ -286,10 +290,10 @@
                 go
                 jq
                 nodejs
-                yarn
                 pythonEnv
                 clang-tools
                 protobuf
+                myyarn
               ];
             };
             default = config.devShells.${package.name};
