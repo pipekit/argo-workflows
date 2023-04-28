@@ -1,13 +1,13 @@
 rec {
   staticFiles = true;
-  version = "0.0.1";
+  version = "latest";
   env = {
     DEFAULT_REQUEUE_TIME = "1s";
     SECURE = "false";
     ALWAYS_OFFLOAD_NODE_STATUS = "false";
     LOG_LEVEL = "debug";
     UPPERIO_DB_DEBUG = "0";
-    IMAGE_NAMESPACE = "";
+    IMAGE_NAMESPACE = "quay.io/pipekitdev";
     VERSION = "${version}";
     AUTH_MODE = "hybrid";
     NAMESPACED = "true";
