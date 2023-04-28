@@ -13,7 +13,6 @@
       perSystem = { pkgs, lib, config, ... }:
         let
           argoConfig = import ./conf.nix;
-          env = argoConfig.env;
           myyarn = pkgs.yarn.override { nodejs = pkgs.nodejs-19_x; };
           src = lib.sourceFilesBySuffices inputs.self [ ".go" ".mod" ".sum" ];
           package = {
@@ -271,7 +270,7 @@
               doCheck = false;
             };
 
-            staticfiles = pkgs.buildGoModule rec {
+            staticfiles = pkgs.buildGoModule {
               pname = "staticfiles";
               version = "0.0.1"; # no official version
               src = pkgs.fetchFromGitHub {
@@ -363,7 +362,7 @@
                 })
               ];
             };
-            default = config.devShells.${package.name};
+            default = config.devShells.devEnv;
           };
 
           treefmt = {
