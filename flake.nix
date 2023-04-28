@@ -14,7 +14,10 @@
         let
           argoConfig = import ./conf.nix;
           myyarn = pkgs.yarn.override { nodejs = pkgs.nodejs-19_x; };
-          src = lib.sourceFilesBySuffices inputs.self [ ".go" ".mod" ".sum" ];
+          src = 
+            builtins.filterSource
+            (path: type: !(type == "directory" && baseNameOf path == "hack"))
+            (lib.sourceFilesBySuffices inputs.self [ ".go" ".mod" ".sum" ]);
           package = {
             name = "controller";
             version = argoConfig.version;
@@ -157,7 +160,7 @@
               pname = package.name;
               inherit (package) version;
               inherit src;
-              vendorSha256 = "sha256-E8BNOjKCZKCJOss7syZCxTeG6vpPDIaH5lBk9LrzkIc=";
+              vendorSha256 = "sha256-vtBy1+fEh7ewKyCUZYOWC3AXi3hs7R3e/9p1aLubDyQ=";
               doCheck = false;
             };
 
