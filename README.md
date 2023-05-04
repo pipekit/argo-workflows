@@ -49,11 +49,11 @@ Argo is a [Cloud Native Computing Foundation (CNCF)](https://cncf.io/) hosted pr
 Nix is a package manager / build tool which focusses on reproducible build environments.
 Argo Workflows has some basic support for Nix which is enough to get Argo Workflows up and running with minimal effort. 
 Here are the steps to follow: 
-  1. modify the hosts file according to [this](https://argoproj.github.io/argo-workflows/running-locally/), don't worry about the other instructions. 
-  2. setup a k8s cluster, k3d is the recommended solution here. 
-  3. Install [Nix](https://nixos.org/download.html) 
+  1. Modify the hosts file according to [this](https://argoproj.github.io/argo-workflows/running-locally/), don't worry about the other instructions. 
+  2. Setup a k8s cluster, k3d is the recommended solution here. 
+  3. Install [Nix](https://nixos.org/download.html).
   4. Make a directory in the argo workflows folder called ".devenv".
-  5. Run "nix develop" (you will have to use the experimental feature flags on a fresh install, the features you need are "nix-command" and "flakes").
+  5. Run "nix develop --extra-experimental-features nix-command --extra-experimental-features flakes" (you can add this as a default in your nix.conf file).
   6. Run "devenv up". 
 
 As I said, this is still fairly barebones at the moment, any feature in the Makefile not mentioned here is excluded at the moment. 
