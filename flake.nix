@@ -14,10 +14,10 @@
         let
           argoConfig = import ./conf.nix;
           myyarn = pkgs.yarn.override { nodejs = pkgs.nodejs-19_x; };
-          src = 
+          src =
             builtins.filterSource
-            (path: type: !(type == "directory" && baseNameOf path == "hack"))
-            (lib.sourceFilesBySuffices inputs.self [ ".go" ".mod" ".sum" ]);
+              (path: type: !(type == "directory" && baseNameOf path == "hack"))
+              (lib.sourceFilesBySuffices inputs.self [ ".go" ".mod" ".sum" ]);
           package = {
             name = "controller";
             version = argoConfig.version;
@@ -292,6 +292,7 @@
               inherit (package) name;
               shellHook = ''
                 unset GOPATH;
+                unset GOROOT;
               '';
               inputsFrom = [ config.packages.${package.name} ];
               packages = with pkgs; [
@@ -345,10 +346,12 @@
                     myyarn
                   ];
                   enterShell = ''
+                    unset GOPATH;
+                    unset GOROOT;
                     ./hack/port-forward.sh;
-                    ./hack/free-port 9090;
-                    ./hack/free-port 2746;
-                    ./hack/free-port 8080;
+                    ./hack/free-port.sh 9090;
+                    ./hack/free-port.sh 2746;
+                    ./hack/free-port.sh 8080;
                     yarn --cwd ui install;
                   '';
                   processes = {
