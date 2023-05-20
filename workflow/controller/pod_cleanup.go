@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"fmt"
+
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -23,7 +25,15 @@ func (woc *wfOperationCtx) queuePodsForCleanup() {
 			continue
 		}
 		nodeID := woc.nodeID(pod)
-		if !woc.wf.Status.Nodes[nodeID].Phase.Fulfilled() {
+		woc.log.Infof("[CRY][DEBUG] We are entering GetPhase")
+		nodePhase, err := woc.wf.Status.Nodes.GetPhase(nodeID)
+		if err != nil {
+			woc.log.Infof("[CRY][DEBUG] WE REACHED THE CURSED LANDS")
+			woc.log.Fatalf("was unable to obtain node for %s", nodeID)
+			panic(fmt.Sprintf("node was not present with id %s", nodeID))
+		}
+		woc.log.Infof("[CRY][DEBUG] GOT PHASE %s for %s", *nodePhase, nodeID)
+		if !nodePhase.Fulfilled() {
 			continue
 		}
 		switch determinePodCleanupAction(selector, pod.Labels, strategy, workflowPhase, pod.Status.Phase) {

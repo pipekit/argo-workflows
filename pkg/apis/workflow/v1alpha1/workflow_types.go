@@ -24,6 +24,7 @@ import (
 
 	argoerrs "github.com/argoproj/argo-workflows/v3/errors"
 	"github.com/argoproj/argo-workflows/v3/util/slice"
+	"github.com/sirupsen/logrus"
 )
 
 // TemplateType is the type of a template
@@ -1704,6 +1705,58 @@ func (n Nodes) Find(f func(NodeStatus) bool) *NodeStatus {
 	return nil
 }
 
+func (n Nodes) Get(key string) (*NodeStatus, error) {
+	val, ok := n[key]
+	if !ok {
+		return nil, fmt.Errorf("key was not found for %s", key)
+	}
+	return &val, nil
+}
+
+func (n Nodes) Has(key string) bool {
+	err, _ := n.Get(key)
+	return err == nil
+}
+
+func (n Nodes) GetPhase(key string) (*NodePhase, error) {
+	val, ok := n[key]
+	if !ok {
+		return nil, fmt.Errorf("key was not found for %s", key)
+	}
+	return &val.Phase, nil
+}
+
+func (n Nodes) Set(key string, status NodeStatus) error {
+	if status.Name == "" {
+		logrus.Warn("Name was not set for key " + key)
+	}
+	if status.ID == "" {
+		logrus.Warn("ID was not set for key " + key)
+	}
+	_, ok := n[key]
+	if ok {
+		logrus.Tracef("Changing NodeStatus for %s to %+v", key, status)
+	}
+	n[key] = status
+	return nil
+}
+
+func (n Nodes) Delete(key string) {
+	_, has := n[key]
+	if !has {
+		logrus.Warnf("Trying to delete non existent key %s", key)
+		return
+	}
+	delete(n, key)
+}
+
+func (n Nodes) GetName(key string) (string, error) {
+	val, err := n.Get(key)
+	if err != nil {
+		return "", err
+	}
+	return val.Name, nil
+}
 func NodeWithName(name string) func(n NodeStatus) bool {
 	return func(n NodeStatus) bool { return n.Name == name }
 }
@@ -1780,6 +1833,12 @@ func (s Nodes) Map(f func(x NodeStatus) interface{}) map[string]interface{} {
 		values[node.ID] = f(node)
 	}
 	return values
+}
+
+func (s Nodes) ForEach(f func(key string, x NodeStatus)) {
+	for key, node := range s {
+		f(key, node)
+	}
 }
 
 // UserContainer is a container specified by a user.
@@ -3203,13 +3262,9 @@ func (wf *Workflow) GetTemplateByName(name string) *Template {
 	return nil
 }
 
-func (wf *Workflow) GetNodeByName(nodeName string) *NodeStatus {
+func (wf *Workflow) GetNodeByName(nodeName string) (*NodeStatus, error) {
 	nodeID := wf.NodeID(nodeName)
-	node, ok := wf.Status.Nodes[nodeID]
-	if !ok {
-		return nil
-	}
-	return &node
+	return wf.Status.Nodes.Get(nodeID)
 }
 
 // GetResourceScope returns the template scope of workflow.

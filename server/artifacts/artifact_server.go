@@ -10,6 +10,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -378,10 +379,16 @@ func (a *ArtifactServer) getArtifactAndDriver(ctx context.Context, nodeId, artif
 	kubeClient := auth.GetKubeClient(ctx)
 
 	var art *wfv1.Artifact
+
+	nodeStatus, err := wf.Status.Nodes.Get(nodeId)
+	if err != nil {
+		logrus.Errorf("Was unable to retrieve node for %s", nodeId)
+		return nil, nil, fmt.Errorf("was not able to retrieve node")
+	}
 	if isInput {
-		art = wf.Status.Nodes[nodeId].Inputs.GetArtifactByName(artifactName)
+		art = nodeStatus.Inputs.GetArtifactByName(artifactName)
 	} else {
-		art = wf.Status.Nodes[nodeId].Outputs.GetArtifactByName(artifactName)
+		art = nodeStatus.Outputs.GetArtifactByName(artifactName)
 	}
 	if art == nil {
 		return nil, nil, fmt.Errorf("artifact not found: %s, isInput=%t, Workflow Status=%+v", artifactName, isInput, wf.Status)
@@ -395,7 +402,13 @@ func (a *ArtifactServer) getArtifactAndDriver(ctx context.Context, nodeId, artif
 	// 5. Inline Template
 
 	var archiveLocation *wfv1.ArtifactLocation
-	templateName := util.GetTemplateFromNode(wf.Status.Nodes[nodeId])
+	logrus.Warnf("[SPECIAL][DEBUG] This used to assume validity")
+	templateNode, err := wf.Status.Nodes.Get(nodeId)
+	if err != nil {
+		logrus.Errorf("[DEBUG] was unable to retrieve node for %s", nodeId)
+		return nil, nil, fmt.Errorf("Unable to get artifact and driver due to inability to get node due for %s, err=%s", nodeId, err)
+	}
+	templateName := util.GetTemplateFromNode(*templateNode)
 	if templateName != "" {
 		template := wf.GetTemplateByName(templateName)
 		if template == nil {
@@ -412,7 +425,7 @@ func (a *ArtifactServer) getArtifactAndDriver(ctx context.Context, nodeId, artif
 		archiveLocation = ar.ToArtifactLocation()
 	}
 
-	err := art.Relocate(archiveLocation) // if the Artifact defines the location (case 1), it will be used; otherwise whatever archiveLocation is set to
+	err = art.Relocate(archiveLocation) // if the Artifact defines the location (case 1), it will be used; otherwise whatever archiveLocation is set to
 	if err != nil {
 		return art, nil, err
 	}
