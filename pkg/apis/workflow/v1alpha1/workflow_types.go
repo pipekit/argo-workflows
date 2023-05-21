@@ -1715,7 +1715,7 @@ func (n Nodes) Get(key string) (*NodeStatus, error) {
 }
 
 func (n Nodes) Has(key string) bool {
-	err, _ := n.Get(key)
+	_, err := n.Get(key)
 	return err == nil
 }
 
