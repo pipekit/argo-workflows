@@ -25,14 +25,11 @@ func (woc *wfOperationCtx) queuePodsForCleanup() {
 			continue
 		}
 		nodeID := woc.nodeID(pod)
-		woc.log.Infof("[CRY][DEBUG] We are entering GetPhase")
 		nodePhase, err := woc.wf.Status.Nodes.GetPhase(nodeID)
 		if err != nil {
-			woc.log.Infof("[CRY][DEBUG] WE REACHED THE CURSED LANDS")
 			woc.log.Fatalf("was unable to obtain node for %s", nodeID)
 			panic(fmt.Sprintf("node was not present with id %s", nodeID))
 		}
-		woc.log.Infof("[CRY][DEBUG] GOT PHASE %s for %s", *nodePhase, nodeID)
 		if !nodePhase.Fulfilled() {
 			continue
 		}
