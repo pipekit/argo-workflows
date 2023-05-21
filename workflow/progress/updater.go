@@ -1,8 +1,9 @@
 package progress
 
 import (
-	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/sirupsen/logrus"
+
+	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 )
 
 // UpdateProgress ensures the workflow's progress is updated with the individual node progress.

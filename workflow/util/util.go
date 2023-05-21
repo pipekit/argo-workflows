@@ -515,7 +515,6 @@ func updateSuspendedNode(ctx context.Context, wfIf v1alpha1.WorkflowInterface, h
 
 		nodeUpdated := false
 		for nodeID, node := range wf.Status.Nodes {
-			log.Infof("[DELETE][DEBUG] KILLING NODE", nodeID)
 			if node.IsActiveSuspendNode() {
 				if SelectorMatchesNode(selector, node) {
 

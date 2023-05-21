@@ -3,8 +3,9 @@ package estimation
 import (
 	"strings"
 
-	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/sirupsen/logrus"
+
+	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 )
 
 // Estimator return estimations for how long workflows and nodes will take

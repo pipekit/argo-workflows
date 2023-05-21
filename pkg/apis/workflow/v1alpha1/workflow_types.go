@@ -22,9 +22,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	"github.com/sirupsen/logrus"
+
 	argoerrs "github.com/argoproj/argo-workflows/v3/errors"
 	"github.com/argoproj/argo-workflows/v3/util/slice"
-	"github.com/sirupsen/logrus"
 )
 
 // TemplateType is the type of a template
@@ -1726,19 +1727,18 @@ func (n Nodes) GetPhase(key string) (*NodePhase, error) {
 	return &val.Phase, nil
 }
 
-func (n Nodes) Set(key string, status NodeStatus) error {
+func (n Nodes) Set(key string, status NodeStatus) {
 	if status.Name == "" {
-		logrus.Warn("Name was not set for key " + key)
+		logrus.Warnf("Name was not set for key %s", key)
 	}
 	if status.ID == "" {
-		logrus.Warn("ID was not set for key " + key)
+		logrus.Warnf("ID was not set for key %s", key)
 	}
 	_, ok := n[key]
 	if ok {
 		logrus.Tracef("Changing NodeStatus for %s to %+v", key, status)
 	}
 	n[key] = status
-	return nil
 }
 
 func (n Nodes) Delete(key string) {

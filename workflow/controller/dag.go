@@ -217,7 +217,7 @@ func (woc *wfOperationCtx) executeDAG(ctx context.Context, nodeName string, tmpl
 		node, err := woc.wf.Status.Nodes.Get(node.ID)
 		if err != nil {
 			// CRITICAL ERROR IF THIS BRANCH IS REACHED -> PANIC
-			panic(fmt.Sprintf("expected node for %s due to preceeded initializeExecutableNode but couldn't find it", node.ID))
+			panic(fmt.Sprintf("expected node for %s due to preceded initializeExecutableNode but couldn't find it", node.ID))
 		}
 		if node.Fulfilled() {
 			woc.killDaemonedChildren(node.ID)
@@ -599,7 +599,6 @@ func (woc *wfOperationCtx) executeDAGTask(ctx context.Context, dagCtx *dagContex
 		}
 		woc.markNodePhase(taskGroupNode.Name, groupPhase)
 	}
-	return
 }
 
 func (woc *wfOperationCtx) buildLocalScopeFromTask(dagCtx *dagContext, task *wfv1.DAGTask) (*wfScope, error) {
