@@ -71,8 +71,8 @@ func sumProgress(wf *wfv1.Workflow, node wfv1.NodeStatus, visited map[string]boo
 		// this will tolerate missing child (will be "") and therefore ignored
 		child, err := wf.Status.Nodes.Get(childNodeID)
 		if err != nil {
-			logrus.Fatalf("Coudn't obtain child for %s, panicking", childNodeID)
-			panic("expected child but didn't get one")
+			logrus.Warnf("Coudn't obtain child for %s, panicking", childNodeID)
+			continue
 		}
 		progress = progress.Add(sumProgress(wf, *child, visited))
 		if executable(child.Type) {

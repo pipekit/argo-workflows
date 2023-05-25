@@ -31,9 +31,8 @@ func resourceDuration(wf *wfv1.Workflow, node wfv1.NodeStatus, visited map[strin
 		visited[childID] = true
 		child, err := wf.Status.Nodes.Get(childID)
 		if err != nil {
-			// CRITICAL ERROR IF WE HIT THIS BRANCH -> probably race condition
-			logrus.Fatalf("was unable to obtain node for %s", childID)
-			panic("child was not found")
+			logrus.Warnf("was unable to obtain node for %s", childID)
+			continue
 		}
 		if child.Type == wfv1.NodeTypePod {
 			v = v.Add(child.ResourcesDuration)

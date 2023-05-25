@@ -832,8 +832,9 @@ func (d *dagContext) evaluateDependsLogic(taskName string) (bool, bool, error) {
 			for _, childNodeID := range depNode.Children {
 				childNodePhase, err := d.wf.Status.Nodes.GetPhase(childNodeID)
 				if err != nil {
-					log.Errorf("was unable to obtain node for %s", childNodeID)
-					return false, false, fmt.Errorf("was unable to obtain node for %s", childNodeID)
+					log.Warnf("was unable to obtain node for %s", childNodeID)
+					allFailed = false // we don't know if all failed
+					continue
 				}
 				anySucceeded = anySucceeded || *childNodePhase == wfv1.NodeSucceeded
 				allFailed = allFailed && *childNodePhase == wfv1.NodeFailed
