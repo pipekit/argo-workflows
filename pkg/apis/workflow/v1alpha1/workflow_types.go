@@ -1835,12 +1835,6 @@ func (s Nodes) Map(f func(x NodeStatus) interface{}) map[string]interface{} {
 	return values
 }
 
-func (s Nodes) ForEach(f func(key string, x NodeStatus)) {
-	for key, node := range s {
-		f(key, node)
-	}
-}
-
 // UserContainer is a container specified by a user.
 type UserContainer struct {
 	apiv1.Container `json:",inline" protobuf:"bytes,1,opt,name=container"`

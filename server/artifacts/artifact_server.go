@@ -402,10 +402,9 @@ func (a *ArtifactServer) getArtifactAndDriver(ctx context.Context, nodeId, artif
 	// 5. Inline Template
 
 	var archiveLocation *wfv1.ArtifactLocation
-	logrus.Warnf("[SPECIAL][DEBUG] This used to assume validity")
 	templateNode, err := wf.Status.Nodes.Get(nodeId)
 	if err != nil {
-		logrus.Errorf("[DEBUG] was unable to retrieve node for %s", nodeId)
+		logrus.Errorf("was unable to retrieve node for %s", nodeId)
 		return nil, nil, fmt.Errorf("Unable to get artifact and driver due to inability to get node due for %s, err=%s", nodeId, err)
 	}
 	templateName := util.GetTemplateFromNode(*templateNode)
