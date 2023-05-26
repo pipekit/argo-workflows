@@ -1,7 +1,7 @@
 package progress
 
 import (
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 )
@@ -71,7 +71,7 @@ func sumProgress(wf *wfv1.Workflow, node wfv1.NodeStatus, visited map[string]boo
 		// this will tolerate missing child (will be "") and therefore ignored
 		child, err := wf.Status.Nodes.Get(childNodeID)
 		if err != nil {
-			logrus.Warnf("Coudn't obtain child for %s, panicking", childNodeID)
+			log.Warnf("Coudn't obtain child for %s, panicking", childNodeID)
 			continue
 		}
 		progress = progress.Add(sumProgress(wf, *child, visited))

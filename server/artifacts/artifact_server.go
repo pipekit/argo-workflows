@@ -10,7 +10,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -382,7 +381,7 @@ func (a *ArtifactServer) getArtifactAndDriver(ctx context.Context, nodeId, artif
 
 	nodeStatus, err := wf.Status.Nodes.Get(nodeId)
 	if err != nil {
-		logrus.Errorf("Was unable to retrieve node for %s", nodeId)
+		log.Errorf("Was unable to retrieve node for %s", nodeId)
 		return nil, nil, fmt.Errorf("was not able to retrieve node")
 	}
 	if isInput {
@@ -404,7 +403,7 @@ func (a *ArtifactServer) getArtifactAndDriver(ctx context.Context, nodeId, artif
 	var archiveLocation *wfv1.ArtifactLocation
 	templateNode, err := wf.Status.Nodes.Get(nodeId)
 	if err != nil {
-		logrus.Errorf("was unable to retrieve node for %s", nodeId)
+		log.Errorf("was unable to retrieve node for %s", nodeId)
 		return nil, nil, fmt.Errorf("Unable to get artifact and driver due to inability to get node due for %s, err=%s", nodeId, err)
 	}
 	templateName := util.GetTemplateFromNode(*templateNode)

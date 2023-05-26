@@ -3,7 +3,7 @@ package estimation
 import (
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 )
@@ -33,7 +33,7 @@ func (e *estimator) EstimateNodeDuration(nodeName string) wfv1.EstimatedDuration
 	oldNodeID := e.baselineWF.NodeID(strings.Replace(nodeName, e.wf.Name, e.baselineWF.Name, 1))
 	node, err := e.baselineWF.Status.Nodes.Get(oldNodeID)
 	if err != nil {
-		logrus.Errorf("was unable to obtain node for %s", oldNodeID)
+		log.Errorf("was unable to obtain node for %s", oldNodeID)
 		// inacurate but not going to break anything
 		return 0
 	}

@@ -1,7 +1,7 @@
 package resource
 
 import (
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 )
@@ -31,7 +31,7 @@ func resourceDuration(wf *wfv1.Workflow, node wfv1.NodeStatus, visited map[strin
 		visited[childID] = true
 		child, err := wf.Status.Nodes.Get(childID)
 		if err != nil {
-			logrus.Warnf("was unable to obtain node for %s", childID)
+			log.Warnf("was unable to obtain node for %s", childID)
 			continue
 		}
 		if child.Type == wfv1.NodeTypePod {

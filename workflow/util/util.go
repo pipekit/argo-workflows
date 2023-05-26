@@ -16,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	apiv1 "k8s.io/api/core/v1"
@@ -750,7 +749,7 @@ func getDescendantNodeIDs(wf *wfv1.Workflow, node wfv1.NodeStatus) []string {
 	for _, child := range node.Children {
 		childStatus, err := wf.Status.Nodes.Get(child)
 		if err != nil {
-			logrus.Fatalf("Couldn't get child, panicking")
+			log.Fatalf("Couldn't get child, panicking")
 			panic("Was not able to obtain child")
 		}
 		descendantNodeIDs = append(descendantNodeIDs, getDescendantNodeIDs(wf, *childStatus)...)
@@ -787,7 +786,7 @@ func resetConnectedParentGroupNodes(oldWF *wfv1.Workflow, newWF *wfv1.Workflow, 
 	for {
 		currentNode, err := oldWF.Status.Nodes.Get(currentNodeID)
 		if err != nil {
-			logrus.Fatalf("dying due to inability to obtain node for %s", currentNodeID)
+			log.Fatalf("dying due to inability to obtain node for %s", currentNodeID)
 			panic("was not able to get node, panicking")
 		}
 		if !containsNode(resetParentGroupNodes, currentNodeID) {
@@ -798,7 +797,7 @@ func resetConnectedParentGroupNodes(oldWF *wfv1.Workflow, newWF *wfv1.Workflow, 
 		if currentNode.BoundaryID != "" && currentNode.BoundaryID != oldWF.ObjectMeta.Name {
 			parentNode, err := oldWF.Status.Nodes.Get(currentNode.BoundaryID)
 			if err != nil {
-				logrus.Fatalf("panicking unable to obtain node for %s", currentNode.BoundaryID)
+				log.Fatalf("panicking unable to obtain node for %s", currentNode.BoundaryID)
 				panic("was not able to get node")
 			}
 			if isGroupNode(*parentNode) {
@@ -880,7 +879,7 @@ func FormulateRetryWorkflow(ctx context.Context, wf *wfv1.Workflow, restartSucce
 						for _, child := range descendantNodeIDs {
 							childNode, err := wf.Status.Nodes.Get(child)
 							if err != nil {
-								logrus.Fatalf("was unable to obtain node for %s due to %s", child, err)
+								log.Fatalf("was unable to obtain node for %s due to %s", child, err)
 								return nil, nil, fmt.Errorf("Was unable to obtain node for %s due to %s", child, err)
 							}
 							if _, present := nodeIDsToReset[child]; present {
@@ -910,7 +909,7 @@ func FormulateRetryWorkflow(ctx context.Context, wf *wfv1.Workflow, restartSucce
 							deletedNodes[descendantNodeID] = true
 							descendantNode, err := wf.Status.Nodes.Get(descendantNodeID)
 							if err != nil {
-								logrus.Fatalf("Was unable to obtain node for %s due to %s", descendantNodeID, err)
+								log.Fatalf("Was unable to obtain node for %s due to %s", descendantNodeID, err)
 								return nil, nil, fmt.Errorf("Was unable to obtain node for %s due to %s", descendantNodeID, err)
 							}
 							if descendantNode.Type == wfv1.NodeTypePod {

@@ -22,7 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	argoerrs "github.com/argoproj/argo-workflows/v3/errors"
 	"github.com/argoproj/argo-workflows/v3/util/slice"
@@ -1729,14 +1729,14 @@ func (n Nodes) GetPhase(key string) (*NodePhase, error) {
 
 func (n Nodes) Set(key string, status NodeStatus) {
 	if status.Name == "" {
-		logrus.Warnf("Name was not set for key %s", key)
+		log.Warnf("Name was not set for key %s", key)
 	}
 	if status.ID == "" {
-		logrus.Warnf("ID was not set for key %s", key)
+		log.Warnf("ID was not set for key %s", key)
 	}
 	_, ok := n[key]
 	if ok {
-		logrus.Tracef("Changing NodeStatus for %s to %+v", key, status)
+		log.Tracef("Changing NodeStatus for %s to %+v", key, status)
 	}
 	n[key] = status
 }
@@ -1744,7 +1744,7 @@ func (n Nodes) Set(key string, status NodeStatus) {
 func (n Nodes) Delete(key string) {
 	_, has := n[key]
 	if !has {
-		logrus.Warnf("Trying to delete non existent key %s", key)
+		log.Warnf("Trying to delete non existent key %s", key)
 		return
 	}
 	delete(n, key)
