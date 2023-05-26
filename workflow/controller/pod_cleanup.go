@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"fmt"
-
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -27,8 +25,8 @@ func (woc *wfOperationCtx) queuePodsForCleanup() {
 		nodeID := woc.nodeID(pod)
 		nodePhase, err := woc.wf.Status.Nodes.GetPhase(nodeID)
 		if err != nil {
-			woc.log.Fatalf("was unable to obtain node for %s", nodeID)
-			panic(fmt.Sprintf("node was not present with id %s", nodeID))
+			woc.log.Errorf("was unable to obtain node for %s", nodeID)
+			continue
 		}
 		if !nodePhase.Fulfilled() {
 			continue

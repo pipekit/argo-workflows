@@ -307,8 +307,9 @@ func (woc *wfOperationCtx) executeStepGroup(ctx context.Context, stepGroup []wfv
 	for _, childNodeID := range node.Children {
 		childNode, err := woc.wf.Status.Nodes.Get(childNodeID)
 		if err != nil {
-			woc.log.Fatalf("was unable to obtain node for %s", childNodeID)
-			panic(fmt.Sprintf("was unable to obtain childNode for %s", childNodeID))
+			errorMsg := fmt.Sprintf("was unable to obtain childNode for %s", childNodeID)
+			woc.log.Errorf(errorMsg)
+			return nil, fmt.Errorf(errorMsg)
 		}
 		step := nodeSteps[childNode.Name]
 		stepsCtx.scope.addParamToScope(fmt.Sprintf("steps.%s.status", childNode.DisplayName), string(childNode.Phase))

@@ -288,8 +288,14 @@ func (woc *wfOperationCtx) operate(ctx context.Context) {
 		woc.wf.Status.EstimatedDuration = woc.estimateWorkflowDuration()
 	} else {
 		woc.workflowDeadline = woc.getWorkflowDeadline()
-		woc.taskResultReconciliation()
-		err := woc.podReconciliation(ctx)
+		err := woc.taskResultReconciliation()
+		if err != nil {
+			woc.log.WithError(err).WithField("workflow", woc.wf.ObjectMeta.Name).Error("task reconciliation failed")
+			woc.eventRecorder.Event(woc.wf, apiv1.EventTypeWarning, "TaskReconciliationFailed", "task reconciliation failed")
+			// TODO: should we re-add to the workqueue, this should happen in caller?
+			return
+		}
+		err = woc.podReconciliation(ctx)
 		if err == nil {
 			woc.failSuspendedAndPendingNodesAfterDeadlineOrShutdown()
 		}
