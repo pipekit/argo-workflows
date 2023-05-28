@@ -1706,6 +1706,8 @@ func (n Nodes) Find(f func(NodeStatus) bool) *NodeStatus {
 	return nil
 }
 
+// Get a NodeStatus from the hashmap of Nodes.
+// Return a nil along with an error if non existent.
 func (n Nodes) Get(key string) (*NodeStatus, error) {
 	val, ok := n[key]
 	if !ok {
@@ -1714,19 +1716,22 @@ func (n Nodes) Get(key string) (*NodeStatus, error) {
 	return &val, nil
 }
 
+// Check if the Nodes map has a key entry
 func (n Nodes) Has(key string) bool {
 	_, err := n.Get(key)
 	return err == nil
 }
 
+// Get the Phase of a Node
 func (n Nodes) GetPhase(key string) (*NodePhase, error) {
-	val, ok := n[key]
-	if !ok {
-		return nil, fmt.Errorf("key was not found for %s", key)
+	val, err := n.Get(key)
+	if err != nil {
+		return nil, err
 	}
 	return &val.Phase, nil
 }
 
+// Set the status of a node by key
 func (n Nodes) Set(key string, status NodeStatus) {
 	if status.Name == "" {
 		log.Warnf("Name was not set for key %s", key)
@@ -1741,8 +1746,9 @@ func (n Nodes) Set(key string, status NodeStatus) {
 	n[key] = status
 }
 
+// Delete a node from the Nodes by key
 func (n Nodes) Delete(key string) {
-	_, has := n[key]
+	has := n.Has(key)
 	if !has {
 		log.Warnf("Trying to delete non existent key %s", key)
 		return
@@ -1750,6 +1756,7 @@ func (n Nodes) Delete(key string) {
 	delete(n, key)
 }
 
+// Get the name of a node by key
 func (n Nodes) GetName(key string) (string, error) {
 	val, err := n.Get(key)
 	if err != nil {
