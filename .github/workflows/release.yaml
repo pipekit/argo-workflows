@@ -305,7 +305,7 @@ jobs:
   test-images-windows:
     name: Try pulling windows
     if: github.repository == 'pipekit/argo-workflows'
-    runs-on: windows-2019
+    runs-on: windows-2022
     needs: [ push-images ]
     steps:
       - name: Docker Login
