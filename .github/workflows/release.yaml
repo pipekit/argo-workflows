@@ -164,7 +164,7 @@ jobs:
   build-windows:
     name: Build & push windows
     if: github.repository == 'pipekit/argo-workflows'
-    runs-on: windows-2019
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v3
       - name: Docker Login
