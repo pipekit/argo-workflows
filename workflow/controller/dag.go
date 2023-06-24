@@ -191,17 +191,6 @@ func (d *dagContext) assessDAGPhase(targetTasks []string, nodes wfv1.Nodes, isSh
 		}
 	}
 
-	// Unfortunately it is possible that we never reached
-	// the targetTasks in our above exploration.
-	// This means two things, either the target tasks are still running
-	// or they won't ever be reached. Some features in Argo make it difficult to determine
-	// if the targetTask wasn't reached because of
-	for _, task := range targetTasks {
-		_, ok := visited[task]
-		if !ok {
-		}
-	}
-
 	// We only succeed if all the target tasks have been considered (i.e. its nodes created) and there are no failures
 	failFast := d.tmpl.DAG.FailFast == nil || *d.tmpl.DAG.FailFast
 	result := wfv1.NodeSucceeded
