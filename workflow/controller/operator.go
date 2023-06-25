@@ -364,11 +364,12 @@ func (woc *wfOperationCtx) operate(ctx context.Context) {
 		default:
 			if !errorsutil.IsTransientErr(err) && !woc.wf.Status.Phase.Completed() && os.Getenv("BUBBLE_ENTRY_TEMPLATE_ERR") != "false" {
 				woc.markWorkflowError(ctx, x)
+
+				// Garbage collect PVCs if Entrypoint template execution returns error
+				if err := woc.deletePVCs(ctx); err != nil {
+					woc.log.WithError(err).Warn("failed to delete PVCs")
+				}
 			}
-		}
-		// Garbage collect PVCs if Entrypoint template execution returns error
-		if err := woc.deletePVCs(ctx); err != nil {
-			woc.log.WithError(err).Warn("failed to delete PVCs")
 		}
 		return
 	}
@@ -439,11 +440,12 @@ func (woc *wfOperationCtx) operate(ctx context.Context) {
 			default:
 				if !errorsutil.IsTransientErr(err) && !woc.wf.Status.Phase.Completed() && os.Getenv("BUBBLE_ENTRY_TEMPLATE_ERR") != "false" {
 					woc.markWorkflowError(ctx, x)
+
+					// Garbage collect PVCs if Onexit template execution returns error
+					if err := woc.deletePVCs(ctx); err != nil {
+						woc.log.WithError(err).Warn("failed to delete PVCs")
+					}
 				}
-			}
-			// Garbage collect PVCs if Onexit template execution returns error
-			if err := woc.deletePVCs(ctx); err != nil {
-				woc.log.WithError(err).Warn("failed to delete PVCs")
 			}
 			return
 		}
