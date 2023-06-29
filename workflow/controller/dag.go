@@ -150,19 +150,17 @@ func (d *dagContext) assessDAGPhase(targetTasks []string, nodes wfv1.Nodes, isSh
 	if err != nil {
 		return "", err
 	}
-	visited := map[string]bool{}
 	// BFS over the children of the DAG
 	uniqueQueue := newUniquePhaseNodeQueue(generatePhaseNodes(boundaryNode.Children, wfv1.NodeSucceeded)...)
 	for !uniqueQueue.empty() {
 		curr := uniqueQueue.pop()
-		visited[curr.nodeId] = true
 
-		currNode, err := nodes.Get(curr.nodeId)
+		node, err := nodes.Get(curr.nodeId)
 		if err != nil {
 			return "", err
 		}
 		// We need to store the current branchPhase to remember the last completed phase in this branch so that we can apply it to omitted nodes
-		node, branchPhase := currNode, curr.phase
+		branchPhase := curr.phase
 
 		if !node.Fulfilled() {
 			return wfv1.NodeRunning, nil
@@ -224,8 +222,6 @@ func (d *dagContext) assessDAGPhase(targetTasks []string, nodes wfv1.Nodes, isSh
 }
 
 func (woc *wfOperationCtx) executeDAG(ctx context.Context, nodeName string, tmplCtx *templateresolution.Context, templateScope string, tmpl *wfv1.Template, orgTmpl wfv1.TemplateReferenceHolder, opts *executeTemplateOpts) (*wfv1.NodeStatus, error) {
-	shutdownStrategy := woc.GetShutdownStrategy().Enabled()
-
 	node, err := woc.wf.GetNodeByName(nodeName)
 	if err != nil {
 		node = woc.initializeExecutableNode(nodeName, wfv1.NodeTypeDAG, templateScope, tmpl, orgTmpl, opts.boundaryID, wfv1.NodeRunning)
@@ -300,7 +296,7 @@ func (woc *wfOperationCtx) executeDAG(ctx context.Context, nodeName string, tmpl
 	}
 
 	// check if we are still running any tasks in this dag and return early if we do
-	dagPhase, err := dagCtx.assessDAGPhase(targetTasks, woc.wf.Status.Nodes, shutdownStrategy)
+	dagPhase, err := dagCtx.assessDAGPhase(targetTasks, woc.wf.Status.Nodes, woc.GetShutdownStrategy().Enabled())
 	if err != nil {
 		return nil, err
 	}
