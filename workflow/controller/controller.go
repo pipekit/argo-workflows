@@ -187,8 +187,6 @@ func NewWorkflowController(ctx context.Context, restConfig *rest.Config, kubecli
 		wfc.executorPlugins = map[string]map[string]*spec.Plugin{}
 	}
 
-	wfc.UpdateConfig(ctx)
-
 	wfc.metrics = metrics.New(wfc.getMetricsServerConfig())
 	wfc.entrypoint = entrypoint.New(kubeclientset, wfc.Config.Images)
 
@@ -239,6 +237,9 @@ var indexers = cache.Indexers{
 // Run starts an Workflow resource controller
 func (wfc *WorkflowController) Run(ctx context.Context, wfWorkers, workflowTTLWorkers, podCleanupWorkers int) {
 	defer runtimeutil.HandleCrash(runtimeutil.PanicHandlers...)
+
+	// init DB after leader election (if enabled)
+	wfc.UpdateConfig(ctx)
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -365,7 +366,7 @@ func (wfc *WorkflowController) initManagers(ctx context.Context) error {
 		labelSelector = labelSelector.Add(*req)
 	}
 	listOpts := metav1.ListOptions{LabelSelector: labelSelector.String()}
-	wfList, err := wfc.wfclientset.ArgoprojV1alpha1().Workflows(wfc.namespace).List(ctx, listOpts)
+	wfList, err := wfc.wfclientset.ArgoprojV1alpha1().Workflows(wfc.GetManagedNamespace()).List(ctx, listOpts)
 	if err != nil {
 		return err
 	}
@@ -404,13 +405,7 @@ func (wfc *WorkflowController) runConfigMapWatcher(stopCh <-chan struct{}) {
 			log.Debugf("received config map %s/%s update", cm.Namespace, cm.Name)
 			if cm.GetName() == wfc.configController.GetName() && wfc.namespace == cm.GetNamespace() {
 				log.Infof("Received Workflow Controller config map %s/%s update", cm.Namespace, cm.Name)
-				err := wfc.updateConfig()
-				if err != nil {
-					log.Errorf("Failed update the Workflow Controller config map. error: %v", err)
-					continue
-				}
-				log.Infof("Successfully Workflow Controller config map %s/%s updated", cm.Namespace, cm.Name)
-				continue
+				wfc.UpdateConfig(ctx)
 			}
 			wfc.notifySemaphoreConfigUpdate(cm)
 		case <-stopCh:
@@ -621,7 +616,10 @@ func (wfc *WorkflowController) deleteOffloadedNodesForWorkflow(uid string, versi
 	case 0:
 		log.WithField("uid", uid).Info("Workflow missing, probably deleted")
 	case 1:
-		un := workflows[0].(*unstructured.Unstructured)
+		un, ok := workflows[0].(*unstructured.Unstructured)
+		if !ok {
+			return fmt.Errorf("object %+v is not an unstructured", workflows[0])
+		}
 		wf, err = util.FromUnstructured(un)
 		if err != nil {
 			return err
@@ -833,7 +831,12 @@ func (wfc *WorkflowController) addWorkflowInformerHandlers(ctx context.Context) 
 	wfc.wfInformer.AddEventHandler(
 		cache.FilteringResourceEventHandler{
 			FilterFunc: func(obj interface{}) bool {
-				return reconciliationNeeded(obj.(*unstructured.Unstructured))
+				un, ok := obj.(*unstructured.Unstructured)
+				if !ok {
+					log.Warnf("Workflow FilterFunc: '%v' is not an unstructured", obj)
+					return false
+				}
+				return reconciliationNeeded(un)
 			},
 			Handler: cache.ResourceEventHandlerFuncs{
 				AddFunc: func(obj interface{}) {

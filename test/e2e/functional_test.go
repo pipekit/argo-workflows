@@ -730,11 +730,8 @@ spec:
 `).
 		When().
 		SubmitWorkflow().
-		WaitForWorkflow(10*time.Second).
+		WaitForWorkflow(fixtures.ToBeFailed).
 		Then().
-		ExpectWorkflow(func(t *testing.T, md *metav1.ObjectMeta, status *wfv1.WorkflowStatus) {
-			assert.Equal(t, wfv1.WorkflowFailed, status.Phase)
-		}).
 		ExpectWorkflowNode(wfv1.FailedPodNode, func(t *testing.T, n *wfv1.NodeStatus, p *apiv1.Pod) {
 			assert.Equal(t, *p.Spec.ActiveDeadlineSeconds, int64(5))
 		})
@@ -1178,4 +1175,28 @@ func (s *FunctionalSuite) TestTTY() {
 		When().
 		SubmitWorkflow().
 		WaitForWorkflow(fixtures.ToBeSucceeded)
+}
+
+func (s *FunctionalSuite) TestTemplateDefaultImage() {
+	s.Given().
+		Workflow(`@functional/template-default-image.yaml`).
+		When().
+		SubmitWorkflow().
+		WaitForWorkflow(fixtures.ToBeSucceeded)
+}
+
+func (s *FunctionalSuite) TestEntrypointName() {
+	s.Given().
+		WorkflowTemplate(`@functional/entrypointName-template.yaml`).
+		Workflow(`@functional/entrypointName-workflow.yaml`).
+		When().
+		CreateWorkflowTemplates().
+		SubmitWorkflow().
+		WaitForWorkflow().
+		Then().
+		ExpectWorkflowNode(wfv1.NodeWithDisplayName("step"), func(t *testing.T, n *wfv1.NodeStatus, p *apiv1.Pod) {
+			assert.Equal(t, wfv1.NodeSucceeded, n.Phase)
+			assert.Equal(t, "bar", n.Inputs.Parameters[0].Value.String())
+		})
+
 }
