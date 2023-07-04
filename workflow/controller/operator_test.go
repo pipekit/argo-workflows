@@ -8140,7 +8140,8 @@ func TestOperatorRetryExpressionError(t *testing.T) {
 	woc.operate(ctx)
 
 	assert.Equal(t, wfv1.WorkflowRunning, woc.wf.Status.Phase)
-	retryNode := woc.wf.GetNodeByName("retry-script-9z9pv[1].retry")
+	retryNode, err := woc.wf.GetNodeByName("retry-script-9z9pv[1].retry")
+	assert.NoError(t, err)
 	assert.Equal(t, wfv1.NodeRunning, retryNode.Phase)
 	assert.Equal(t, 3, len(retryNode.Children))
 }
@@ -8308,7 +8309,8 @@ func TestOperatorRetryExpressionErrorNoExpr(t *testing.T) {
 	woc.operate(ctx)
 
 	assert.Equal(t, wfv1.WorkflowFailed, woc.wf.Status.Phase)
-	retryNode := woc.wf.GetNodeByName("retry-script-9z9pv[1].retry")
+	retryNode, err := woc.wf.GetNodeByName("retry-script-9z9pv[1].retry")
+	assert.NoError(t, err)
 	assert.Equal(t, wfv1.NodeError, retryNode.Phase)
 	assert.Equal(t, 2, len(retryNode.Children))
 	assert.Equal(t, "Error (exit code 1)", retryNode.Message)
