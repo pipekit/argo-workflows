@@ -44,7 +44,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          tags: quay.io/argoproj/argoexec:latest
+          tags: quay.io/pipekitdev/argoexec:latest
           outputs: type=docker,dest=/tmp/argoexec_image.tar
           target: argoexec
           cache-from: type=gha
