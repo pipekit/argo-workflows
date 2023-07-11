@@ -82,7 +82,7 @@ jobs:
             --platform="${PLATFORM}" \
             --target $TARGET \
             --tag $image_name \
-            --tag quay.io\$image_name .
+            --tag quay.io/$image_name .
 
   # build-windows:
   #   name: Build & push windows
