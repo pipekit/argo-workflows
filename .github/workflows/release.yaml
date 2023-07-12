@@ -39,14 +39,14 @@ jobs:
         with:
           version: v0.10.4
 
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        id: cache
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-${{ matrix.platform }}-${{ matrix.target }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.platform }}-${{ matrix.target }}-buildx-
+      # - name: Cache Docker layers
+      #   uses: actions/cache@v3
+      #   id: cache
+      #   with:
+      #     path: /tmp/.buildx-cache
+      #     key: ${{ runner.os }}-${{ matrix.platform }}-${{ matrix.target }}-buildx-${{ github.sha }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-${{ matrix.platform }}-${{ matrix.target }}-buildx-
 
       - name: Docker Login
         uses: docker/login-action@v2
