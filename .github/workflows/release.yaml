@@ -46,7 +46,7 @@ jobs:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-${{ matrix.platform }}-${{ matrix.target }}-buildx-${{ github.sha }}-wibble
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.platform }}-${{ matrix.target }}-buildx-
+            ${{ runner.os }}-${{ matrix.platform }}-${{ matrix.target }}-buildx-wibble-
 
       - name: Docker Login
         uses: docker/login-action@v2
