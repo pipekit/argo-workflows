@@ -85,59 +85,46 @@ jobs:
             --tag $image_name \
             --tag quay.io/$image_name .
 
-  build-windows:
-    name: Build & push windows
-    if: github.repository == 'pipekit/argo-workflows'
-    runs-on: windows-2022
-    steps:
-      - uses: actions/checkout@v3
+  # build-windows:
+  #   name: Build & push windows
+  #   if: github.repository == 'pipekit/argo-workflows'
+  #   runs-on: windows-2019
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Docker Login
+  #       uses: Azure/docker-login@v1
+  #       with:
+  #         username: ${{ secrets.DOCKERIO_USERNAME }}
+  #         password: ${{ secrets.DOCKERIO_PASSWORD }}
 
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        id: cache
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-windows-2022-argoexec-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-windows-2022-argoexec-buildx-
-
-      - name: Docker Login
-        uses: Azure/docker-login@v1
-        with:
-          username: ${{ secrets.DOCKERIO_USERNAME }}
-          password: ${{ secrets.DOCKERIO_PASSWORD }}
-
-      - name: Login to Quay
-        uses: Azure/docker-login@v1
-        with:
-          login-server: quay.io
-          username: ${{ secrets.QUAYIO_USERNAME }}
-          password: ${{ secrets.QUAYIO_PASSWORD }}
+  #     - name: Login to Quay
+  #       uses: Azure/docker-login@v1
+  #       with:
+  #         login-server: quay.io
+  #         username: ${{ secrets.QUAYIO_USERNAME }}
+  #         password: ${{ secrets.QUAYIO_PASSWORD }}
    
-      - name: Build & Push Windows Docker Images
-        env:
-          DOCKERIO_ORG: ${{ secrets.DOCKERIO_ORG }}
-        run: |
-          docker_org=$DOCKERIO_ORG
+  #     - name: Build & Push Windows Docker Images
+  #       env:
+  #         DOCKERIO_ORG: ${{ secrets.DOCKERIO_ORG }}
+  #       run: |
+  #         docker_org=$DOCKERIO_ORG
 
-          tag=$(basename $GITHUB_REF)
-          if [ $tag = "master" ]; then
-            tag="latest"
-          fi
+  #         tag=$(basename $GITHUB_REF)
+  #         if [ $tag = "master" ]; then
+  #           tag="latest"
+  #         fi
 
-          targets="argoexec"
-          for target in $targets; do
-            image_name="${docker_org}/${target}:${tag}-windows"
-            docker buildx build \
-              --cache-from "type=local,src=/tmp/.buildx-cache" \
-              --cache-to "type=local,dest=/tmp/.buildx-cache" \
-              --output "type=image,push=true" \
-              --target $TARGET \
-              --provenance=false \
-              --file Dockerfile.windows \
-              --tag $image_name \
-              --tag quay.io/$image_name .
-          done
+  #         targets="argoexec"
+  #         for target in $targets; do
+  #           image_name="${docker_org}/${target}:${tag}-windows"
+  #           docker build --target $target -t $image_name -f Dockerfile.windows .
+  #           docker push $image_name
+
+  #           docker tag $image_name quay.io/$image_name
+  #           docker push quay.io/$image_name
+
+  #         done
 
   push-images:
     name: Push manifest with all images
