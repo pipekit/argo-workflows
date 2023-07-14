@@ -1,32 +1,35 @@
-#syntax=docker/dockerfile:1.2
+## #syntax=docker/dockerfile:1.2
 ARG GIT_COMMIT=unknown
 ARG GIT_TAG=unknown
 ARG GIT_TREE_STATE=unknown
 
-FROM golang:1.21-alpine3.19 as builder
+FROM artprod.dev.bloomberg.com/rhel7-dpkg:latest as builder
+RUN yum install -y mailcap
 
-RUN apk update && apk add --no-cache \
-    git \
+
+RUN apt-get update && apt-get install -y \
+    go \
     make \
     ca-certificates \
     wget \
     curl \
     gcc \
-    bash \
-    mailcap
+    bash
 
 WORKDIR /go/src/github.com/argoproj/argo-workflows
 COPY go.mod .
 COPY go.sum .
+ENV GOPRIVATE="*.dev.bloomberg.com"
+ENV GOPROXY="https://goproxy.dev.bloomberg.com,direct"
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
 COPY . .
 
 ####################################################################################################
 
-FROM node:20-alpine as argo-ui
+FROM artprod.dev.bloomberg.com/rhel7-dpkg:latest as argo-ui
 
-RUN apk update && apk add --no-cache git
+RUN apt-get update && apt-get install -y node
 
 COPY ui/package.json ui/yarn.lock ui/
 
@@ -49,6 +52,8 @@ ARG GIT_COMMIT
 ARG GIT_TAG
 ARG GIT_TREE_STATE
 
+ENV GOPRIVATE="*.dev.bloomberg.com"
+ENV GOPROXY="https://goproxy.dev.bloomberg.com,direct"
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build make dist/argoexec GIT_COMMIT=${GIT_COMMIT} GIT_TAG=${GIT_TAG} GIT_TREE_STATE=${GIT_TREE_STATE}
 
 ####################################################################################################
@@ -59,6 +64,8 @@ ARG GIT_COMMIT
 ARG GIT_TAG
 ARG GIT_TREE_STATE
 
+ENV GOPRIVATE="*.dev.bloomberg.com"
+ENV GOPROXY="https://goproxy.dev.bloomberg.com,direct"
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build make dist/workflow-controller GIT_COMMIT=${GIT_COMMIT} GIT_TAG=${GIT_TAG} GIT_TREE_STATE=${GIT_TREE_STATE}
 
 ####################################################################################################
@@ -74,11 +81,13 @@ COPY --from=argo-ui ui/dist/app ui/dist/app
 # update timestamp so that `make` doesn't try to rebuild this -- it was already built in the previous stage
 RUN touch ui/dist/app/index.html
 
+ENV GOPRIVATE="*.dev.bloomberg.com"
+ENV GOPROXY="https://goproxy.dev.bloomberg.com,direct"
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build STATIC_FILES=true make dist/argo GIT_COMMIT=${GIT_COMMIT} GIT_TAG=${GIT_TAG} GIT_TREE_STATE=${GIT_TREE_STATE}
 
 ####################################################################################################
 
-FROM gcr.io/distroless/static as argoexec
+FROM artprod.dev.bloomberg.com/distroless/static:latest as argoexec
 
 COPY --from=argoexec-build /go/src/github.com/argoproj/argo-workflows/dist/argoexec /bin/
 COPY --from=argoexec-build /etc/mime.types /etc/mime.types
@@ -89,7 +98,7 @@ ENTRYPOINT [ "argoexec" ]
 
 ####################################################################################################
 
-FROM gcr.io/distroless/static as workflow-controller
+FROM artprod.dev.bloomberg.com/distroless/static:latest as workflow-controller
 
 USER 8737
 
@@ -101,7 +110,7 @@ ENTRYPOINT [ "workflow-controller" ]
 
 ####################################################################################################
 
-FROM gcr.io/distroless/static as argocli
+FROM artprod.dev.bloomberg.com/distroless/static:latest as argocli
 
 USER 8737
 

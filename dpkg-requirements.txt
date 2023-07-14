@@ -2,4 +2,4 @@ go
 node
 golangci-lint
 jq
-kubectl
+
