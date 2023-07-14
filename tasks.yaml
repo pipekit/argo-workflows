@@ -52,6 +52,8 @@ spec:
         - WORKFLOW_GC_PERIOD=30s
         - UPPERIO_DB_DEBUG=1
         - ARCHIVED_WORKFLOW_GC_PERIOD=30s
+        - K3D_IMAGE_TOOLS=artprod.dev.bloomberg.com/mlp/ext/ghcr.io/k3d-io/k3d-tools:5.5.1
+        - K3D_IMAGE_LOADBALANCER=artprod.dev.bloomberg.com/mlp/ext/ghcr.io/k3d-io/k3d-proxy:5.5.1
       ports: "9090"
     - name: build-argo
       command: make ./dist/argo

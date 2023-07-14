@@ -21,6 +21,9 @@ COPY go.mod .
 COPY go.sum .
 ENV GOPRIVATE="*.dev.bloomberg.com"
 ENV GOPROXY="https://goproxy.dev.bloomberg.com,direct"
+ENV K3D_IMAGE_TOOLS=artprod.dev.bloomberg.com/mlp/ext/ghcr.io/k3d-io/k3d-tools:5.5.1
+ENV K3D_IMAGE_LOADBALANCER=artprod.dev.bloomberg.com/mlp/ext/ghcr.io/k3d-io/k3d-proxy:5.5.1
+
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
 COPY . .
