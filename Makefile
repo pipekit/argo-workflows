@@ -1,6 +1,7 @@
 export SHELL:=/bin/bash
 export SHELLOPTS:=$(if $(SHELLOPTS),$(SHELLOPTS):)pipefail:errexit
 
+USE_NIX := false
 # https://stackoverflow.com/questions/4122831/disable-make-builtin-rules-and-variables-from-inside-the-make-file
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
@@ -158,7 +159,9 @@ ui/dist/app/index.html: $(shell find ui/src -type f && find ui -maxdepth 1 -type
 	JOBS=max yarn --cwd ui build
 
 $(GOPATH)/bin/staticfiles:
+ifneq ($(USE_NIX), true)
 	go install bou.ke/staticfiles@dd04075
+endif
 
 ifeq ($(STATIC_FILES),true)
 server/static/files.go: $(GOPATH)/bin/staticfiles ui/dist/app/index.html
@@ -244,8 +247,8 @@ argoexec-image:
 .PHONY: codegen
 codegen: types swagger manifests $(GOPATH)/bin/mockery docs/fields.md docs/cli/argo.md
 	go generate ./...
-	make --directory sdks/java generate
-	make --directory sdks/python generate
+	make --directory sdks/java USE_NIX=$(USE_NIX) generate
+	make --directory sdks/python USE_NIX=$(USE_NIX) generate
 
 .PHONY: check-pwd
 check-pwd:
@@ -275,27 +278,49 @@ swagger: \
 
 
 $(GOPATH)/bin/mockery:
+ifneq ($(USE_NIX), true)
 	go install github.com/vektra/mockery/v2@v2.10.0
+endif
 $(GOPATH)/bin/controller-gen:
+ifneq ($(USE_NIX), true)
 	go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1
+endif
 $(GOPATH)/bin/go-to-protobuf:
+ifneq ($(USE_NIX), true)
 	go install k8s.io/code-generator/cmd/go-to-protobuf@v0.21.5
+endif
 $(GOPATH)/src/github.com/gogo/protobuf:
+ifneq ($(USE_NIX), true)
 	[ -e $(GOPATH)/src/github.com/gogo/protobuf ] || git clone --depth 1 https://github.com/gogo/protobuf.git -b v1.3.2 $(GOPATH)/src/github.com/gogo/protobuf
+endif
 $(GOPATH)/bin/protoc-gen-gogo:
+ifneq ($(USE_NIX), true)
 	go install github.com/gogo/protobuf/protoc-gen-gogo@v1.3.2
+endif
 $(GOPATH)/bin/protoc-gen-gogofast:
+ifneq ($(USE_NIX), true)
 	go install github.com/gogo/protobuf/protoc-gen-gogofast@v1.3.2
+endif
 $(GOPATH)/bin/protoc-gen-grpc-gateway:
+ifneq ($(USE_NIX), true)
 	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway@v1.16.0
+endif
 $(GOPATH)/bin/protoc-gen-swagger:
+ifneq ($(USE_NIX), true)
 	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger@v1.16.0
+endif
 $(GOPATH)/bin/openapi-gen:
+ifneq ($(USE_NIX), true)
 	go install k8s.io/kube-openapi/cmd/openapi-gen@v0.0.0-20220124234850-424119656bbf
+endif
 $(GOPATH)/bin/swagger:
+ifneq ($(USE_NIX), true)
 	go install github.com/go-swagger/go-swagger/cmd/swagger@v0.28.0
+endif
 $(GOPATH)/bin/goimports:
+ifneq ($(USE_NIX), true)
 	go install golang.org/x/tools/cmd/goimports@v0.1.7
+endif
 
 /usr/local/bin/clang-format:
 ifeq (, $(shell which clang-format))
@@ -449,7 +474,9 @@ dist/argosay:
 	cp test/e2e/images/argosay/v2/argosay dist/
 
 $(GOPATH)/bin/goreman:
+ifneq ($(USE_NIX), true)
 	go install github.com/mattn/goreman@v0.3.11
+endif
 
 .PHONY: start
 ifeq ($(RUN_MODE),local)
@@ -491,7 +518,9 @@ ifeq ($(RUN_MODE),local)
 endif
 
 $(GOPATH)/bin/stern:
+ifneq ($(USE_NIX), true)
 	go install github.com/stern/stern@latest
+endif
 
 .PHONY: logs
 logs: $(GOPATH)/bin/stern
@@ -612,7 +641,9 @@ docs/cli/argo.md: $(CLI_PKGS) go.sum server/static/files.go hack/cli/main.go
 # docs
 
 /usr/local/bin/mdspell:
+ifneq ($(USE_NIX), true)
 	npm i -g markdown-spellcheck
+endif
 
 .PHONY: docs-spellcheck
 docs-spellcheck: /usr/local/bin/mdspell
@@ -620,15 +651,21 @@ docs-spellcheck: /usr/local/bin/mdspell
 	mdspell --ignore-numbers --ignore-acronyms --en-us --no-suggestions --report $(shell find docs -name '*.md' -not -name upgrading.md -not -name fields.md -not -name upgrading.md -not -name executor_swagger.md -not -path '*/cli/*')
 
 /usr/local/bin/markdown-link-check:
+ifneq ($(USE_NIX), true)
 	npm i -g markdown-link-check
+endif
 
 .PHONY: docs-linkcheck
 docs-linkcheck: /usr/local/bin/markdown-link-check
 	# check docs for broken links
+ifneq ($(USE_NIX), true)
 	markdown-link-check -q -c .mlc_config.json $(shell find docs -name '*.md' -not -name fields.md -not -name executor_swagger.md)
+endif
 
 /usr/local/bin/markdownlint:
+ifneq ($(USE_NIX), true)
 	npm i -g  markdownlint-cli
+endif
 
 .PHONY: docs-lint
 docs-lint: /usr/local/bin/markdownlint
@@ -636,7 +673,9 @@ docs-lint: /usr/local/bin/markdownlint
 	markdownlint docs --fix --ignore docs/fields.md --ignore docs/executor_swagger.md --ignore docs/cli --ignore docs/walk-through/the-structure-of-workflow-specs.md
 
 /usr/local/bin/mkdocs:
+ifneq ($(USE_NIX), true)
 	python -m pip install mkdocs==1.2.4 mkdocs_material==8.1.9  mkdocs-spellcheck==0.2.1
+endif
 
 .PHONY: docs
 docs: /usr/local/bin/mkdocs \
