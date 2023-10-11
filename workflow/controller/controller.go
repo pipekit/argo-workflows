@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	gosync "sync"
 	"syscall"
 	"time"
 
@@ -65,6 +66,18 @@ import (
 	"github.com/argoproj/argo-workflows/v3/workflow/util"
 	plugin "github.com/argoproj/argo-workflows/v3/workflow/util/plugins"
 )
+
+const maxAllowedStackDepth = 100
+
+type recentlyCompletedWorkflow struct {
+	key string
+	when time.Time
+}
+
+type recentCompletions struct {
+	completions []recentlyCompletedWorkflow
+	mutex	  gosync.Mutex
+}
 
 // WorkflowController is the controller for workflow resources
 type WorkflowController struct {
@@ -128,6 +141,8 @@ type WorkflowController struct {
 	// Default is 3s and can be configured using the env var ARGO_PROGRESS_FILE_TICK_DURATION
 	progressFileTickDuration time.Duration
 	executorPlugins          map[string]map[string]*spec.Plugin // namespace -> name -> plugin
+
+	recentCompletions          recentCompletions
 }
 
 const (
@@ -699,6 +714,7 @@ func (wfc *WorkflowController) processNextItem(ctx context.Context) bool {
 	}
 	defer wfc.wfQueue.Done(key)
 
+
 	obj, exists, err := wfc.wfInformer.GetIndexer().GetByKey(key.(string))
 	if err != nil {
 		log.WithFields(log.Fields{"key": key, "error": err}).Error("Failed to get workflow from informer")
@@ -732,6 +748,11 @@ func (wfc *WorkflowController) processNextItem(ctx context.Context) bool {
 		woc := newWorkflowOperationCtx(wf, wfc)
 		woc.markWorkflowFailed(ctx, fmt.Sprintf("cannot unmarshall spec: %s", err.Error()))
 		woc.persistUpdates(ctx)
+		return true
+	}
+
+	if wfc.checkRecentlyCompleted(wf.ObjectMeta.Name) {
+		log.WithFields(log.Fields{"name": wf.ObjectMeta.Name}).Warn("Cache: Rejecting recently deleted")
 		return true
 	}
 
@@ -826,6 +847,47 @@ func getWfPriority(obj interface{}) (int32, time.Time) {
 	return int32(priority), un.GetCreationTimestamp().Time
 }
 
+// 10 minutes in the past
+const maxCompletedStoreTime = time.Second * -600
+
+func (wfc *WorkflowController) cleanCompletedWorkflowsRecord() {
+	cutoff := time.Now().Add(maxCompletedStoreTime)
+	wfc.recentCompletions.mutex.Lock()
+	defer wfc.recentCompletions.mutex.Unlock()
+
+	for i, val := range wfc.recentCompletions.completions {
+		if val.when.After(cutoff) {
+			wfc.recentCompletions.completions = wfc.recentCompletions.completions[i:]
+			break
+		}
+	}
+}
+
+func (wfc *WorkflowController) recordCompletedWorkflow(key string) {
+	wfc.recentCompletions.mutex.Lock()
+	defer wfc.recentCompletions.mutex.Unlock()
+	if !wfc.checkRecentlyCompleted(key) {
+		log.WithFields(log.Fields{"key": key}).Info("Cache: recording completed workflow")
+		wfc.recentCompletions.completions = append(wfc.recentCompletions.completions,
+			recentlyCompletedWorkflow{
+				key: key,
+				when: time.Now(),
+			})
+	}
+}
+
+func (wfc *WorkflowController) checkRecentlyCompleted(key string) bool {
+	wfc.cleanCompletedWorkflowsRecord()
+	wfc.recentCompletions.mutex.Lock()
+	defer wfc.recentCompletions.mutex.Unlock()
+	for _, val := range wfc.recentCompletions.completions {
+		if val.key == key {
+			return true
+		}
+	}
+	return false
+}
+
 func (wfc *WorkflowController) addWorkflowInformerHandlers(ctx context.Context) {
 	wfc.wfInformer.AddEventHandler(
 		cache.FilteringResourceEventHandler{
@@ -835,7 +897,13 @@ func (wfc *WorkflowController) addWorkflowInformerHandlers(ctx context.Context) 
 					log.Warnf("Workflow FilterFunc: '%v' is not an unstructured", obj)
 					return false
 				}
-				return reconciliationNeeded(un)
+				needed := reconciliationNeeded(un)
+				if !needed {
+					key, _ := cache.MetaNamespaceKeyFunc(un)
+ 					wfc.recordCompletedWorkflow(key)
+					wfc.throttler.Remove(key)
+				}
+				return needed
 			},
 			Handler: cache.ResourceEventHandlerFuncs{
 				AddFunc: func(obj interface{}) {
@@ -866,6 +934,7 @@ func (wfc *WorkflowController) addWorkflowInformerHandlers(ctx context.Context) 
 					key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 					if err == nil {
 						wfc.releaseAllWorkflowLocks(obj)
+						wfc.recordCompletedWorkflow(key)
 						// no need to add to the queue - this workflow is done
 						wfc.throttler.Remove(key)
 					}
