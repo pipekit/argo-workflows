@@ -13,7 +13,6 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     wget \
     curl \
-    gcc \
     bash
 
 WORKDIR /go/src/github.com/argoproj/argo-workflows
@@ -32,7 +31,7 @@ COPY . .
 
 FROM artprod.dev.bloomberg.com/rhel7-dpkg:latest as argo-ui
 
-RUN apt-get update && apt-get install -y node
+RUN apt-get update && apt-get install -y node yarn git
 
 COPY ui/package.json ui/yarn.lock ui/
 
