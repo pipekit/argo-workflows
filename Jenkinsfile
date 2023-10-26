@@ -21,6 +21,7 @@ node(agent_label) {
                     .setDefaultNamespace("workflow-runtimes")
                     .setDockerRegistryCredential("dsbuild-artifactory-jwt")
                     .inside(buildEnv)
+                    .setSanitizeNameClosure({ rawName -> return "workflow-controller" })
                     .addBuildVariables([
                         "GIT_COMMIT": "${GIT_COMMIT}",
                         "GIT_TREE_STATE": "JaaS-clean",
