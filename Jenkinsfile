@@ -17,7 +17,7 @@ node(agent_label) {
 
     def infoAgent = j.agent("generic.JaazyFileInfoAgent")
 
-    def dockerAgent = j.agent("generic.DockerAgent")
+    def dockerAgent = j.agent("generic.DockerAgent", "workflow-controller")
                     .setDefaultNamespace("workflow-runtimes")
                     .setDockerRegistryCredential("dsbuild-artifactory-jwt")
                     .inside(buildEnv)
