@@ -17,7 +17,8 @@ node(agent_label) {
 
     def infoAgent = j.agent("generic.JaazyFileInfoAgent")
 
-    def dockerAgent = j.agent("generic.DockerAgent", "workflow-controller")
+    // WORKFLOW CONTROLLER
+    def workflow_controller = j.agent("generic.DockerAgent", "workflow-controller")
                     .setDefaultNamespace("workflow-runtimes")
                     .setDockerRegistryCredential("dsbuild-artifactory-jwt")
                     .inside(buildEnv)
@@ -31,9 +32,26 @@ node(agent_label) {
                     .addBuildFlags(["--target workflow-controller"])
 
 
-    def workflow = j.workflow("SimpleFlow") // Probably should give this a better variable name
+    // ARGOEXEC
+    def argoexec = j.agent("generic.DockerAgent", "argoexec")
+                    .setDefaultNamespace("workflow-runtimes")
+                    .setDockerRegistryCredential("dsbuild-artifactory-jwt")
+                    .inside(buildEnv)
+                    .setSanitizeNameClosure({ rawName -> return "argoexec" })
+                    .addBuildVariables([
+                        "GIT_COMMIT": "${GIT_COMMIT}",
+                        "GIT_TREE_STATE": "JaaS-clean",
+                        "GIT_TAG": "untagged",
+                        "VERSION": infoAgent.getVersion(),
+                    ])
+                    .addBuildFlags(["--target argoexec"])
+
+    j.workflow("SimpleFlow")
                 .infoUsing(infoAgent)
-                .buildUsing(dockerAgent)
-                .publishUsing(dockerAgent)
-                .start()  // Needed to actually start the workflow
+                .buildUsingParallel([workflow_controller, argoexec])
+                .publishUsing(workflow_controller)
+                .publishUsing(argoexec)
+                .start()
+
+    
 }
