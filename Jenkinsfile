@@ -14,6 +14,11 @@ node(agent_label) {
         .addVariables([
             "DOCKER_BUILDKIT": "1"
         ])
+        .addCredentialEnv(usernamePassword(
+            credentialsId: 'bbgithub_token',
+            usernameVariable: 'GIT_USERNAME',
+            passwordVariable: 'GIT_PASSWORD'
+        ))
 
     def infoAgent = j.agent("generic.JaazyFileInfoAgent")
 
@@ -46,12 +51,30 @@ node(agent_label) {
                     ])
                     .addBuildFlags(["--target argoexec"])
 
+    // UI
+    def argoui = j.agent("generic.DockerAgent", "argoui")
+              .setDefaultNamespace("workflow-runtimes")
+              .setDockerRegistryCredential("dsbuild-artifactory-jwt")
+              .inside(buildEnv)
+              .setSanitizeNameClosure({ rawName -> return "argoui" })
+              .addBuildVariables([
+                  "GIT_COMMIT": "${GIT_COMMIT}",
+                  "GIT_TREE_STATE": "JaaS-clean",
+                  "GIT_TAG": "untagged",
+                  "VERSION": infoAgent.getVersion(),
+                  "HTTP_PROXY": "http://devproxy.bloomberg.com:82",
+                  "HTTPS_PROXY": "http://devproxy.bloomberg.com:82",
+                  "NO_PROXY": ".bloomberg.com",
+              ])
+              .addBuildFlags(["--secret id=GIT_PASSWORD,env=GIT_PASSWORD", "--target argo-ui"])
+
     j.workflow("SimpleFlow")
                 .infoUsing(infoAgent)
-                .buildUsingParallel([workflow_controller, argoexec])
+                .buildUsingParallel([workflow_controller, argoexec, argoui])
                 .publishUsing(workflow_controller)
                 .publishUsing(argoexec)
+                .publishUsing(argoui)
                 .start()
 
-    
+
 }

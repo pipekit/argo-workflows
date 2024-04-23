@@ -29,13 +29,19 @@ COPY . .
 
 ####################################################################################################
 
-FROM artprod.dev.bloomberg.com/rhel7-dpkg:latest as argo-ui
+FROM artprod.dev.bloomberg.com/node:21-rhel8-dpkg as argo-ui
 
-RUN apt-get update && apt-get install -y node yarn git
+RUN apt-get update && apt-get install -y yarn git
+
+# Nuke proxy configs on npm to not mess with host setup
+RUN npm config delete noproxy proxy https-proxy -g
+
+# Add support for git credential helper to read from secret
+RUN git config --system credential.helper '!f() { sleep 1; echo "username=token"; echo "password=$(cat /run/secrets/GIT_PASSWORD)"; }; f'
 
 COPY ui/package.json ui/yarn.lock ui/
 
-RUN --mount=type=cache,target=/root/.yarn \
+RUN --mount=type=secret,id=GIT_PASSWORD --mount=type=cache,target=/root/.yarn \
   YARN_CACHE_FOLDER=/root/.yarn JOBS=max \
   yarn --cwd ui install --network-timeout 1000000
 
