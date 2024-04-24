@@ -30,8 +30,8 @@ node(agent_label) {
                     .setSanitizeNameClosure({ rawName -> return "workflow-controller" })
                     .addBuildVariables([
                         "GIT_COMMIT": "${GIT_COMMIT}",
-                        "GIT_TREE_STATE": "JaaS-clean",
-                        "GIT_TAG": "untagged",
+                        "GIT_TREE_STATE": "clean",
+                        "GIT_TAG": infoAgent.getVersion(),
                         "VERSION": infoAgent.getVersion(),
                     ])
                     .addBuildFlags(["--target workflow-controller"])
@@ -45,8 +45,8 @@ node(agent_label) {
                     .setSanitizeNameClosure({ rawName -> return "argoexec" })
                     .addBuildVariables([
                         "GIT_COMMIT": "${GIT_COMMIT}",
-                        "GIT_TREE_STATE": "JaaS-clean",
-                        "GIT_TAG": "untagged",
+                        "GIT_TREE_STATE": "clean",
+                        "GIT_TAG": infoAgent.getVersion(),
                         "VERSION": infoAgent.getVersion(),
                     ])
                     .addBuildFlags(["--target argoexec"])
@@ -59,8 +59,8 @@ node(agent_label) {
               .setSanitizeNameClosure({ rawName -> return "argoui" })
               .addBuildVariables([
                   "GIT_COMMIT": "${GIT_COMMIT}",
-                  "GIT_TREE_STATE": "JaaS-clean",
-                  "GIT_TAG": "untagged",
+                  "GIT_TREE_STATE": "clean",
+                  "GIT_TAG": infoAgent.getVersion(),
                   "VERSION": infoAgent.getVersion(),
                   "HTTP_PROXY": "http://devproxy.bloomberg.com:82",
                   "HTTPS_PROXY": "http://devproxy.bloomberg.com:82",
@@ -68,12 +68,30 @@ node(agent_label) {
               ])
               .addBuildFlags(["--secret id=GIT_PASSWORD,env=GIT_PASSWORD", "--target argo-ui"])
 
+    // most curiously, the server is embedded into the argocli, and started via `argo server`
+    def argocli = j.agent("generic.DockerAgent", "argocli")
+              .setDefaultNamespace("workflow-runtimes")
+              .setDockerRegistryCredential("dsbuild-artifactory-jwt")
+              .inside(buildEnv)
+              .setSanitizeNameClosure({ rawName -> return "argocli" })
+              .addBuildVariables([
+                  "GIT_COMMIT": "${GIT_COMMIT}",
+                  "GIT_TREE_STATE": "clean",
+                  "GIT_TAG": infoAgent.getVersion(),
+                  "VERSION": infoAgent.getVersion(),
+                  "HTTP_PROXY": "http://devproxy.bloomberg.com:82",
+                  "HTTPS_PROXY": "http://devproxy.bloomberg.com:82",
+                  "NO_PROXY": ".bloomberg.com",
+              ])
+              .addBuildFlags(["--secret id=GIT_PASSWORD,env=GIT_PASSWORD", "--target argocli"])
+
     j.workflow("SimpleFlow")
                 .infoUsing(infoAgent)
-                .buildUsingParallel([workflow_controller, argoexec, argoui])
+                .buildUsingParallel([workflow_controller, argoexec, argoui, argocli])
                 .publishUsing(workflow_controller)
                 .publishUsing(argoexec)
                 .publishUsing(argoui)
+                .publishUsing(argocli)
                 .start()
 
 
