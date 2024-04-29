@@ -255,7 +255,7 @@ func (woc *wfOperationCtx) operate(ctx context.Context) {
 
 	// Workflow Level Synchronization lock
 	if woc.execWf.Spec.Synchronization != nil {
-		woc.log.Infoln("[HYPO-1] Trying to acquire workflow level lock for ", woc.wf.Name)
+		woc.log.Infoln("[PK][HYPO-1] Trying to acquire workflow level lock for ", woc.wf.Name)
 		acquired, wfUpdate, msg, err := woc.controller.syncManager.TryAcquire(woc.wf, "", woc.execWf.Spec.Synchronization)
 		if err != nil {
 			woc.log.Warn("Failed to acquire the lock")
@@ -520,7 +520,7 @@ func (woc *wfOperationCtx) operate(ctx context.Context) {
 func (woc *wfOperationCtx) releaseLocksForPendingShuttingdownWfs(ctx context.Context) bool {
 	if woc.GetShutdownStrategy().Enabled() && woc.wf.Status.Phase == wfv1.WorkflowPending && woc.GetShutdownStrategy() == wfv1.ShutdownStrategyTerminate {
 
-		woc.log.Infof("[HYPO-1] Releasing all workflow locks for workflow %s\n", woc.execWf.Name)
+		woc.log.Infof("[PK][HYPO-1] Releasing all workflow locks for workflow %s\n", woc.execWf.Name)
 		if woc.controller.syncManager.ReleaseAll(woc.execWf) {
 			woc.log.WithFields(log.Fields{"key": woc.execWf.Name}).Info("Released all locks since this pending workflow is being shutdown")
 			woc.markWorkflowSuccess(ctx)
@@ -733,7 +733,7 @@ func (woc *wfOperationCtx) persistUpdates(ctx context.Context) {
 	// Release all acquired lock for completed workflow
 	if woc.wf.Status.Synchronization != nil && woc.wf.Status.Fulfilled() {
 
-		log.Infof("[HYPO-1] Releasing all workflow locks for workflow %s\n", woc.wf.Name)
+		log.Infof("[PK][HYPO-1] Releasing all workflow locks for workflow %s\n", woc.wf.Name)
 		if woc.controller.syncManager.ReleaseAll(woc.wf) {
 			woc.log.WithFields(log.Fields{"key": woc.wf.Name}).Info("Released all acquired locks")
 		}
@@ -1822,6 +1822,8 @@ type executeTemplateOpts struct {
 func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string, orgTmpl wfv1.TemplateReferenceHolder, tmplCtx *templateresolution.Context, args wfv1.Arguments, opts *executeTemplateOpts) (*wfv1.NodeStatus, error) {
 	woc.log.Debugf("Evaluating node %s: template: %s, boundaryID: %s", nodeName, common.GetTemplateHolderString(orgTmpl), opts.boundaryID)
 
+	woc.log.Infof("[PK] Evaluating node: %s template: %s boundaryID: %s", nodeName, common.GetTemplateHolderString(orgTmpl), opts.boundaryID)
+
 	// Set templateScope from which the template resolution starts.
 	templateScope := tmplCtx.GetTemplateScope()
 
@@ -1878,7 +1880,7 @@ func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string,
 	// If so, release synchronization and return this node. No more logic will be executed.
 	if node != nil {
 		fulfilledNode := woc.handleNodeFulfilled(nodeName, node, processedTmpl)
-		woc.log.Infof("[HYPO-1] Releasing lock for workflow %s and node %s\n", woc.wf.Name, node.Name)
+		woc.log.Infof("[PK][HYPO-1] Releasing lock for workflow %s and node %s\n", woc.wf.Name, node.Name)
 		if fulfilledNode != nil {
 			woc.controller.syncManager.Release(woc.wf, node.ID, processedTmpl.Synchronization)
 			return fulfilledNode, nil
@@ -1910,12 +1912,12 @@ func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string,
 	unlockedNode := false
 
 	if processedTmpl.Synchronization != nil {
-		woc.log.Infof("[HYPO-1] Trying to acquire lock for workflow %s and node %s\n", woc.wf, nodeName)
+		woc.log.Infof("[PK][HYPO-1] Trying to acquire lock for workflow %s and node %s\n", woc.wf, nodeName)
 		lockAcquired, wfUpdated, msg, err := woc.controller.syncManager.TryAcquire(woc.wf, woc.wf.NodeID(nodeName), processedTmpl.Synchronization)
 		if lockAcquired {
-			woc.log.Infof("[HYPO-1] Lock acquired for workflow %s and node %s\n", woc.wf, nodeName)
+			woc.log.Infof("[PK][HYPO-1] Lock acquired for workflow %s and node %s\n", woc.wf, nodeName)
 		} else {
-			woc.log.Infof("[HYPO-1] Unable to acquire lock for workflow %s and node %s wfUpdated: %t msg: %s err: %s", woc.wf, nodeName, wfUpdated, msg, err)
+			woc.log.Infof("[PK][HYPO-1] Unable to acquire lock for workflow %s and node %s wfUpdated: %t msg: %s err: %s", woc.wf, nodeName, wfUpdated, msg, err)
 		}
 		if err != nil {
 			return woc.initializeNodeOrMarkError(node, nodeName, templateScope, orgTmpl, opts.boundaryID, opts.nodeFlag, err), err
@@ -2011,7 +2013,7 @@ func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string,
 	if node != nil {
 		fulfilledNode := woc.handleNodeFulfilled(nodeName, node, processedTmpl)
 		if fulfilledNode != nil {
-			woc.log.Infof("[HYPO-1] Releasing lock for workflow %s and node %s\n", woc.wf.Name, node.Name)
+			woc.log.Infof("[PK][HYPO-1] Releasing lock for workflow %s and node %s\n", woc.wf.Name, node.Name)
 			woc.controller.syncManager.Release(woc.wf, node.ID, processedTmpl.Synchronization)
 			return fulfilledNode, nil
 		}
@@ -2071,7 +2073,7 @@ func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string,
 				}
 			}
 			if processedTmpl.Synchronization != nil {
-				woc.log.Infof("[HYPO-1] Releasing lock for workflow %s and node %s\n", woc.wf.Name, node.Name)
+				woc.log.Infof("[PK][HYPO-1] Releasing lock for workflow %s and node %s\n", woc.wf.Name, node.Name)
 				woc.controller.syncManager.Release(woc.wf, node.ID, processedTmpl.Synchronization)
 			}
 			_, lastChildNode := getChildNodeIdsAndLastRetriedNode(retryParentNode, woc.wf.Status.Nodes)
@@ -2158,14 +2160,14 @@ func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string,
 			}
 		}
 		if release {
-			woc.log.Infof("[HYPO-1] Releasing lock for workflow %s and node %s\n", woc.wf.Name, node.Name)
+			woc.log.Infof("[PK][HYPO-1] Releasing lock for workflow %s and node %s\n", woc.wf.Name, node.Name)
 			woc.controller.syncManager.Release(woc.wf, node.ID, processedTmpl.Synchronization)
 			return node, err
 		}
 	}
 
 	if node.Fulfilled() {
-		woc.log.Infof("[HYPO-1] Releasing lock for workflow %s and node %s\n", woc.wf.Name, node.Name)
+		woc.log.Infof("[PK][HYPO-1] Releasing lock for workflow %s and node %s\n", woc.wf.Name, node.Name)
 		woc.controller.syncManager.Release(woc.wf, node.ID, processedTmpl.Synchronization)
 	}
 
@@ -2773,21 +2775,25 @@ func (woc *wfOperationCtx) getOutboundNodes(nodeID string) []string {
 	}
 	switch node.Type {
 	case wfv1.NodeTypeSkipped, wfv1.NodeTypeSuspend, wfv1.NodeTypeHTTP, wfv1.NodeTypePlugin:
+		woc.log.Infof("[PK] GON Returning quick node %v", node)
 		return []string{node.ID}
 	case wfv1.NodeTypePod:
 
 		// Recover the template that created this pod. If we can't just let the pod be its own outbound node
 		tmplCtx, err := woc.createTemplateContext(node.GetTemplateScope())
 		if err != nil {
+			woc.log.Infof("[PK] GON Returning GTC %v", node)
 			return []string{node.ID}
 		}
 		_, parentTemplate, _, err := tmplCtx.ResolveTemplate(node)
 		if err != nil {
+			woc.log.Infof("[PK] GON Returning parentT %v", node)
 			return []string{node.ID}
 		}
 
 		// If this pod does not come from a container set, its outbound node is itself
 		if parentTemplate.GetType() != wfv1.TemplateTypeContainerSet {
+			woc.log.Infof("[PK] GON Returning !CS %v", node)
 			return []string{node.ID}
 		}
 
@@ -2795,12 +2801,15 @@ func (woc *wfOperationCtx) getOutboundNodes(nodeID string) []string {
 		fallthrough
 	case wfv1.NodeTypeContainer, wfv1.NodeTypeTaskGroup:
 		if len(node.Children) == 0 {
+			woc.log.Infof("[PK] GON no child %v", node)
 			return []string{node.ID}
 		}
 		outboundNodes := make([]string, 0)
 		for _, child := range node.Children {
+			woc.log.Infof("[PK] GON CS TG %v", node)
 			outboundNodes = append(outboundNodes, woc.getOutboundNodes(child)...)
 		}
+		woc.log.Infof("[PK] GON CS TG %v", outboundNodes)
 		return outboundNodes
 	case wfv1.NodeTypeRetry:
 		numChildren := len(node.Children)
@@ -2812,6 +2821,7 @@ func (woc *wfOperationCtx) getOutboundNodes(nodeID string) []string {
 	for _, outboundNodeID := range node.OutboundNodes {
 		outbound = append(outbound, woc.getOutboundNodes(outboundNodeID)...)
 	}
+	woc.log.Infof("[PK] GON Returning uptree %v of %v", outbound, node)
 	return outbound
 }
 

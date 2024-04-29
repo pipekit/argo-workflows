@@ -132,7 +132,9 @@ func (d *dagContext) assessDAGPhase(targetTasks []string, nodes wfv1.Nodes, isSh
 	// We cannot only rely on the DAG traversal. Conditionals, self-references,
 	// and ContinuesOn (every one of those features in unison) make this an undecidable problem.
 	// However, we can just use isShutdown to automatically fail the DAG.
+	log.Warnf("[PK] assesing DAG phase for %v, all tasks %+v", targetTasks, d.tasks)
 	if isShutdown {
+		log.Warnf("[PK] shutdown")
 		return wfv1.NodeFailed, nil
 	}
 	// targetTaskPhases keeps track of all the phases of the target tasks. This is necessary because some target tasks may
@@ -148,8 +150,10 @@ func (d *dagContext) assessDAGPhase(targetTasks []string, nodes wfv1.Nodes, isSh
 
 	boundaryNode, err := nodes.Get(d.boundaryID)
 	if err != nil {
+		log.Warnf("[PK] ADP failed boundary node")
 		return "", err
 	}
+	log.Warnf("[PK] Got boundaryNode with phase %s name %s and id %s", boundaryNode.Phase, boundaryNode.Name, boundaryNode.ID)
 	// BFS over the children of the DAG
 	uniqueQueue := newUniquePhaseNodeQueue(generatePhaseNodes(boundaryNode.Children, wfv1.NodeSucceeded)...)
 	for !uniqueQueue.empty() {
@@ -159,17 +163,21 @@ func (d *dagContext) assessDAGPhase(targetTasks []string, nodes wfv1.Nodes, isSh
 		if err != nil {
 			// this is okay, this means that
 			// we are still running
+			log.Warnf("[PK] ADP still running")
 			return wfv1.NodeRunning, nil
 		}
+		log.Warnf("[PK] Phase %s for ancestor %s. Current is %+v\n", node.Phase, node.Name, curr)
 		// We need to store the current branchPhase to remember the last completed phase in this branch so that we can apply it to omitted nodes
 		branchPhase := curr.phase
 
 		if !node.Fulfilled() {
+			log.Warnf("[PK] ADP not fulfilled")
 			return wfv1.NodeRunning, nil
 		}
 
 		// Only overwrite the branchPhase if this node completed. (If it didn't we can just inherit our parent's branchPhase).
 		if node.Completed() {
+			log.Warnf("[PK] updated branchPhase to %s\n", node.Phase)
 			branchPhase = node.Phase
 		}
 
@@ -180,6 +188,7 @@ func (d *dagContext) assessDAGPhase(targetTasks []string, nodes wfv1.Nodes, isSh
 			// Note that if the target task is NOT omitted (i.e. it Completed), then this check is moot, because every time
 			// we arrive at said target task it will have the same branchPhase.
 			if !previousPhase.FailedOrError() {
+				log.Warnf("[PK] updated node %s to phase %s", node.Name, branchPhase)
 				targetTaskPhases[node.ID] = branchPhase
 			}
 		}
@@ -187,6 +196,7 @@ func (d *dagContext) assessDAGPhase(targetTasks []string, nodes wfv1.Nodes, isSh
 		if node.Type == wfv1.NodeTypeRetry {
 			uniqueQueue.add(generatePhaseNodes(getRetryNodeChildrenIds(node, nodes), branchPhase)...)
 		} else {
+			log.Warnf("[PK] generating new children with phase %s", branchPhase)
 			uniqueQueue.add(generatePhaseNodes(node.Children, branchPhase)...)
 		}
 	}
@@ -196,10 +206,12 @@ func (d *dagContext) assessDAGPhase(targetTasks []string, nodes wfv1.Nodes, isSh
 	result := wfv1.NodeSucceeded
 	for _, depName := range targetTasks {
 		branchPhase := targetTaskPhases[d.taskNodeID(depName)]
+		log.Warnf("[PK] ADP task %s phase is >%v<", depName, branchPhase)
 		if branchPhase == "" {
 			result = wfv1.NodeRunning
 			// If failFast is disabled, we will want to let all tasks complete before checking for failures
 			if !failFast {
+				log.Warnf("[PK] ADP notfailfast")
 				break
 			}
 		} else if branchPhase.FailedOrError() {
@@ -215,11 +227,13 @@ func (d *dagContext) assessDAGPhase(targetTasks []string, nodes wfv1.Nodes, isSh
 			result = branchPhase
 			// If failFast is enabled, don't check to see if other target tasks are complete and fail now instead
 			if failFast {
+				log.Warnf("[PK] ADP failfast")
 				break
 			}
 		}
 	}
 
+	log.Warnf("[PK] ADP result %v", result)
 	return result, nil
 }
 
@@ -265,6 +279,7 @@ func (woc *wfOperationCtx) executeDAG(ctx context.Context, nodeName string, tmpl
 
 	// kick off execution of each target task asynchronously
 	for _, taskName := range targetTasks {
+		log.Warnf("[PK] task %s", taskName)
 		woc.executeDAGTask(ctx, dagCtx, taskName)
 
 		// It is possible that target tasks are not reconsidered (i.e. executeDAGTask is not called on them) once they are
@@ -303,9 +318,11 @@ func (woc *wfOperationCtx) executeDAG(ctx context.Context, nodeName string, tmpl
 	if err != nil {
 		return nil, err
 	}
+	log.Warnf("[PK] dagPhase is %s", dagPhase)
 
 	switch dagPhase {
 	case wfv1.NodeRunning:
+		log.Warnf("[PK] dagPhase returns early")
 		return node, nil
 	case wfv1.NodeError, wfv1.NodeFailed:
 		err = woc.updateOutboundNodesForTargetTasks(dagCtx, targetTasks, nodeName)
@@ -313,6 +330,8 @@ func (woc *wfOperationCtx) executeDAG(ctx context.Context, nodeName string, tmpl
 			return nil, err
 		}
 		_ = woc.markNodePhase(nodeName, dagPhase)
+		log.Warnf("[PK] dagPhase updated for %s to %s", nodeName, dagPhase)
+		log.Warnf("[PK] dagPhase returns early after outbound")
 		return node, nil
 	}
 
@@ -347,13 +366,14 @@ func (woc *wfOperationCtx) executeDAG(ctx context.Context, nodeName string, tmpl
 	}
 	outputs, err := getTemplateOutputsFromScope(tmpl, scope)
 	if err != nil {
+		log.Warnf("[PK][KNOWNBAD] Failing because of template outputs")
 		woc.log.Errorf("unable to get outputs")
 		return node, err
 	}
 	if outputs != nil {
 		node, err = woc.wf.GetNodeByName(nodeName)
 		if err != nil {
-			woc.log.Errorf("unable to get node by name for %s", nodeName)
+			woc.log.Errorf("[KNOWNBAD]unable to get node by name for %s", nodeName)
 			return nil, err
 		}
 		node.Outputs = outputs
@@ -370,12 +390,15 @@ func (woc *wfOperationCtx) executeDAG(ctx context.Context, nodeName string, tmpl
 
 	err = woc.updateOutboundNodesForTargetTasks(dagCtx, targetTasks, nodeName)
 	if err != nil {
+		woc.log.Errorf("[KNOWNBAD] unable to update outbound nodes %s", err)
 		return nil, err
 	}
+	log.Warnf("[PK] dagPhase updated for %s to %s", nodeName, dagPhase)
 	return woc.markNodePhase(nodeName, wfv1.NodeSucceeded), nil
 }
 
 func (woc *wfOperationCtx) updateOutboundNodesForTargetTasks(dagCtx *dagContext, targetTasks []string, nodeName string) error {
+	woc.log.Warnf("[PK] updateOutboundNodesForTargetTasks %s >%v<", nodeName, targetTasks)
 	// set the outbound nodes from the target tasks
 	outbound := make([]string, 0)
 	for _, depName := range targetTasks {
@@ -394,7 +417,7 @@ func (woc *wfOperationCtx) updateOutboundNodesForTargetTasks(dagCtx *dagContext,
 	}
 	node.OutboundNodes = outbound
 	woc.wf.Status.Nodes.Set(node.ID, *node)
-	woc.log.Infof("Outbound nodes of %s set to %s", node.ID, outbound)
+	woc.log.Warnf("[PK] Outbound nodes of %s set to %s", node.ID, outbound)
 	return nil
 }
 
@@ -443,7 +466,7 @@ func (woc *wfOperationCtx) executeDAGTask(ctx context.Context, dagCtx *dagContex
 
 		// Release acquired lock completed task.
 		if tmpl != nil {
-			woc.log.Infof("[HYPO-1] Releasing lock for workflow %s and node %s\n", woc.wf.Name, node.Name)
+			woc.log.Infof("[PK][HYPO-1] Releasing lock for workflow %s and node %s\n", woc.wf.Name, node.Name)
 			woc.controller.syncManager.Release(woc.wf, node.ID, processedTmpl.Synchronization)
 		}
 
@@ -483,6 +506,7 @@ func (woc *wfOperationCtx) executeDAGTask(ctx context.Context, dagCtx *dagContex
 		if len(taskDependencies) == 0 || taskGroupNode != nil {
 			// if we had no dependencies, then we are a root task, and we should connect the
 			// boundary node as our parent
+			log.Warnf("[PK] Connecting boundary as parent of %s", taskNodeName)
 			if taskGroupNode == nil {
 				woc.addChildNode(dagCtx.boundaryName, taskNodeName)
 			} else {
@@ -491,8 +515,10 @@ func (woc *wfOperationCtx) executeDAGTask(ctx context.Context, dagCtx *dagContex
 		} else {
 			// Otherwise, add all outbound nodes of our dependencies as parents to this node
 			for _, depName := range taskDependencies {
+				log.Warnf("[PK] Connecting task %s as parent of %s", depName, taskNodeName)
 				depNode := dagCtx.getTaskNode(depName)
 				outboundNodeIDs := woc.getOutboundNodes(depNode.ID)
+				log.Warnf("[PK] Outbound nodes ids for %s are >%v<", depName, outboundNodeIDs)
 				for _, outNodeID := range outboundNodeIDs {
 					nodeName, err := woc.wf.Status.Nodes.GetName(outNodeID)
 					if err != nil {
@@ -522,6 +548,7 @@ func (woc *wfOperationCtx) executeDAGTask(ctx context.Context, dagCtx *dagContex
 		}
 		if !execute {
 			// Given the results of this node's dependencies, this node should not be executed. Mark it omitted
+			log.Warnf("[PK] Marking %s as omitted", nodeName)
 			woc.initializeNode(nodeName, wfv1.NodeTypeSkipped, dagTemplateScope, task, dagCtx.boundaryID, wfv1.NodeOmitted, &wfv1.NodeFlag{}, "omitted: depends condition not met")
 			connectDependencies(nodeName)
 			return
