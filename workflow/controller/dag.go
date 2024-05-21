@@ -289,11 +289,10 @@ func (woc *wfOperationCtx) executeDAG(ctx context.Context, nodeName string, tmpl
 
 	hook := &NanoSecondHook{}
 
-	log := woc.log.WithField("workflow", woc.wf.Name)
-
 	myCount := globalExecDAGCount.Load()
-
+	log := woc.log.WithField("workflow", woc.wf.Name)
 	log = log.WithField("DAGExecNum", myCount)
+	log = log.WithField("nodeName", nodeName)
 
 	dagCtx := &dagContext{
 		boundaryName:   nodeName,
