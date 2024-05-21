@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	logrus "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -244,6 +245,7 @@ func TestEvaluateDependsLogic(t *testing.T) {
 		wf:           &wfv1.Workflow{ObjectMeta: metav1.ObjectMeta{Name: "test-wf"}},
 		dependencies: make(map[string][]string),
 		dependsLogic: make(map[string]string),
+		log:          logrus.NewEntry(&logrus.Logger{}),
 	}
 
 	// Task A is running
@@ -344,6 +346,7 @@ func TestEvaluateAnyAllDependsLogic(t *testing.T) {
 		wf:           &wfv1.Workflow{ObjectMeta: metav1.ObjectMeta{Name: "test-wf"}},
 		dependencies: make(map[string][]string),
 		dependsLogic: make(map[string]string),
+		log:          logrus.NewEntry(&logrus.Logger{}),
 	}
 
 	// Task A is still running, A-1 succeeded but A-2 failed
@@ -430,6 +433,7 @@ func TestEvaluateDependsLogicWhenDaemonFailed(t *testing.T) {
 		wf:           &wfv1.Workflow{ObjectMeta: metav1.ObjectMeta{Name: "test-wf"}},
 		dependencies: make(map[string][]string),
 		dependsLogic: make(map[string]string),
+		log:          logrus.NewEntry(&logrus.Logger{}),
 	}
 
 	// Task A is running
@@ -479,6 +483,7 @@ func TestEvaluateDependsLogicWhenTaskOmitted(t *testing.T) {
 		wf:           &wfv1.Workflow{ObjectMeta: metav1.ObjectMeta{Name: "test-wf"}},
 		dependencies: make(map[string][]string),
 		dependsLogic: make(map[string]string),
+		log:          logrus.NewEntry(&logrus.Logger{}),
 	}
 
 	// Task A is running
@@ -525,6 +530,7 @@ func TestAllEvaluateDependsLogic(t *testing.T) {
 			wf:           &wfv1.Workflow{ObjectMeta: metav1.ObjectMeta{Name: "test-wf"}},
 			dependencies: make(map[string][]string),
 			dependsLogic: make(map[string]string),
+			log:          logrus.NewEntry(&logrus.Logger{}),
 		}
 
 		// Task A is running
