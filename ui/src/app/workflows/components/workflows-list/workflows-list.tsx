@@ -40,7 +40,12 @@ interface State {
     resourceVersion?: string;
     error?: Error;
     batchActionDisabled: Actions.OperationDisabled;
+    storedDisplayISOFormatStart: boolean;
+    storedDisplayISOFormatFinished: boolean;
 }
+
+import {TimestampSwitch} from '../../../shared/components/timestamp';
+import {TIMESTAMP_KEYS} from '../../../shared/use-timestamp';
 
 interface WorkflowListRenderOptions {
     paginationLimit: number;
@@ -60,6 +65,7 @@ const allBatchActionsEnabled: Actions.OperationDisabled = {
 
 export class WorkflowsList extends BasePage<RouteComponentProps<any>, State> {
     private storage: ScopedLocalStorage;
+    private timestampStorage: ScopedLocalStorage;
 
     private get sidePanel() {
         return this.queryParam('sidePanel');
@@ -101,6 +107,7 @@ export class WorkflowsList extends BasePage<RouteComponentProps<any>, State> {
     constructor(props: RouteComponentProps<State>, context: any) {
         super(props, context);
         this.storage = new ScopedLocalStorage('ListOptions');
+        this.timestampStorage = new ScopedLocalStorage('Timestamp');
         const savedOptions = this.storage.getItem('options', {
             paginationLimit: 0,
             selectedPhases: [],
@@ -119,7 +126,9 @@ export class WorkflowsList extends BasePage<RouteComponentProps<any>, State> {
             minStartedAt: this.lastMonth(),
             maxStartedAt: this.nextDay(),
             selectedWorkflows: new Map<string, models.Workflow>(),
-            batchActionDisabled: {...allBatchActionsEnabled}
+            batchActionDisabled: {...allBatchActionsEnabled},
+            storedDisplayISOFormatStart: this.timestampStorage.getItem(`displayISOFormat-${TIMESTAMP_KEYS.WORKFLOWS_ROW_STARTED}`, false),
+            storedDisplayISOFormatFinished: this.timestampStorage.getItem(`displayISOFormat-${TIMESTAMP_KEYS.WORKFLOWS_ROW_FINISHED}`, false)
         };
     }
 
@@ -301,6 +310,16 @@ export class WorkflowsList extends BasePage<RouteComponentProps<any>, State> {
         return counts;
     }
 
+    private setStoredDisplayISOFormatStart = (value: boolean) => {
+        this.setState({storedDisplayISOFormatStart: value});
+        this.timestampStorage.setItem(`displayISOFormat-${TIMESTAMP_KEYS.WORKFLOWS_ROW_STARTED}`, value, false);
+    };
+
+    private setStoredDisplayISOFormatFinished = (value: boolean) => {
+        this.setState({storedDisplayISOFormatFinished: value});
+        this.timestampStorage.setItem(`displayISOFormat-${TIMESTAMP_KEYS.WORKFLOWS_ROW_FINISHED}`, value, false);
+    };
+
     private renderWorkflows() {
         const counts = this.countsByCompleted();
         return (
@@ -352,8 +371,20 @@ export class WorkflowsList extends BasePage<RouteComponentProps<any>, State> {
                                 <div className='row small-11'>
                                     <div className='columns small-3'>NAME</div>
                                     <div className='columns small-1'>NAMESPACE</div>
-                                    <div className='columns small-1'>STARTED</div>
-                                    <div className='columns small-1'>FINISHED</div>
+                                    <div className='columns small-1'>
+                                        STARTED{' '}
+                                        <TimestampSwitch
+                                            storedDisplayISOFormat={this.state.storedDisplayISOFormatStart}
+                                            setStoredDisplayISOFormat={this.setStoredDisplayISOFormatStart}
+                                        />
+                                    </div>
+                                    <div className='columns small-1'>
+                                        FINISHED{' '}
+                                        <TimestampSwitch
+                                            storedDisplayISOFormat={this.state.storedDisplayISOFormatFinished}
+                                            setStoredDisplayISOFormat={this.setStoredDisplayISOFormatFinished}
+                                        />
+                                    </div>
                                     <div className='columns small-1'>DURATION</div>
                                     <div className='columns small-1'>PROGRESS</div>
                                     <div className='columns small-2'>MESSAGE</div>
@@ -395,6 +426,8 @@ export class WorkflowsList extends BasePage<RouteComponentProps<any>, State> {
                                             }
                                             this.updateCurrentlySelectedAndBatchActions(currentlySelected);
                                         }}
+                                        displayISOFormatStart={this.state.storedDisplayISOFormatStart}
+                                        displayISOFormatFinished={this.state.storedDisplayISOFormatFinished}
                                     />
                                 );
                             })}

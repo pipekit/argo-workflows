@@ -8,7 +8,7 @@ import {ErrorNotice} from '../../../shared/components/error-notice';
 import {ExampleManifests} from '../../../shared/components/example-manifests';
 import {InfoIcon} from '../../../shared/components/fa-icons';
 import {Loading} from '../../../shared/components/loading';
-import {Timestamp} from '../../../shared/components/timestamp';
+import {Timestamp, TimestampSwitch} from '../../../shared/components/timestamp';
 import {useCollectEvent} from '../../../shared/components/use-collect-event';
 import {ZeroState} from '../../../shared/components/zero-state';
 import {Context} from '../../../shared/context';
@@ -17,6 +17,7 @@ import {Footnote} from '../../../shared/footnote';
 import {historyUrl} from '../../../shared/history';
 import {services} from '../../../shared/services';
 import {useQueryParams} from '../../../shared/use-query-params';
+import useTimestamp, {TIMESTAMP_KEYS} from '../../../shared/use-timestamp';
 import {Utils} from '../../../shared/utils';
 import {CronWorkflowCreator} from '../cron-workflow-creator';
 import {CronWorkflowFilters} from '../cron-workflow-filters/cron-workflow-filters';
@@ -36,6 +37,9 @@ export const CronWorkflowList = ({match, location, history}: RouteComponentProps
     const [sidePanel, setSidePanel] = useState(queryParams.get('sidePanel') === 'true');
     const [labels, setLabels] = useState([]);
     const [states, setStates] = useState(['Running', 'Suspended']); // check all by default
+
+    const [storedDisplayISOFormatCreation, setStoredDisplayISOFormatCreation] = useTimestamp(TIMESTAMP_KEYS.CRON_WORKFLOW_LIST_CREATION);
+    const [storedDisplayISOFormatNextScheduled, setStoredDisplayISOFormatNextScheduled] = useTimestamp(TIMESTAMP_KEYS.CRON_WORKFLOW_LIST_NEXT_SCHEDULED);
 
     useEffect(
         useQueryParams(history, p => {
@@ -129,12 +133,21 @@ export const CronWorkflowList = ({match, location, history}: RouteComponentProps
                             <div className='argo-table-list'>
                                 <div className='row argo-table-list__head'>
                                     <div className='columns small-1' />
-                                    <div className='columns small-3'>NAME</div>
+                                    <div className='columns small-2'>NAME</div>
                                     <div className='columns small-2'>NAMESPACE</div>
                                     <div className='columns small-1'>SCHEDULE</div>
-                                    <div className='columns small-3' />
-                                    <div className='columns small-1'>CREATED</div>
-                                    <div className='columns small-1'>NEXT RUN</div>
+                                    <div className='columns small-1' />
+                                    <div className='columns small-2'>
+                                        CREATED{' '}
+                                        <TimestampSwitch storedDisplayISOFormat={storedDisplayISOFormatCreation} setStoredDisplayISOFormat={setStoredDisplayISOFormatCreation} />
+                                    </div>
+                                    <div className='columns small-2'>
+                                        NEXT RUN{' '}
+                                        <TimestampSwitch
+                                            storedDisplayISOFormat={storedDisplayISOFormatNextScheduled}
+                                            setStoredDisplayISOFormat={setStoredDisplayISOFormatNextScheduled}
+                                        />
+                                    </div>
                                 </div>
                                 {cronWorkflows.map(w => (
                                     <Link
@@ -142,20 +155,27 @@ export const CronWorkflowList = ({match, location, history}: RouteComponentProps
                                         key={`${w.metadata.namespace}/${w.metadata.name}`}
                                         to={uiUrl(`cron-workflows/${w.metadata.namespace}/${w.metadata.name}`)}>
                                         <div className='columns small-1'>{w.spec.suspend ? <i className='fa fa-pause' /> : <i className='fa fa-clock' />}</div>
-                                        <div className='columns small-3'>{w.metadata.name}</div>
+                                        <div className='columns small-2'>{w.metadata.name}</div>
                                         <div className='columns small-2'>{w.metadata.namespace}</div>
                                         <div className='columns small-1'>{w.spec.schedule}</div>
-                                        <div className='columns small-3'>
+                                        <div className='columns small-1'>
                                             <PrettySchedule schedule={w.spec.schedule} />
                                         </div>
-                                        <div className='columns small-1'>
-                                            <Timestamp date={w.metadata.creationTimestamp} />
+                                        <div className='columns small-2'>
+                                            <Timestamp date={w.metadata.creationTimestamp} displayISOFormat={storedDisplayISOFormatCreation} />
                                         </div>
-                                        <div className='columns small-1'>
+                                        <div className='columns small-2'>
                                             {w.spec.suspend ? (
                                                 ''
                                             ) : (
-                                                <Ticker intervalMs={1000}>{() => <Timestamp date={getNextScheduledTime(w.spec.schedule, w.spec.timezone)} />}</Ticker>
+                                                <Ticker intervalMs={1000}>
+                                                    {() => (
+                                                        <Timestamp
+                                                            date={getNextScheduledTime(w.spec.schedule, w.spec.timezone)}
+                                                            displayISOFormat={storedDisplayISOFormatNextScheduled}
+                                                        />
+                                                    )}
+                                                </Ticker>
                                             )}
                                         </div>
                                     </Link>

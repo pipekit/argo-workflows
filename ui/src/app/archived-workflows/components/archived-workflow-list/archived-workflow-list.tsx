@@ -9,12 +9,13 @@ import {ErrorNotice} from '../../../shared/components/error-notice';
 import {Loading} from '../../../shared/components/loading';
 import {PaginationPanel} from '../../../shared/components/pagination-panel';
 import {PhaseIcon} from '../../../shared/components/phase-icon';
-import {Timestamp} from '../../../shared/components/timestamp';
+import {Timestamp, TimestampSwitch} from '../../../shared/components/timestamp';
 import {ZeroState} from '../../../shared/components/zero-state';
 import {formatDuration, wfDuration} from '../../../shared/duration';
 import {Pagination, parseLimit} from '../../../shared/pagination';
 import {ScopedLocalStorage} from '../../../shared/scoped-local-storage';
 import {services} from '../../../shared/services';
+import {TIMESTAMP_KEYS} from '../../../shared/use-timestamp';
 import {Utils} from '../../../shared/utils';
 import {ArchivedWorkflowFilters} from '../archived-workflow-filters/archived-workflow-filters';
 
@@ -29,6 +30,8 @@ interface BrowserStorageOptions {
     maxStartedAt?: Date;
     error?: Error;
     deep: boolean;
+    storedDisplayISOFormatStart: boolean;
+    storedDisplayISOFormatFinished: boolean;
 }
 
 interface State extends BrowserStorageOptions {
@@ -39,10 +42,12 @@ const defaultPaginationLimit = 10;
 
 export class ArchivedWorkflowList extends BasePage<RouteComponentProps<any>, State> {
     private storage: ScopedLocalStorage;
+    private timestampStorage: ScopedLocalStorage;
 
     constructor(props: RouteComponentProps<any>, context: any) {
         super(props, context);
         this.storage = new ScopedLocalStorage('ArchiveListOptions');
+        this.timestampStorage = new ScopedLocalStorage('Timestamp');
         const savedOptions = this.storage.getItem('options', {
             pagination: {limit: defaultPaginationLimit},
             selectedPhases: [],
@@ -59,7 +64,9 @@ export class ArchivedWorkflowList extends BasePage<RouteComponentProps<any>, Sta
             selectedLabels: labelQueryParam.length > 0 ? labelQueryParam : savedOptions.selectedLabels,
             minStartedAt: this.parseTime(this.queryParam('minStartedAt')) || this.lastMonth(),
             maxStartedAt: this.parseTime(this.queryParam('maxStartedAt')) || this.nextDay(),
-            deep: this.queryParam('deep') === 'true'
+            deep: this.queryParam('deep') === 'true',
+            storedDisplayISOFormatStart: this.timestampStorage.getItem(`displayISOFormat-${TIMESTAMP_KEYS.WORKFLOWS_ARCHIVED_ROW_STARTED}`, false),
+            storedDisplayISOFormatFinished: this.timestampStorage.getItem(`displayISOFormat-${TIMESTAMP_KEYS.WORKFLOWS_ARCHIVED_ROW_FINISHED}`, false)
         };
     }
 
@@ -242,6 +249,16 @@ export class ArchivedWorkflowList extends BasePage<RouteComponentProps<any>, Sta
             .catch(error => this.setState({error}));
     }
 
+    private setStoredDisplayISOFormatStart = (value: boolean) => {
+        this.setState({storedDisplayISOFormatStart: value});
+        this.timestampStorage.setItem(`displayISOFormat-${TIMESTAMP_KEYS.WORKFLOWS_ARCHIVED_ROW_STARTED}`, value, false);
+    };
+
+    private setStoredDisplayISOFormatFinished = (value: boolean) => {
+        this.setState({storedDisplayISOFormatFinished: value});
+        this.timestampStorage.setItem(`displayISOFormat-${TIMESTAMP_KEYS.WORKFLOWS_ARCHIVED_ROW_FINISHED}`, value, false);
+    };
+
     private renderWorkflows() {
         if (this.state.error) {
             return <ErrorNotice error={this.state.error} />;
@@ -266,8 +283,17 @@ export class ArchivedWorkflowList extends BasePage<RouteComponentProps<any>, Sta
                         <div className='columns small-1' />
                         <div className='columns small-3'>NAME</div>
                         <div className='columns small-2'>NAMESPACE</div>
-                        <div className='columns small-2'>STARTED</div>
-                        <div className='columns small-2'>FINISHED</div>
+                        <div className='columns small-2'>
+                            STARTED{' '}
+                            <TimestampSwitch storedDisplayISOFormat={this.state.storedDisplayISOFormatStart} setStoredDisplayISOFormat={this.setStoredDisplayISOFormatStart} />
+                        </div>
+                        <div className='columns small-2'>
+                            FINISHED{' '}
+                            <TimestampSwitch
+                                storedDisplayISOFormat={this.state.storedDisplayISOFormatFinished}
+                                setStoredDisplayISOFormat={this.setStoredDisplayISOFormatFinished}
+                            />
+                        </div>
                         <div className='columns small-2'>DURATION</div>
                     </div>
                     {this.state.workflows.map(w => (
@@ -278,10 +304,10 @@ export class ArchivedWorkflowList extends BasePage<RouteComponentProps<any>, Sta
                             <div className='columns small-3'>{w.metadata.name}</div>
                             <div className='columns small-2'>{w.metadata.namespace}</div>
                             <div className='columns small-2'>
-                                <Timestamp date={w.status.startedAt} />
+                                <Timestamp date={w.status.startedAt} displayISOFormat={this.state.storedDisplayISOFormatStart} />
                             </div>
                             <div className='columns small-2'>
-                                <Timestamp date={w.status.finishedAt} />
+                                <Timestamp date={w.status.finishedAt} displayISOFormat={this.state.storedDisplayISOFormatFinished} />
                             </div>
                             <div className='columns small-2'>{formatDuration(wfDuration(w.status))}</div>
                         </Link>
