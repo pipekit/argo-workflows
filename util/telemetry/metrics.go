@@ -17,17 +17,6 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 )
 
-type Config struct {
-	Enabled      bool
-	Path         string
-	Port         int
-	TTL          time.Duration
-	IgnoreErrors bool
-	Secure       bool
-	Modifiers    map[string]Modifier
-	Temporality  metricsdk.TemporalitySelector
-}
-
 type Metrics struct {
 	// Ensures mutual exclusion in workflows map
 	Mutex sync.RWMutex

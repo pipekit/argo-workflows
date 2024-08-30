@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 	apiv1 "k8s.io/api/core/v1"
 	apierr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +25,7 @@ import (
 	"github.com/argoproj/argo-workflows/v3/util/deprecation"
 	errorsutil "github.com/argoproj/argo-workflows/v3/util/errors"
 	"github.com/argoproj/argo-workflows/v3/util/intstr"
+	"github.com/argoproj/argo-workflows/v3/util/telemetry"
 	"github.com/argoproj/argo-workflows/v3/util/template"
 	"github.com/argoproj/argo-workflows/v3/workflow/common"
 	"github.com/argoproj/argo-workflows/v3/workflow/controller/entrypoint"
@@ -160,7 +163,7 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 			}
 		}
 	}
-
+	spanContext := trace.SpanFromContext(ctx).SpanContext()
 	pod := &apiv1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      util.GeneratePodName(woc.wf.Name, nodeName, tmpl.Name, nodeID, util.GetWorkflowPodNameVersion(woc.wf)),
@@ -172,6 +175,8 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 			Annotations: map[string]string{
 				common.AnnotationKeyNodeName: nodeName,
 				common.AnnotationKeyNodeID:   nodeID,
+				common.AnnotationKeyTraceID:  spanContext.TraceID().String(),
+				common.AnnotationKeySpanID:   spanContext.SpanID().String(),
 			},
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(woc.wf, wfv1.SchemeGroupVersion.WithKind(workflow.WorkflowKind)),
@@ -310,8 +315,12 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 		{Name: common.EnvVarDeadline, Value: woc.getDeadline(opts).Format(time.RFC3339)},
 	}
 
+	carrier := telemetry.EnvvarCarrier{EnvVars: &envVars}
+	prop := propagation.TraceContext{}
+	prop.Inject(ctx, carrier)
 	// only set tick durations/EnvVarProgressFile if progress is enabled.
 	// The progress is only monitored if the tick durations are >0.
+
 	if woc.controller.progressPatchTickDuration != 0 && woc.controller.progressFileTickDuration != 0 {
 		envVars = append(envVars,
 			apiv1.EnvVar{

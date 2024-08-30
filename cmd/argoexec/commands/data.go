@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"github.com/argoproj/argo-workflows/v3/workflow/executor/tracing"
 )
 
 func NewDataCommand() *cobra.Command {
@@ -25,9 +27,10 @@ func NewDataCommand() *cobra.Command {
 
 func execData(ctx context.Context) error {
 	wfExecutor := initExecutor()
+	ctx = tracing.InjectTraceContext(ctx)
 
 	// Don't allow cancellation to impact capture of results, parameters, artifacts, or defers.
-	bgCtx := context.Background()
+	bgCtx := tracing.InjectTraceContext(context.Background())
 	// Create a new empty (placeholder) task result with LabelKeyReportOutputsCompleted set to false.
 	wfExecutor.InitializeOutput(bgCtx)
 	defer wfExecutor.HandleError(bgCtx)

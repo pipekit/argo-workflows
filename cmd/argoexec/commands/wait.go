@@ -7,6 +7,8 @@ import (
 
 	"github.com/argoproj/pkg/stats"
 	"github.com/spf13/cobra"
+
+	"github.com/argoproj/argo-workflows/v3/workflow/executor/tracing"
 )
 
 func NewWaitCommand() *cobra.Command {
@@ -27,13 +29,17 @@ func NewWaitCommand() *cobra.Command {
 
 func waitContainer(ctx context.Context) error {
 	wfExecutor := initExecutor()
+	ctx = tracing.InjectTraceContext(ctx)
 
 	// Don't allow cancellation to impact capture of results, parameters, artifacts, or defers.
-	bgCtx := context.Background()
+	bgCtx := tracing.InjectTraceContext(context.Background())
 
 	defer wfExecutor.HandleError(bgCtx)    // Must be placed at the bottom of defers stack.
 	defer wfExecutor.FinalizeOutput(bgCtx) // Ensures the LabelKeyReportOutputsCompleted is set to true.
 	defer stats.LogStats()
+
+	bgCtx, span := wfExecutor.Tracing.Tracing.Tracer.Start(bgCtx, "wait-container")
+	defer span.End()
 	stats.StartStatsTicker(5 * time.Minute)
 
 	// Create a new empty (placeholder) task result with LabelKeyReportOutputsCompleted set to false.

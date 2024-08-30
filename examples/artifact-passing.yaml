@@ -15,24 +15,30 @@ spec:
         template: print-message-from-file
         arguments:
           artifacts:
-          - name: message
-            from: "{{steps.generate-artifact.outputs.artifacts.hello-art}}"
+          - name: foo
+            from: "{{steps.generate-artifact.outputs.artifacts.file-foo}}"
+          - name: bar
+            from: "{{steps.generate-artifact.outputs.artifacts.file-bar}}"
 
   - name: hello-world-to-file
     container:
       image: busybox
       command: [sh, -c]
-      args: ["sleep 1; echo hello world | tee /tmp/hello_world.txt"]
+      args: ["sleep 1; dd if=/dev/zero of=/tmp/hello_world bs=1024000 count=5120"]
     outputs:
       artifacts:
-      - name: hello-art
+      - name: file-foo
+        path: /tmp/hello_world.txt
+      - name: file-bar
         path: /tmp/hello_world.txt
 
   - name: print-message-from-file
     inputs:
       artifacts:
-      - name: message
+      - name: foo
         path: /tmp/message
+      - name: bar
+        path: /tmp/message2
     container:
       image: alpine:latest
       command: [sh, -c]

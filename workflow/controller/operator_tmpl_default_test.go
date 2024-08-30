@@ -128,7 +128,7 @@ func TestSetTemplateDefault(t *testing.T) {
 	t.Run("tmplDefaultInConfig", func(t *testing.T) {
 		wf := wfv1.MustUnmarshalWorkflow(defaultWf)
 		woc := newWorkflowOperationCtx(wf, controller)
-		err := woc.setExecWorkflow(context.Background())
+		err, _ := woc.setExecWorkflow(context.Background())
 		require.NoError(t, err)
 		tmpl := woc.execWf.Spec.Templates[0]
 		err = woc.mergedTemplateDefaultsInto(&tmpl)
@@ -155,7 +155,7 @@ func TestSetTemplateDefault(t *testing.T) {
 			},
 		}
 		woc := newWorkflowOperationCtx(wf, controller)
-		err := woc.setExecWorkflow(context.Background())
+		err, _ := woc.setExecWorkflow(context.Background())
 		require.NoError(t, err)
 		tmpl := woc.execWf.Spec.Templates[0]
 		err = woc.mergedTemplateDefaultsInto(&tmpl)
@@ -185,7 +185,7 @@ func TestSetTemplateDefault(t *testing.T) {
 			},
 		}
 		woc := newWorkflowOperationCtx(wf, controller)
-		err := woc.setExecWorkflow(context.Background())
+		err, _ := woc.setExecWorkflow(context.Background())
 		require.NoError(t, err)
 		tmpl := woc.execWf.Spec.Templates[0]
 		err = woc.mergedTemplateDefaultsInto(&tmpl)
@@ -226,7 +226,7 @@ func TestSetTemplateDefault(t *testing.T) {
 			},
 		}
 		woc := newWorkflowOperationCtx(wf, controller)
-		err := woc.setExecWorkflow(context.Background())
+		err, _ := woc.setExecWorkflow(context.Background())
 		require.NoError(t, err)
 		tmpl := woc.execWf.Spec.Templates[0]
 		err = woc.mergedTemplateDefaultsInto(&tmpl)

@@ -123,7 +123,7 @@ func initExecutor() *executor.WorkflowExecutor {
 	cre, err := emissary.New()
 	checkErr(err)
 
-	wfExecutor := executor.NewExecutor(
+	wfExecutor, err := executor.NewExecutor(
 		clientset,
 		versioned.NewForConfigOrDie(config).ArgoprojV1alpha1().WorkflowTaskResults(namespace),
 		restClient,
@@ -140,6 +140,7 @@ func initExecutor() *executor.WorkflowExecutor {
 		annotationPatchTickDuration,
 		progressFileTickDuration,
 	)
+	checkErr(err)
 
 	log.
 		WithField("version", version.String()).

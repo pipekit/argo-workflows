@@ -1234,7 +1234,7 @@ func Test_createSecretVolumesFromArtifactLocations_SSECUsed(t *testing.T) {
 		MountPath: path.Join(common.SecretVolMountPath, "enckey"),
 	}
 
-	err := woc.setExecWorkflow(ctx)
+	err, _ := woc.setExecWorkflow(ctx)
 	require.NoError(t, err)
 	woc.operate(ctx)
 
@@ -1858,7 +1858,7 @@ func TestPodMetadataWithWorkflowDefaults(t *testing.T) {
 	wf := wfv1.MustUnmarshalWorkflow(helloWorldWf)
 	ctx := context.Background()
 	woc := newWorkflowOperationCtx(wf, controller)
-	err := woc.setExecWorkflow(ctx)
+	err, _ := woc.setExecWorkflow(ctx)
 	require.NoError(t, err)
 	mainCtr := woc.execWf.Spec.Templates[0].Container
 	pod, _ := woc.createWorkflowPod(ctx, wf.Name, []apiv1.Container{*mainCtr}, &wf.Spec.Templates[0], &createWorkflowPodOpts{})
@@ -1881,7 +1881,7 @@ func TestPodMetadataWithWorkflowDefaults(t *testing.T) {
 	wf = wfv1.MustUnmarshalWorkflow(wfWithPodMetadata)
 	ctx = context.Background()
 	woc = newWorkflowOperationCtx(wf, controller)
-	err = woc.setExecWorkflow(ctx)
+	err, ctx = woc.setExecWorkflow(ctx)
 	require.NoError(t, err)
 	mainCtr = woc.execWf.Spec.Templates[0].Container
 	pod, _ = woc.createWorkflowPod(ctx, wf.Name, []apiv1.Container{*mainCtr}, &wf.Spec.Templates[0], &createWorkflowPodOpts{})
@@ -1899,7 +1899,7 @@ func TestPodExists(t *testing.T) {
 	wf := wfv1.MustUnmarshalWorkflow(helloWorldWf)
 	ctx := context.Background()
 	woc := newWorkflowOperationCtx(wf, controller)
-	err := woc.setExecWorkflow(ctx)
+	err, _ := woc.setExecWorkflow(ctx)
 	require.NoError(t, err)
 	mainCtr := woc.execWf.Spec.Templates[0].Container
 	pod, err := woc.createWorkflowPod(ctx, wf.Name, []apiv1.Container{*mainCtr}, &wf.Spec.Templates[0], &createWorkflowPodOpts{})
@@ -1927,7 +1927,7 @@ func TestPodFinalizerExits(t *testing.T) {
 	wf := wfv1.MustUnmarshalWorkflow(helloWorldWf)
 	ctx := context.Background()
 	woc := newWorkflowOperationCtx(wf, controller)
-	err := woc.setExecWorkflow(ctx)
+	err, _ := woc.setExecWorkflow(ctx)
 	require.NoError(t, err)
 	mainCtr := woc.execWf.Spec.Templates[0].Container
 	pod, err := woc.createWorkflowPod(ctx, wf.Name, []apiv1.Container{*mainCtr}, &wf.Spec.Templates[0], &createWorkflowPodOpts{})
@@ -1945,7 +1945,7 @@ func TestPodFinalizerDoesNotExist(t *testing.T) {
 	wf := wfv1.MustUnmarshalWorkflow(helloWorldWf)
 	ctx := context.Background()
 	woc := newWorkflowOperationCtx(wf, controller)
-	err := woc.setExecWorkflow(ctx)
+	err, _ := woc.setExecWorkflow(ctx)
 	require.NoError(t, err)
 	mainCtr := woc.execWf.Spec.Templates[0].Container
 	pod, err := woc.createWorkflowPod(ctx, wf.Name, []apiv1.Container{*mainCtr}, &wf.Spec.Templates[0], &createWorkflowPodOpts{})
@@ -1962,7 +1962,7 @@ func TestProgressEnvVars(t *testing.T) {
 		wf := wfv1.MustUnmarshalWorkflow(helloWorldWf)
 		ctx := context.Background()
 		woc := newWorkflowOperationCtx(wf, controller)
-		err := woc.setExecWorkflow(ctx)
+		err, _ := woc.setExecWorkflow(ctx)
 		require.NoError(t, err)
 		mainCtr := woc.execWf.Spec.Templates[0].Container
 		pod, err := woc.createWorkflowPod(ctx, wf.Name, []apiv1.Container{*mainCtr}, &wf.Spec.Templates[0], &createWorkflowPodOpts{})
@@ -2086,7 +2086,7 @@ func TestMergeEnvVars(t *testing.T) {
 		wf := wfv1.MustUnmarshalWorkflow(helloWorldWfWithEnvReferSecret)
 		ctx := context.Background()
 		woc := newWorkflowOperationCtx(wf, controller)
-		err := woc.setExecWorkflow(ctx)
+		err, _ := woc.setExecWorkflow(ctx)
 		require.NoError(t, err)
 		mainCtrSpec := &apiv1.Container{
 			Name:            common.MainContainerName,

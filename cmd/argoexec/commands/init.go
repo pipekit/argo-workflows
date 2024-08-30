@@ -6,6 +6,8 @@ import (
 
 	"github.com/argoproj/pkg/stats"
 	"github.com/spf13/cobra"
+
+	"github.com/argoproj/argo-workflows/v3/workflow/executor/tracing"
 )
 
 func NewInitCommand() *cobra.Command {
@@ -13,7 +15,7 @@ func NewInitCommand() *cobra.Command {
 		Use:   "init",
 		Short: "Load artifacts",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := context.Background()
+			ctx := tracing.InjectTraceContext(context.Background())
 			err := loadArtifacts(ctx)
 			if err != nil {
 				return fmt.Errorf("%+v", err)
@@ -26,6 +28,8 @@ func NewInitCommand() *cobra.Command {
 
 func loadArtifacts(ctx context.Context) error {
 	wfExecutor := initExecutor()
+	ctx, span := wfExecutor.Tracing.Tracing.Tracer.Start(ctx, "init-container")
+	defer span.End()
 	defer wfExecutor.HandleError(ctx)
 	defer stats.LogStats()
 

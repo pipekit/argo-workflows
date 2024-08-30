@@ -23,6 +23,8 @@ func (we *WorkflowExecutor) upsertTaskResult(ctx context.Context, result wfv1.No
 }
 
 func (we *WorkflowExecutor) patchTaskResult(ctx context.Context, result wfv1.NodeResult) error {
+	ctx, span := we.Tracing.Tracing.Tracer.Start(ctx, "patchTaskResult")
+	defer span.End()
 	data, err := json.Marshal(&wfv1.WorkflowTaskResult{NodeResult: result})
 	if err != nil {
 		return err
@@ -37,6 +39,8 @@ func (we *WorkflowExecutor) patchTaskResult(ctx context.Context, result wfv1.Nod
 }
 
 func (we *WorkflowExecutor) patchTaskResultLabels(ctx context.Context, labels map[string]string) error {
+	ctx, span := we.Tracing.Tracing.Tracer.Start(ctx, "patchTaskResultLabels")
+	defer span.End()
 	data, err := json.Marshal(&wfv1.WorkflowTaskResult{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: labels,
@@ -55,6 +59,8 @@ func (we *WorkflowExecutor) patchTaskResultLabels(ctx context.Context, labels ma
 }
 
 func (we *WorkflowExecutor) createTaskResult(ctx context.Context, result wfv1.NodeResult) error {
+	ctx, span := we.Tracing.Tracing.Tracer.Start(ctx, "createTaskResult")
+	defer span.End()
 	taskResult := &wfv1.WorkflowTaskResult{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: workflow.APIVersion,

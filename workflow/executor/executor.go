@@ -23,6 +23,8 @@ import (
 
 	argofile "github.com/argoproj/pkg/file"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	apiv1 "k8s.io/api/core/v1"
 	apierr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,6 +46,7 @@ import (
 	artifactcommon "github.com/argoproj/argo-workflows/v3/workflow/artifacts/common"
 	"github.com/argoproj/argo-workflows/v3/workflow/common"
 	executorretry "github.com/argoproj/argo-workflows/v3/workflow/executor/retry"
+	"github.com/argoproj/argo-workflows/v3/workflow/executor/tracing"
 )
 
 const (
@@ -66,6 +69,7 @@ type WorkflowExecutor struct {
 	RESTClient          rest.Interface
 	Namespace           string
 	RuntimeExecutor     ContainerRuntimeExecutor
+	Tracing             *tracing.Tracing
 
 	// memoized configmaps
 	memoizedConfigMaps map[string]string
@@ -122,8 +126,9 @@ func NewExecutor(
 	includeScriptOutput bool,
 	deadline time.Time,
 	annotationPatchTickDuration, readProgressFileTickDuration time.Duration,
-) WorkflowExecutor {
+) (WorkflowExecutor, error) {
 	log.WithFields(log.Fields{"Steps": executorretry.Steps, "Duration": executorretry.Duration, "Factor": executorretry.Factor, "Jitter": executorretry.Jitter}).Info("Using executor retry strategy")
+	tracing, err := tracing.New(context.Background(), `argoexec`) // TODO arguments here
 	return WorkflowExecutor{
 		PodName:                      podName,
 		podUID:                       podUID,
@@ -138,12 +143,13 @@ func NewExecutor(
 		Template:                     template,
 		IncludeScriptOutput:          includeScriptOutput,
 		Deadline:                     deadline,
+		Tracing:                      tracing,
 		memoizedConfigMaps:           map[string]string{},
 		memoizedSecrets:              map[string][]byte{},
 		errors:                       []error{},
 		annotationPatchTickDuration:  annotationPatchTickDuration,
 		readProgressFileTickDuration: readProgressFileTickDuration,
-	}
+	}, err
 }
 
 // HandleError is a helper to annotate the pod with the error message upon a unexpected executor panic or error
@@ -161,9 +167,12 @@ func (we *WorkflowExecutor) HandleError(ctx context.Context) {
 // LoadArtifacts loads artifacts from location to a container path
 func (we *WorkflowExecutor) LoadArtifacts(ctx context.Context) error {
 	log.Infof("Start loading input artifacts...")
+	ctx, span := we.Tracing.Tracing.Tracer.Start(ctx, "load artifacts")
+	defer span.End()
 	for _, art := range we.Template.Inputs.Artifacts {
-
 		log.Infof("Downloading artifact: %s", art.Name)
+		span.AddEvent("download artifact",
+			trace.WithAttributes(attribute.KeyValue{Key: "file", Value: attribute.StringValue(art.Name)}))
 
 		if !art.HasLocationOrKey() {
 			if art.Optional {
@@ -295,6 +304,8 @@ func (we *WorkflowExecutor) StageFiles() error {
 // SaveArtifacts uploads artifacts to the archive location
 func (we *WorkflowExecutor) SaveArtifacts(ctx context.Context) (wfv1.Artifacts, error) {
 	artifacts := wfv1.Artifacts{}
+	ctx, span := we.Tracing.Tracing.Tracer.Start(ctx, "save artifacts")
+	defer span.End()
 	if len(we.Template.Outputs.Artifacts) == 0 {
 		log.Infof("No output artifacts")
 		return artifacts, nil
@@ -308,8 +319,9 @@ func (we *WorkflowExecutor) SaveArtifacts(ctx context.Context) (wfv1.Artifacts, 
 
 	aggregateError := ""
 	for _, art := range we.Template.Outputs.Artifacts {
+		span.AddEvent("upload artifact",
+			trace.WithAttributes(attribute.KeyValue{Key: "file", Value: attribute.StringValue(art.Name)}))
 		saved, err := we.saveArtifact(ctx, common.MainContainerName, &art)
-
 		if err != nil {
 			aggregateError += err.Error() + "; "
 		}
@@ -1114,6 +1126,8 @@ func chmod(artPath string, mode int32, recurse bool) error {
 // Also monitors for updates in the pod annotations which may change (e.g. terminate)
 // Upon completion, kills any sidecars after it finishes.
 func (we *WorkflowExecutor) Wait(ctx context.Context) error {
+	ctx, span := we.Tracing.Tracing.Tracer.Start(ctx, "wait")
+	defer span.End()
 	containerNames := we.Template.GetMainContainerNames()
 	// only monitor progress if both tick durations are >0
 	if we.annotationPatchTickDuration != 0 && we.readProgressFileTickDuration != 0 {

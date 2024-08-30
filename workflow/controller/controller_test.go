@@ -41,6 +41,7 @@ import (
 	"github.com/argoproj/argo-workflows/v3/workflow/events"
 	hydratorfake "github.com/argoproj/argo-workflows/v3/workflow/hydrator/fake"
 	"github.com/argoproj/argo-workflows/v3/workflow/metrics"
+	"github.com/argoproj/argo-workflows/v3/workflow/tracing"
 	"github.com/argoproj/argo-workflows/v3/workflow/util"
 )
 
@@ -317,6 +318,7 @@ func newController(options ...interface{}) (context.CancelFunc, *WorkflowControl
 		wfc.podCleanupQueue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 		wfc.rateLimiter = wfc.newRateLimiter()
 	}
+	wfc.tracing, _ = tracing.New(ctx, telemetry.TestScopeName)
 
 	// always compare to WorkflowController.Run to see what this block of code should be doing
 	{
@@ -803,7 +805,7 @@ func TestCheckAndInitWorkflowTmplRef(t *testing.T) {
 	cancel, controller := newController(wf, wftmpl)
 	defer cancel()
 	woc := newWorkflowOperationCtx(wf, controller)
-	err := woc.setExecWorkflow(context.Background())
+	err, _ := woc.setExecWorkflow(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, wftmpl.Spec.Templates, woc.execWf.Spec.Templates)
 }
@@ -854,14 +856,14 @@ func TestInvalidWorkflowMetadata(t *testing.T) {
 	cancel, controller := newController(wf)
 	defer cancel()
 	woc := newWorkflowOperationCtx(wf, controller)
-	err := woc.setExecWorkflow(context.Background())
+	err, _ := woc.setExecWorkflow(context.Background())
 	require.ErrorContains(t, err, "invalid label value")
 
 	wf = wfv1.MustUnmarshalWorkflow(wfWithInvalidMetadataLabels)
 	cancel, controller = newController(wf)
 	defer cancel()
 	woc = newWorkflowOperationCtx(wf, controller)
-	err = woc.setExecWorkflow(context.Background())
+	err, _ = woc.setExecWorkflow(context.Background())
 	require.ErrorContains(t, err, "invalid label value")
 }
 

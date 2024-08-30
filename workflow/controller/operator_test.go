@@ -4294,7 +4294,7 @@ func TestPDBCreation(t *testing.T) {
 	woc.operate(ctx)
 	pdb, _ := controller.kubeclientset.PolicyV1().PodDisruptionBudgets("").Get(ctx, woc.wf.Name, metav1.GetOptions{})
 	assert.Equal(t, pdb.Name, wf.Name)
-	woc.markWorkflowSuccess(ctx)
+	ctx = woc.markWorkflowSuccess(ctx)
 	_, err := controller.kubeclientset.PolicyV1().PodDisruptionBudgets("").Get(ctx, woc.wf.Name, metav1.GetOptions{})
 	require.EqualError(t, err, "poddisruptionbudgets.policy \"my-pdb-wf\" not found")
 
@@ -4345,7 +4345,7 @@ func TestStatusConditions(t *testing.T) {
 	woc := newWorkflowOperationCtx(wf, controller)
 	woc.operate(ctx)
 	assert.Empty(t, woc.wf.Status.Conditions)
-	woc.markWorkflowSuccess(ctx)
+	ctx = woc.markWorkflowSuccess(ctx)
 	assert.Equal(t, woc.wf.Status.Conditions[0].Status, metav1.ConditionStatus("True"))
 }
 
@@ -6325,7 +6325,7 @@ func TestPropagateMaxDurationProcess(t *testing.T) {
 	assert.NotNil(t, wf)
 	woc := newWorkflowOperationCtx(wf, controller)
 	assert.NotNil(t, woc)
-	err := woc.setExecWorkflow(context.Background())
+	err, _ := woc.setExecWorkflow(context.Background())
 	require.NoError(t, err)
 	assert.Empty(t, woc.wf.Status.Nodes)
 
@@ -8333,7 +8333,7 @@ func TestSubstituteGlobalVariables(t *testing.T) {
 
 	// ctx := context.Background()
 	woc := newWorkflowOperationCtx(wf, controller)
-	err := woc.setExecWorkflow(context.Background())
+	err, _ := woc.setExecWorkflow(context.Background())
 	require.NoError(t, err)
 	assert.NotNil(t, woc.execWf)
 	assert.Equal(t, "mutex1", woc.execWf.Spec.Synchronization.Mutex.Name)
@@ -8416,7 +8416,7 @@ func TestSubstituteGlobalVariablesLabelsAnnotations(t *testing.T) {
 			defer cancel()
 
 			woc := newWorkflowOperationCtx(wf, controller)
-			err := woc.setExecWorkflow(context.Background())
+			err, _ := woc.setExecWorkflow(context.Background())
 
 			require.NoError(t, err)
 			assert.NotNil(t, woc.execWf)

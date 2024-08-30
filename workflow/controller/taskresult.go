@@ -1,10 +1,13 @@
 package controller
 
 import (
+	"context"
 	"reflect"
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"
@@ -58,10 +61,12 @@ func recentlyDeleted(node *wfv1.NodeStatus) bool {
 	return time.Since(node.FinishedAt.Time) <= envutil.LookupEnvDurationOr("RECENTLY_DELETED_POD_DURATION", 10*time.Second)
 }
 
-func (woc *wfOperationCtx) taskResultReconciliation() {
+func (woc *wfOperationCtx) taskResultReconciliation(ctx context.Context) {
 	objs, _ := woc.controller.taskResultInformer.GetIndexer().ByIndex(indexes.WorkflowIndex, woc.wf.Namespace+"/"+woc.wf.Name)
 	woc.log.WithField("numObjs", len(objs)).Info("Task-result reconciliation")
 
+	ctx, span := woc.controller.tracing.Tracer.Start(ctx, "result-reconcilliation", trace.WithAttributes(attribute.String("name", woc.wf.Name)))
+	defer span.End()
 	for _, obj := range objs {
 		result := obj.(*wfv1.WorkflowTaskResult)
 		resultName := result.GetName()
@@ -70,6 +75,7 @@ func (woc *wfOperationCtx) taskResultReconciliation() {
 		woc.log.Debugf("task result name:\n%+v", resultName)
 
 		label := result.Labels[common.LabelKeyReportOutputsCompleted]
+		_, span := woc.controller.tracing.Tracer.Start(ctx, "single-result-reconcilliation", trace.WithAttributes(attribute.String("name", string(resultName)), attribute.String("complete", string(label))))
 		// If the task result is completed, set the state to true.
 		if label == "true" {
 			woc.log.Debugf("Marking task result complete %s", resultName)
@@ -82,6 +88,7 @@ func (woc *wfOperationCtx) taskResultReconciliation() {
 		nodeID := result.Name
 		old, err := woc.wf.Status.Nodes.Get(nodeID)
 		if err != nil {
+			span.End()
 			continue
 		}
 		// Mark task result as completed if it has no chance to be completed.
@@ -92,6 +99,7 @@ func (woc *wfOperationCtx) taskResultReconciliation() {
 				// In this case, the workflow will only be requeued after the resync period (20m). This means
 				// workflow will not update for 20m. Requeuing here prevents that happening.
 				woc.requeue()
+				span.End()
 				continue
 			} else {
 				woc.log.WithField("nodeID", nodeID).Info("Marking task result as completed because pod has been deleted for a while.")
@@ -118,5 +126,6 @@ func (woc *wfOperationCtx) taskResultReconciliation() {
 			woc.wf.Status.Nodes.Set(nodeID, *newNode)
 			woc.updated = true
 		}
+		span.End()
 	}
 }

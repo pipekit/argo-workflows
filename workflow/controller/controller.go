@@ -70,6 +70,7 @@ import (
 	"github.com/argoproj/argo-workflows/v3/workflow/metrics"
 	"github.com/argoproj/argo-workflows/v3/workflow/signal"
 	"github.com/argoproj/argo-workflows/v3/workflow/sync"
+	"github.com/argoproj/argo-workflows/v3/workflow/tracing"
 	"github.com/argoproj/argo-workflows/v3/workflow/util"
 	plugin "github.com/argoproj/argo-workflows/v3/workflow/util/plugins"
 )
@@ -139,6 +140,7 @@ type WorkflowController struct {
 	estimatorFactory      estimation.EstimatorFactory
 	syncManager           *sync.Manager
 	metrics               *metrics.Metrics
+	tracing               *tracing.Tracing
 	eventRecorderManager  events.EventRecorderManager
 	archiveLabelSelector  labels.Selector
 	cacheFactory          controllercache.Factory
@@ -228,6 +230,10 @@ func NewWorkflowController(ctx context.Context, restConfig *rest.Config, kubecli
 		})
 	deprecation.Initialize(wfc.metrics.Metrics.DeprecatedFeature)
 
+	if err != nil {
+		return nil, err
+	}
+	wfc.tracing, err = tracing.New(ctx, `workflows-controller`)
 	if err != nil {
 		return nil, err
 	}
@@ -873,7 +879,7 @@ func (wfc *WorkflowController) processNextItem(ctx context.Context) bool {
 	if !(woc.GetShutdownStrategy().Enabled() && woc.GetShutdownStrategy() == wfv1.ShutdownStrategyTerminate) && !wfc.throttler.Admit(key.(string)) {
 		log.WithField("key", key).Info("Workflow processing has been postponed due to max parallelism limit")
 		if woc.wf.Status.Phase == wfv1.WorkflowUnknown {
-			woc.markWorkflowPhase(ctx, wfv1.WorkflowPending, "Workflow processing has been postponed because too many workflows are already running")
+			ctx = woc.markWorkflowPhase(ctx, wfv1.WorkflowPending, "Workflow processing has been postponed because too many workflows are already running")
 			woc.persistUpdates(ctx)
 		}
 		return true
@@ -890,7 +896,7 @@ func (wfc *WorkflowController) processNextItem(ctx context.Context) bool {
 	err = wfc.hydrator.Hydrate(woc.wf)
 	if err != nil {
 		woc.log.Errorf("hydration failed: %v", err)
-		woc.markWorkflowError(ctx, err)
+		ctx = woc.markWorkflowError(ctx, err)
 		woc.persistUpdates(ctx)
 		return true
 	}
