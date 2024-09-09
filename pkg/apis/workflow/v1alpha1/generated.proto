@@ -509,7 +509,7 @@ message CronWorkflowSpec {
   repeated string schedules = 11;
 
   // v3.6 and after: When is an expression that determines if a run should be scheduled.
-  optional string when = 12;
+  optional string whenExpression = 12;
 }
 
 // CronWorkflowStatus is the status of a CronWorkflow

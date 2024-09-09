@@ -12,7 +12,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/labels"
+	k8slabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
@@ -318,17 +318,17 @@ func groupWorkflows(wfs []*v1alpha1.Workflow) map[types.UID][]v1alpha1.Workflow 
 
 func cronWfInformerListOptionsFunc(options *v1.ListOptions, instanceId string) {
 	options.FieldSelector = fields.Everything().String()
-	labelSelector := labels.NewSelector().Add(util.InstanceIDRequirement(instanceId))
+	labelSelector := k8slabels.NewSelector().Add(util.InstanceIDRequirement(instanceId))
 	options.LabelSelector = labelSelector.String()
 }
 
 func wfInformerListOptionsFunc(options *v1.ListOptions, instanceId string) {
 	options.FieldSelector = fields.Everything().String()
-	isCronWorkflowChildReq, err := labels.NewRequirement(common.LabelKeyCronWorkflow, selection.Exists, []string{})
+	isCronWorkflowChildReq, err := k8slabels.NewRequirement(common.LabelKeyCronWorkflow, selection.Exists, []string{})
 	if err != nil {
 		panic(err)
 	}
-	labelSelector := labels.NewSelector().Add(*isCronWorkflowChildReq)
+	labelSelector := k8slabels.NewSelector().Add(*isCronWorkflowChildReq)
 	labelSelector = labelSelector.Add(util.InstanceIDRequirement(instanceId))
 	options.LabelSelector = labelSelector.String()
 }

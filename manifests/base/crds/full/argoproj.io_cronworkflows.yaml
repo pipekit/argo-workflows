@@ -55,7 +55,7 @@ spec:
                 type: boolean
               timezone:
                 type: string
-              when:
+              whenExpression:
                 type: string
               workflowMetadata:
                 type: object

@@ -2257,7 +2257,7 @@ func schema_pkg_apis_workflow_v1alpha1_CronWorkflowSpec(ref common.ReferenceCall
 							},
 						},
 					},
-					"when": {
+					"whenExpression": {
 						SchemaProps: spec.SchemaProps{
 							Description: "v3.6 and after: When is an expression that determines if a run should be scheduled.",
 							Type:        []string{"string"},

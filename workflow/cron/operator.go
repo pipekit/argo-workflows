@@ -25,7 +25,7 @@ import (
 	wfextvv1alpha1 "github.com/argoproj/argo-workflows/v3/pkg/client/informers/externalversions/workflow/v1alpha1"
 	errorsutil "github.com/argoproj/argo-workflows/v3/util/errors"
 	"github.com/argoproj/argo-workflows/v3/util/expr/argoexpr"
-	"github.com/argoproj/argo-workflows/v3/util/template"
+	"github.com/argoproj/argo-workflows/v3/util/expr/env"
 	waitutil "github.com/argoproj/argo-workflows/v3/util/wait"
 	"github.com/argoproj/argo-workflows/v3/workflow/common"
 	"github.com/argoproj/argo-workflows/v3/workflow/metrics"
@@ -207,12 +207,8 @@ func shouldExecute(when string) (bool, error) {
 }
 
 func evalWhen(cron *v1alpha1.CronWorkflow) (bool, error) {
-	if cron.Spec.When == "" {
+	if cron.Spec.WhenExpression == "" {
 		return true, nil
-	}
-	cronBytes, err := json.Marshal(cron)
-	if err != nil {
-		return false, err
 	}
 
 	m := make(map[string]interface{})
@@ -249,22 +245,7 @@ func evalWhen(cron *v1alpha1.CronWorkflow) (bool, error) {
 
 	addSetField("lastScheduledTime", tm)
 
-	t, err := template.NewTemplate(string(cronBytes))
-	if err != nil {
-		return false, err
-	}
-
-	newCronStr, err := t.Replace(m, false)
-	if err != nil {
-		return false, err
-	}
-
-	var newCron v1alpha1.CronWorkflow
-	err = json.Unmarshal([]byte(newCronStr), &newCron)
-	if err != nil {
-		return false, err
-	}
-	return shouldExecute(newCron.Spec.When)
+	return argoexpr.EvalBool(cron.Spec.WhenExpression, env.GetFuncMap(m))
 }
 
 func (woc *cronWfOperationCtx) enforceRuntimePolicy(ctx context.Context) (bool, error) {
