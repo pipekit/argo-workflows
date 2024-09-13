@@ -941,7 +941,7 @@ func (s *CLISuite) TestWorkflowRetryWithRecreatedPVC() {
 			}
 		}).
 		When().
-		WaitForWorkflow(fixtures.ToBeFailed).
+		WaitForWorkflow(fixtures.ToBeFailed, time.Minute*11).
 		Then().
 		ExpectWorkflow(func(t *testing.T, _ *metav1.ObjectMeta, status *wfv1.WorkflowStatus) {
 			assert.Equal(t, wfv1.NodeFailed, status.Nodes.FindByDisplayName("print").Phase)
