@@ -17,7 +17,7 @@ grep -lR 'workflows.argoproj.io/test' examples/* | while read f ; do
   echo "Running $f..."
   kubectl create -f $f
   name=$(kubectl get workflow -o name)
-  kubectl wait --for=condition=Completed $name
+  kubectl wait --timeout=90s --for=condition=Completed $name
   phase="$(kubectl get $name -o 'jsonpath={.status.phase}')"
   echo " -> $phase"
   test Succeeded == $phase
