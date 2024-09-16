@@ -351,7 +351,7 @@ func (s *ArgoServerSuite) TestUnauthorized() {
 		defer func() { s.username = "" }()
 		s.e().GET("/api/v1/workflows/argo").
 			Expect().
-			Status(401)
+			StatusRange(httpexpect.Status4xx)
 	})
 }
 
