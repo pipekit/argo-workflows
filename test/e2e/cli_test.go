@@ -933,6 +933,7 @@ func (s *CLISuite) TestWorkflowRetryWithRecreatedPVC() {
 		When().
 		SubmitWorkflow().
 		WaitForWorkflow(fixtures.ToBeFailed).
+		Wait(30*time.Second).
 		Then().
 		RunCli([]string{"retry", "retry-with-recreated-pvc"}, func(t *testing.T, output string, err error) {
 			if assert.NoError(t, err, output) {
