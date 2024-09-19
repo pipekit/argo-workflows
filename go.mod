@@ -69,10 +69,10 @@ require (
 	k8s.io/cli-runtime v0.24.3
 	k8s.io/client-go v0.24.3
 	k8s.io/gengo v0.0.0-20220613173612-397b4ae3bce7
-	k8s.io/klog/v2 v2.70.1
+	k8s.io/klog/v2 v2.80.1
 	k8s.io/kube-openapi v0.0.0-20220627174259-011e075b9cb8
 	k8s.io/kubectl v0.24.3
-	k8s.io/utils v0.0.0-20220713171938-56c0de1e6f5e
+	k8s.io/utils v0.0.0-20250502105355-0f33e8f1c979
 	sigs.k8s.io/yaml v1.4.0
 	zombiezen.com/go/sqlite v1.2.0
 )
