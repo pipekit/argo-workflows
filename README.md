@@ -1,4 +1,5 @@
 <!-- markdownlint-disable-next-line MD041 -->
+[![DevX Spaces](https://spaces.dx.bloomberg.com/badge.svg)](https://spaces.dx.bloomberg.com/badges/create?org=workflow-orchestration&repo=argo-workflows&installDocker=true&skipDependencyInstall=true)
 [![Security Status](https://github.com/argoproj/argo-workflows/actions/workflows/snyk.yml/badge.svg?branch=release-3.5)](https://github.com/argoproj/argo-workflows/actions/workflows/snyk.yml?query=branch%3Arelease-3.5)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/3830/badge)](https://bestpractices.coreinfrastructure.org/projects/3830)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/argoproj/argo-workflows/badge)](https://api.securityscorecards.dev/projects/github.com/argoproj/argo-workflows)
@@ -8,6 +9,24 @@
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-argoproj-blue.svg?logo=linkedin)](https://www.linkedin.com/company/argoproj/)
 [![Release Version](https://img.shields.io/github/v/release/argoproj/argo-workflows?label=argo-workflows)](https://github.com/argoproj/argo-workflows/releases/latest)
 [![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/argo-workflows)](https://artifacthub.io/packages/helm/argo/argo-workflows)
+
+
+## Developing Argo Workflows @Bloomberg
+
+You can develop argo workflows in DevX spaces. A couple of notes:
+
+* *Before* creating a workspace in DevX Spaces, create a [Spaces Development Secret](https://tutti.prod.bloomberg.com/spaces/how_to/manage_development_secrets) named `GIT_USERNAME` with your bbgithub username and `GIT_PASSWORD` with an "Personal Access Token" that you can [retrieve your bbgithub settings](https://bbgithub.dev.bloomberg.com/settings/tokens). Building the UI image requires authenticated access to bbgithub.
+* To build the ui, use:
+```shell
+apt-get install -y node yarn
+export YARN_CACHE_FOLDER=/root/.yarn
+npm config delete noproxy proxy https-proxy -g
+cd ui
+yarn  --verbose --prefer-offline  --network-timeout 600000 build
+yarn  --verbose --prefer-offline  --network-timeout 600000 install
+```
+* To build the docker images locally, use [`.github/bb-build-docker.sh`](.github/bb-build-docker.sh)
+* These images can be used for testing on QA clusters, etc.
 
 ## What is Argo Workflows?
 
