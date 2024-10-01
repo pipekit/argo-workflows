@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -2132,4 +2133,525 @@ func TestRetryWorkflowWithNestedDAGsWithSuspendNodes(t *testing.T) {
 	assert.Equal(t, wfv1.NodeSucceeded, wf.Status.Nodes.FindByName("fail-two-nested-dag-suspend.dag1-step3-middle2.dag2-branch2-step2").Phase)
 	assert.Equal(t, wfv1.NodeSucceeded, wf.Status.Nodes.FindByName("fail-two-nested-dag-suspend.dag1-step4").Phase)
 	assert.Equal(t, 1, len(podsToDelete))
+}
+
+const stepsRetryFormulate = `apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  annotations:
+    workflows.argoproj.io/pod-name-format: v2
+  creationTimestamp: "2024-09-19T02:41:51Z"
+  generateName: steps-
+  generation: 29
+  labels:
+    workflows.argoproj.io/completed: "true"
+    workflows.argoproj.io/phase: Succeeded
+  name: steps-4k5vn
+  namespace: argo
+  resourceVersion: "50080"
+  uid: 0e7608c7-4555-46a4-8697-3be04eec428b
+spec:
+  activeDeadlineSeconds: 300
+  arguments: {}
+  entrypoint: hello-hello-hello
+  podSpecPatch: |
+    terminationGracePeriodSeconds: 3
+  templates:
+  - inputs: {}
+    metadata: {}
+    name: hello-hello-hello
+    outputs: {}
+    steps:
+    - - arguments:
+          parameters:
+          - name: message
+            value: hello1
+        name: hello1
+        template: whalesay
+    - - arguments:
+          parameters:
+          - name: message
+            value: hello2a
+        name: hello2a
+        template: whalesay
+      - arguments:
+          parameters:
+          - name: message
+            value: hello2b
+        name: hello2b
+        template: whalesay
+  - container:
+      args:
+      - '{{inputs.parameters.message}}'
+      command:
+      - cowsay
+      image: docker/whalesay
+      name: ""
+      resources: {}
+    inputs:
+      parameters:
+      - name: message
+    metadata: {}
+    name: whalesay
+    outputs: {}
+status:
+  artifactGCStatus:
+    notSpecified: true
+  artifactRepositoryRef:
+    artifactRepository:
+      archiveLogs: true
+      s3:
+        accessKeySecret:
+          key: accesskey
+          name: my-minio-cred
+        bucket: my-bucket
+        endpoint: minio:9000
+        insecure: true
+        secretKeySecret:
+          key: secretkey
+          name: my-minio-cred
+    configMap: artifact-repositories
+    key: default-v1
+    namespace: argo
+  conditions:
+  - status: "False"
+    type: PodRunning
+  - status: "True"
+    type: Completed
+  finishedAt: "2024-09-19T02:43:44Z"
+  nodes:
+    steps-4k5vn:
+      children:
+      - steps-4k5vn-899690889
+      displayName: steps-4k5vn
+      finishedAt: "2024-09-19T02:43:44Z"
+      id: steps-4k5vn
+      name: steps-4k5vn
+      outboundNodes:
+      - steps-4k5vn-2627784879
+      - steps-4k5vn-2644562498
+      phase: Succeeded
+      progress: 3/3
+      resourcesDuration:
+        cpu: 1
+        memory: 22
+      startedAt: "2024-09-19T02:43:30Z"
+      templateName: hello-hello-hello
+      templateScope: local/steps-4k5vn
+      type: Steps
+    steps-4k5vn-899690889:
+      boundaryID: steps-4k5vn
+      children:
+      - steps-4k5vn-1044844302
+      displayName: '[0]'
+      finishedAt: "2024-09-19T02:42:12Z"
+      id: steps-4k5vn-899690889
+      name: steps-4k5vn[0]
+      nodeFlag: {}
+      phase: Succeeded
+      progress: 3/3
+      resourcesDuration:
+        cpu: 1
+        memory: 22
+      startedAt: "2024-09-19T02:41:51Z"
+      templateScope: local/steps-4k5vn
+      type: StepGroup
+    steps-4k5vn-1044844302:
+      boundaryID: steps-4k5vn
+      children:
+      - steps-4k5vn-4053927188
+      displayName: hello1
+      finishedAt: "2024-09-19T02:42:09Z"
+      hostNodeName: k3d-k3s-default-server-0
+      id: steps-4k5vn-1044844302
+      inputs:
+        parameters:
+        - name: message
+          value: hello1
+      name: steps-4k5vn[0].hello1
+      outputs:
+        artifacts:
+        - name: main-logs
+          s3:
+            key: steps-4k5vn/steps-4k5vn-whalesay-1044844302/main.log
+        exitCode: "0"
+      phase: Succeeded
+      progress: 1/1
+      resourcesDuration:
+        cpu: 1
+        memory: 11
+      startedAt: "2024-09-19T02:41:51Z"
+      templateName: whalesay
+      templateScope: local/steps-4k5vn
+      type: Pod
+    steps-4k5vn-2627784879:
+      boundaryID: steps-4k5vn
+      displayName: hello2a
+      finishedAt: "2024-09-19T02:43:39Z"
+      hostNodeName: k3d-k3s-default-server-0
+      id: steps-4k5vn-2627784879
+      inputs:
+        parameters:
+        - name: message
+          value: hello2a
+      name: steps-4k5vn[1].hello2a
+      outputs:
+        artifacts:
+        - name: main-logs
+          s3:
+            key: steps-4k5vn/steps-4k5vn-whalesay-2627784879/main.log
+        exitCode: "0"
+      phase: Succeeded
+      progress: 1/1
+      resourcesDuration:
+        cpu: 0
+        memory: 5
+      startedAt: "2024-09-19T02:43:30Z"
+      templateName: whalesay
+      templateScope: local/steps-4k5vn
+      type: Pod
+    steps-4k5vn-2644562498:
+      boundaryID: steps-4k5vn
+      displayName: hello2b
+      finishedAt: "2024-09-19T02:43:41Z"
+      hostNodeName: k3d-k3s-default-server-0
+      id: steps-4k5vn-2644562498
+      inputs:
+        parameters:
+        - name: message
+          value: hello2b
+      name: steps-4k5vn[1].hello2b
+      outputs:
+        artifacts:
+        - name: main-logs
+          s3:
+            key: steps-4k5vn/steps-4k5vn-whalesay-2644562498/main.log
+        exitCode: "0"
+      phase: Succeeded
+      progress: 1/1
+      resourcesDuration:
+        cpu: 0
+        memory: 6
+      startedAt: "2024-09-19T02:43:30Z"
+      templateName: whalesay
+      templateScope: local/steps-4k5vn
+      type: Pod
+    steps-4k5vn-4053927188:
+      boundaryID: steps-4k5vn
+      children:
+      - steps-4k5vn-2627784879
+      - steps-4k5vn-2644562498
+      displayName: '[1]'
+      finishedAt: "2024-09-19T02:43:44Z"
+      id: steps-4k5vn-4053927188
+      name: steps-4k5vn[1]
+      nodeFlag: {}
+      phase: Succeeded
+      progress: 2/2
+      resourcesDuration:
+        cpu: 0
+        memory: 11
+      startedAt: "2024-09-19T02:43:30Z"
+      templateScope: local/steps-4k5vn
+      type: StepGroup
+  phase: Succeeded
+  progress: 3/3
+  resourcesDuration:
+    cpu: 1
+    memory: 22
+  startedAt: "2024-09-19T02:43:30Z"
+  taskResultsCompletionStatus:
+    steps-4k5vn-1044844302: true
+    steps-4k5vn-2627784879: true
+    steps-4k5vn-2644562498: true
+
+`
+
+func TestStepsRetryWorkflow(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	wf := wfv1.MustUnmarshalWorkflow(stepsRetryFormulate)
+	selectorStr := "id=steps-4k5vn-2627784879"
+	newWf, podsToDelete, err := MyFormulateRetryWorkflow(context.Background(), wf, true, selectorStr, []string{})
+
+	require.NoError(err)
+	_ = assert
+	_ = newWf
+	_ = podsToDelete
+
+}
+
+func TestDagConversion(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	wf := wfv1.MustUnmarshalWorkflow(stepsRetryFormulate)
+
+	nodes, err := newWorkflowsDag(wf)
+	require.NoError(err)
+	assert.Len(nodes, len(wf.Status.Nodes))
+
+	numNilParent := 0
+	for _, n := range nodes {
+		if n.parent == nil {
+			numNilParent++
+		}
+	}
+
+	assert.Equal(1, numNilParent)
+
+	sortedNodes, err := topoSort(nodes)
+	require.NoError(err)
+	assert.Equal(len(wf.Status.Nodes), len(sortedNodes))
+
+}
+
+const dagDiamondRetry = `apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  annotations:
+    workflows.argoproj.io/pod-name-format: v2
+  creationTimestamp: "2024-10-01T04:27:23Z"
+  generateName: dag-diamond-
+  generation: 16
+  labels:
+    workflows.argoproj.io/completed: "true"
+    workflows.argoproj.io/phase: Succeeded
+  name: dag-diamond-82q7s
+  namespace: argo
+  resourceVersion: "4633"
+  uid: dd3d2674-43d8-446a-afdf-17ec95afade2
+spec:
+  activeDeadlineSeconds: 300
+  arguments: {}
+  entrypoint: diamond
+  podSpecPatch: |
+    terminationGracePeriodSeconds: 3
+  templates:
+  - dag:
+      tasks:
+      - arguments:
+          parameters:
+          - name: message
+            value: A
+        name: A
+        template: echo
+      - arguments:
+          parameters:
+          - name: message
+            value: B
+        depends: A
+        name: B
+        template: echo
+      - arguments:
+          parameters:
+          - name: message
+            value: C
+        depends: A
+        name: C
+        template: echo
+      - arguments:
+          parameters:
+          - name: message
+            value: D
+        depends: B && C
+        name: D
+        template: echo
+    inputs: {}
+    metadata: {}
+    name: diamond
+    outputs: {}
+  - container:
+      command:
+      - echo
+      - '{{inputs.parameters.message}}'
+      image: alpine:3.7
+      name: ""
+      resources: {}
+    inputs:
+      parameters:
+      - name: message
+    metadata: {}
+    name: echo
+    outputs: {}
+status:
+  artifactGCStatus:
+    notSpecified: true
+  artifactRepositoryRef:
+    artifactRepository:
+      archiveLogs: true
+      s3:
+        accessKeySecret:
+          key: accesskey
+          name: my-minio-cred
+        bucket: my-bucket
+        endpoint: minio:9000
+        insecure: true
+        secretKeySecret:
+          key: secretkey
+          name: my-minio-cred
+    configMap: artifact-repositories
+    key: default-v1
+    namespace: argo
+  conditions:
+  - status: "False"
+    type: PodRunning
+  - status: "True"
+    type: Completed
+  finishedAt: "2024-10-01T04:27:42Z"
+  nodes:
+    dag-diamond-82q7s:
+      children:
+      - dag-diamond-82q7s-1310542453
+      displayName: dag-diamond-82q7s
+      finishedAt: "2024-10-01T04:27:42Z"
+      id: dag-diamond-82q7s
+      name: dag-diamond-82q7s
+      outboundNodes:
+      - dag-diamond-82q7s-1226654358
+      phase: Succeeded
+      progress: 4/4
+      resourcesDuration:
+        cpu: 0
+        memory: 8
+      startedAt: "2024-10-01T04:27:23Z"
+      templateName: diamond
+      templateScope: local/dag-diamond-82q7s
+      type: DAG
+    dag-diamond-82q7s-1226654358:
+      boundaryID: dag-diamond-82q7s
+      displayName: D
+      finishedAt: "2024-10-01T04:27:39Z"
+      hostNodeName: k3d-k3s-default-server-0
+      id: dag-diamond-82q7s-1226654358
+      inputs:
+        parameters:
+        - name: message
+          value: D
+      name: dag-diamond-82q7s.D
+      outputs:
+        artifacts:
+        - name: main-logs
+          s3:
+            key: dag-diamond-82q7s/dag-diamond-82q7s-echo-1226654358/main.log
+        exitCode: "0"
+      phase: Succeeded
+      progress: 1/1
+      resourcesDuration:
+        cpu: 0
+        memory: 2
+      startedAt: "2024-10-01T04:27:36Z"
+      templateName: echo
+      templateScope: local/dag-diamond-82q7s
+      type: Pod
+    dag-diamond-82q7s-1260209596:
+      boundaryID: dag-diamond-82q7s
+      children:
+      - dag-diamond-82q7s-1226654358
+      displayName: B
+      finishedAt: "2024-10-01T04:27:33Z"
+      hostNodeName: k3d-k3s-default-server-0
+      id: dag-diamond-82q7s-1260209596
+      inputs:
+        parameters:
+        - name: message
+          value: B
+      name: dag-diamond-82q7s.B
+      outputs:
+        artifacts:
+        - name: main-logs
+          s3:
+            key: dag-diamond-82q7s/dag-diamond-82q7s-echo-1260209596/main.log
+        exitCode: "0"
+      phase: Succeeded
+      progress: 1/1
+      resourcesDuration:
+        cpu: 0
+        memory: 2
+      startedAt: "2024-10-01T04:27:30Z"
+      templateName: echo
+      templateScope: local/dag-diamond-82q7s
+      type: Pod
+    dag-diamond-82q7s-1276987215:
+      boundaryID: dag-diamond-82q7s
+      children:
+      - dag-diamond-82q7s-1226654358
+      displayName: C
+      finishedAt: "2024-10-01T04:27:33Z"
+      hostNodeName: k3d-k3s-default-server-0
+      id: dag-diamond-82q7s-1276987215
+      inputs:
+        parameters:
+        - name: message
+          value: C
+      name: dag-diamond-82q7s.C
+      outputs:
+        artifacts:
+        - name: main-logs
+          s3:
+            key: dag-diamond-82q7s/dag-diamond-82q7s-echo-1276987215/main.log
+        exitCode: "0"
+      phase: Succeeded
+      progress: 1/1
+      resourcesDuration:
+        cpu: 0
+        memory: 2
+      startedAt: "2024-10-01T04:27:30Z"
+      templateName: echo
+      templateScope: local/dag-diamond-82q7s
+      type: Pod
+    dag-diamond-82q7s-1310542453:
+      boundaryID: dag-diamond-82q7s
+      children:
+      - dag-diamond-82q7s-1260209596
+      - dag-diamond-82q7s-1276987215
+      displayName: A
+      finishedAt: "2024-10-01T04:27:27Z"
+      hostNodeName: k3d-k3s-default-server-0
+      id: dag-diamond-82q7s-1310542453
+      inputs:
+        parameters:
+        - name: message
+          value: A
+      name: dag-diamond-82q7s.A
+      outputs:
+        artifacts:
+        - name: main-logs
+          s3:
+            key: dag-diamond-82q7s/dag-diamond-82q7s-echo-1310542453/main.log
+        exitCode: "0"
+      phase: Succeeded
+      progress: 1/1
+      resourcesDuration:
+        cpu: 0
+        memory: 2
+      startedAt: "2024-10-01T04:27:23Z"
+      templateName: echo
+      templateScope: local/dag-diamond-82q7s
+      type: Pod
+  phase: Succeeded
+  progress: 4/4
+  resourcesDuration:
+    cpu: 0
+    memory: 8
+  startedAt: "2024-10-01T04:27:23Z"
+  taskResultsCompletionStatus:
+    dag-diamond-82q7s-1226654358: true
+    dag-diamond-82q7s-1260209596: true
+    dag-diamond-82q7s-1276987215: true
+    dag-diamond-82q7s-1310542453: true
+
+`
+
+func TestDAGDiamondRetryWorkflow(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	wf := wfv1.MustUnmarshalWorkflow(dagDiamondRetry)
+	selectorStr := "id=dag-diamond-82q7s-1260209596"
+	newWf, podsToDelete, err := MyFormulateRetryWorkflow(context.Background(), wf, true, selectorStr, []string{})
+
+	require.NoError(err)
+	_ = assert
+	_ = newWf
+	_ = podsToDelete
+
 }
