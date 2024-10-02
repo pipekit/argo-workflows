@@ -907,7 +907,7 @@ func newWorkflowsDag(wf *wfv1.Workflow) ([]*node, error) {
 	for _, wfNode := range wf.Status.Nodes {
 		wfNode := wfNode
 		parentWfNode, ok := parentsMap[wfNode.ID]
-		if !ok && wfNode.Name != wf.Name {
+		if !ok && wfNode.Name != wf.Name && !strings.HasPrefix(wfNode.Name, wf.ObjectMeta.Name+".onExit") {
 			return nil, fmt.Errorf("couldn't find parent node for %s", wfNode.ID)
 		}
 
@@ -937,7 +937,7 @@ func newWorkflowsDag(wf *wfv1.Workflow) ([]*node, error) {
 	return values, nil
 }
 
-func singularPath(nodes []*node, toNode string) ([]*node, error) {
+func singularPath(onExitNodeName string, nodes []*node, toNode string) ([]*node, error) {
 
 	if len(nodes) <= 0 {
 		return nil, fmt.Errorf("expected at least 1 node")
@@ -948,7 +948,7 @@ func singularPath(nodes []*node, toNode string) ([]*node, error) {
 		if nodes[i].n.ID == toNode {
 			leaf = nodes[i]
 		}
-		if nodes[i].parent == nil {
+		if nodes[i].parent == nil && !strings.HasPrefix(nodes[i].n.Name, onExitNodeName) {
 			root = nodes[i]
 		}
 	}
@@ -1042,8 +1042,15 @@ func consumePod(n *node, deleteAllContainers bool, resetFunc resetFn, addToDelet
 	return curr, nil
 }
 
-func resetPath(allNodes []*node, toNode string) (map[string]bool, map[string]bool, error) {
-	nodes, err := singularPath(allNodes, toNode)
+func resetPath(isOnExitNode bool, onExitNodeName string, allNodes []*node, toNode string) (map[string]bool, map[string]bool, error) {
+	if isOnExitNode {
+		nodesToDelete := make(map[string]bool)
+		nodesToReset := make(map[string]bool)
+		nodesToDelete[toNode] = true
+		return nodesToReset, nodesToDelete, nil
+	}
+
+	nodes, err := singularPath(onExitNodeName, allNodes, toNode)
 
 	curr := nodes[len(nodes)-1]
 	if len(nodes) > 0 {
@@ -1189,6 +1196,8 @@ func MyFormulateRetryWorkflow(ctx context.Context, wf *wfv1.Workflow, restartSuc
 		return nil, nil, errors.Errorf(errors.CodeBadRequest, "Cannot retry a workflow in phase %s", wf.Status.Phase)
 	}
 
+	onExitNodeName := wf.ObjectMeta.Name + ".onExit"
+
 	newWf, err := createNewRetryWorkflow(wf, parameters)
 	if err != nil {
 		return nil, nil, err
@@ -1206,14 +1215,6 @@ func MyFormulateRetryWorkflow(ctx context.Context, wf *wfv1.Workflow, restartSuc
 		return nil, nil, err
 	}
 
-	onExitNodeName := wf.ObjectMeta.Name + ".onExit"
-	for _, node := range wf.Status.Nodes {
-		if strings.HasPrefix(node.Name, onExitNodeName) {
-			deleteNodes[node.ID] = true
-			break
-		}
-	}
-
 	for failedNode := range failed {
 		deleteNodes[failedNode] = true
 	}
@@ -1227,18 +1228,21 @@ func MyFormulateRetryWorkflow(ctx context.Context, wf *wfv1.Workflow, restartSuc
 		return nil, nil, err
 	}
 
-	templates := make(map[string]*wfv1.Template)
-
-	for _, t := range wf.Spec.Templates {
-		t := t
-		templates[t.Name] = &t
-
-	}
 	toReset := make(map[string]bool)
 	toDelete := make(map[string]bool)
 
+	nodesMap := make(map[string]*node)
+	for i := range nodes {
+		nodesMap[nodes[i].n.ID] = nodes[i]
+	}
+
 	for n := range deleteNodes {
-		pathToReset, pathToDelete, err := resetPath(nodes, n)
+		currNode, ok := nodesMap[n]
+		if !ok {
+			return nil, nil, fmt.Errorf("bug in map handling logic, expected key %s not present in nodesMap", n)
+		}
+		isOnExitNode := strings.HasPrefix(currNode.n.Name, onExitNodeName)
+		pathToReset, pathToDelete, err := resetPath(isOnExitNode, onExitNodeName, nodes, n)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1268,12 +1272,11 @@ func MyFormulateRetryWorkflow(ctx context.Context, wf *wfv1.Workflow, restartSuc
 	}
 
 	for id, n := range wf.Status.Nodes {
-		shouldDelete := toDelete[id]
+		shouldDelete := toDelete[id] || strings.HasPrefix(n.Name, onExitNodeName)
 		if _, err := newWf.Status.Nodes.Get(id); err != nil && !shouldDelete {
 			newWf.Status.Nodes.Set(id, *n.DeepCopy())
 		}
 	}
-
 	for id, oldWfNode := range wf.Status.Nodes {
 
 		if !newWf.Status.Nodes.Has(id) {

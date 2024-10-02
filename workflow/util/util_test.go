@@ -2651,3 +2651,404 @@ func TestDAGDiamondRetryWorkflow(t *testing.T) {
 	_ = podsToDelete
 
 }
+
+const onExitWorkflowRetry = `apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  annotations:
+    workflows.argoproj.io/pod-name-format: v2
+  creationTimestamp: "2024-10-02T05:54:00Z"
+  generateName: work-avoidance-
+  generation: 25
+  labels:
+    workflows.argoproj.io/completed: "true"
+    workflows.argoproj.io/phase: Succeeded
+    workflows.argoproj.io/resubmitted-from-workflow: work-avoidance-xghlj
+  name: work-avoidance-trkkq
+  namespace: argo
+  resourceVersion: "2661"
+  uid: 0271624e-0096-428a-81da-643dbbd69440
+spec:
+  activeDeadlineSeconds: 300
+  arguments: {}
+  entrypoint: main
+  onExit: save-markers
+  podSpecPatch: |
+    terminationGracePeriodSeconds: 3
+  templates:
+  - inputs: {}
+    metadata: {}
+    name: main
+    outputs: {}
+    steps:
+    - - arguments: {}
+        name: load-markers
+        template: load-markers
+    - - arguments:
+          parameters:
+          - name: num
+            value: '{{item}}'
+        name: echo
+        template: echo
+        withSequence:
+          count: "3"
+  - container:
+      command:
+      - mkdir
+      - -p
+      - /work/markers
+      image: docker/whalesay:latest
+      name: ""
+      resources: {}
+      volumeMounts:
+      - mountPath: /work
+        name: work
+    inputs:
+      artifacts:
+      - name: markers
+        optional: true
+        path: /work/markers
+        s3:
+          accessKeySecret:
+            key: accesskey
+            name: my-minio-cred
+          bucket: my-bucket
+          endpoint: minio:9000
+          insecure: true
+          key: work-avoidance-markers
+          secretKeySecret:
+            key: secretkey
+            name: my-minio-cred
+    metadata: {}
+    name: load-markers
+    outputs: {}
+  - inputs:
+      parameters:
+      - name: num
+    metadata: {}
+    name: echo
+    outputs: {}
+    script:
+      command:
+      - bash
+      - -eux
+      image: docker/whalesay:latest
+      name: ""
+      resources: {}
+      source: |
+        marker=/work/markers/$(date +%Y-%m-%d)-echo-{{inputs.parameters.num}}
+        if [ -e  ${marker} ]; then
+          echo "work already done"
+          exit 0
+        fi
+        echo "working very hard"
+        # toss a virtual coin and exit 1 if 1
+        if [ $(($(($RANDOM%10))%2)) -eq 1 ]; then
+          echo "oh no!"
+          exit 1
+        fi
+        touch ${marker}
+      volumeMounts:
+      - mountPath: /work
+        name: work
+  - container:
+      command:
+      - "true"
+      image: docker/whalesay:latest
+      name: ""
+      resources: {}
+      volumeMounts:
+      - mountPath: /work
+        name: work
+    inputs: {}
+    metadata: {}
+    name: save-markers
+    outputs:
+      artifacts:
+      - name: markers
+        path: /work/markers
+        s3:
+          accessKeySecret:
+            key: accesskey
+            name: my-minio-cred
+          bucket: my-bucket
+          endpoint: minio:9000
+          insecure: true
+          key: work-avoidance-markers
+          secretKeySecret:
+            key: secretkey
+            name: my-minio-cred
+  volumeClaimTemplates:
+  - metadata:
+      creationTimestamp: null
+      name: work
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Mi
+    status: {}
+status:
+  artifactGCStatus:
+    notSpecified: true
+  artifactRepositoryRef:
+    artifactRepository:
+      archiveLogs: true
+      s3:
+        accessKeySecret:
+          key: accesskey
+          name: my-minio-cred
+        bucket: my-bucket
+        endpoint: minio:9000
+        insecure: true
+        secretKeySecret:
+          key: secretkey
+          name: my-minio-cred
+    configMap: artifact-repositories
+    key: default-v1
+    namespace: argo
+  conditions:
+  - status: "False"
+    type: PodRunning
+  - status: "True"
+    type: Completed
+  finishedAt: "2024-10-02T05:54:41Z"
+  nodes:
+    work-avoidance-trkkq:
+      children:
+      - work-avoidance-trkkq-88427725
+      displayName: work-avoidance-trkkq
+      finishedAt: "2024-10-02T05:54:30Z"
+      id: work-avoidance-trkkq
+      name: work-avoidance-trkkq
+      outboundNodes:
+      - work-avoidance-trkkq-4180283560
+      - work-avoidance-trkkq-605537244
+      - work-avoidance-trkkq-4183398008
+      phase: Succeeded
+      progress: 4/4
+      resourcesDuration:
+        cpu: 1
+        memory: 22
+      startedAt: "2024-10-02T05:54:00Z"
+      templateName: main
+      templateScope: local/work-avoidance-trkkq
+      type: Steps
+    work-avoidance-trkkq-21464344:
+      boundaryID: work-avoidance-trkkq
+      children:
+      - work-avoidance-trkkq-4180283560
+      - work-avoidance-trkkq-605537244
+      - work-avoidance-trkkq-4183398008
+      displayName: '[1]'
+      finishedAt: "2024-10-02T05:54:30Z"
+      id: work-avoidance-trkkq-21464344
+      name: work-avoidance-trkkq[1]
+      nodeFlag: {}
+      phase: Succeeded
+      progress: 3/3
+      resourcesDuration:
+        cpu: 1
+        memory: 18
+      startedAt: "2024-10-02T05:54:14Z"
+      templateScope: local/work-avoidance-trkkq
+      type: StepGroup
+    work-avoidance-trkkq-88427725:
+      boundaryID: work-avoidance-trkkq
+      children:
+      - work-avoidance-trkkq-3329426915
+      displayName: '[0]'
+      finishedAt: "2024-10-02T05:54:14Z"
+      id: work-avoidance-trkkq-88427725
+      name: work-avoidance-trkkq[0]
+      nodeFlag: {}
+      phase: Succeeded
+      progress: 4/4
+      resourcesDuration:
+        cpu: 1
+        memory: 22
+      startedAt: "2024-10-02T05:54:00Z"
+      templateScope: local/work-avoidance-trkkq
+      type: StepGroup
+    work-avoidance-trkkq-605537244:
+      boundaryID: work-avoidance-trkkq
+      displayName: echo(1:1)
+      finishedAt: "2024-10-02T05:54:24Z"
+      hostNodeName: k3d-k3s-default-server-0
+      id: work-avoidance-trkkq-605537244
+      inputs:
+        parameters:
+        - name: num
+          value: "1"
+      name: work-avoidance-trkkq[1].echo(1:1)
+      outputs:
+        artifacts:
+        - name: main-logs
+          s3:
+            key: work-avoidance-trkkq/work-avoidance-trkkq-echo-605537244/main.log
+        exitCode: "0"
+      phase: Succeeded
+      progress: 1/1
+      resourcesDuration:
+        cpu: 0
+        memory: 6
+      startedAt: "2024-10-02T05:54:14Z"
+      templateName: echo
+      templateScope: local/work-avoidance-trkkq
+      type: Pod
+    work-avoidance-trkkq-1461956272:
+      displayName: work-avoidance-trkkq.onExit
+      finishedAt: "2024-10-02T05:54:38Z"
+      hostNodeName: k3d-k3s-default-server-0
+      id: work-avoidance-trkkq-1461956272
+      name: work-avoidance-trkkq.onExit
+      nodeFlag:
+        hooked: true
+      outputs:
+        artifacts:
+        - name: markers
+          path: /work/markers
+          s3:
+            accessKeySecret:
+              key: accesskey
+              name: my-minio-cred
+            bucket: my-bucket
+            endpoint: minio:9000
+            insecure: true
+            key: work-avoidance-markers
+            secretKeySecret:
+              key: secretkey
+              name: my-minio-cred
+        - name: main-logs
+          s3:
+            key: work-avoidance-trkkq/work-avoidance-trkkq-save-markers-1461956272/main.log
+        exitCode: "0"
+      phase: Succeeded
+      progress: 1/1
+      resourcesDuration:
+        cpu: 0
+        memory: 5
+      startedAt: "2024-10-02T05:54:30Z"
+      templateName: save-markers
+      templateScope: local/work-avoidance-trkkq
+      type: Pod
+    work-avoidance-trkkq-3329426915:
+      boundaryID: work-avoidance-trkkq
+      children:
+      - work-avoidance-trkkq-21464344
+      displayName: load-markers
+      finishedAt: "2024-10-02T05:54:12Z"
+      hostNodeName: k3d-k3s-default-server-0
+      id: work-avoidance-trkkq-3329426915
+      inputs:
+        artifacts:
+        - name: markers
+          optional: true
+          path: /work/markers
+          s3:
+            accessKeySecret:
+              key: accesskey
+              name: my-minio-cred
+            bucket: my-bucket
+            endpoint: minio:9000
+            insecure: true
+            key: work-avoidance-markers
+            secretKeySecret:
+              key: secretkey
+              name: my-minio-cred
+      name: work-avoidance-trkkq[0].load-markers
+      outputs:
+        artifacts:
+        - name: main-logs
+          s3:
+            key: work-avoidance-trkkq/work-avoidance-trkkq-load-markers-3329426915/main.log
+        exitCode: "0"
+      phase: Succeeded
+      progress: 1/1
+      resourcesDuration:
+        cpu: 0
+        memory: 4
+      startedAt: "2024-10-02T05:54:00Z"
+      templateName: load-markers
+      templateScope: local/work-avoidance-trkkq
+      type: Pod
+    work-avoidance-trkkq-4180283560:
+      boundaryID: work-avoidance-trkkq
+      displayName: echo(0:0)
+      finishedAt: "2024-10-02T05:54:27Z"
+      hostNodeName: k3d-k3s-default-server-0
+      id: work-avoidance-trkkq-4180283560
+      inputs:
+        parameters:
+        - name: num
+          value: "0"
+      name: work-avoidance-trkkq[1].echo(0:0)
+      outputs:
+        artifacts:
+        - name: main-logs
+          s3:
+            key: work-avoidance-trkkq/work-avoidance-trkkq-echo-4180283560/main.log
+        exitCode: "0"
+      phase: Succeeded
+      progress: 1/1
+      resourcesDuration:
+        cpu: 1
+        memory: 8
+      startedAt: "2024-10-02T05:54:14Z"
+      templateName: echo
+      templateScope: local/work-avoidance-trkkq
+      type: Pod
+    work-avoidance-trkkq-4183398008:
+      boundaryID: work-avoidance-trkkq
+      displayName: echo(2:2)
+      finishedAt: "2024-10-02T05:54:21Z"
+      hostNodeName: k3d-k3s-default-server-0
+      id: work-avoidance-trkkq-4183398008
+      inputs:
+        parameters:
+        - name: num
+          value: "2"
+      name: work-avoidance-trkkq[1].echo(2:2)
+      outputs:
+        artifacts:
+        - name: main-logs
+          s3:
+            key: work-avoidance-trkkq/work-avoidance-trkkq-echo-4183398008/main.log
+        exitCode: "0"
+      phase: Succeeded
+      progress: 1/1
+      resourcesDuration:
+        cpu: 0
+        memory: 4
+      startedAt: "2024-10-02T05:54:14Z"
+      templateName: echo
+      templateScope: local/work-avoidance-trkkq
+      type: Pod
+  phase: Succeeded
+  progress: 5/5
+  resourcesDuration:
+    cpu: 1
+    memory: 27
+  startedAt: "2024-10-02T05:54:00Z"
+  taskResultsCompletionStatus:
+    work-avoidance-trkkq-605537244: true
+    work-avoidance-trkkq-1461956272: true
+    work-avoidance-trkkq-3329426915: true
+    work-avoidance-trkkq-4180283560: true
+    work-avoidance-trkkq-4183398008: true
+`
+
+func TestOnExitWorkflowRetry(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	wf := wfv1.MustUnmarshalWorkflow(onExitWorkflowRetry)
+	selectorStr := "id=work-avoidance-trkkq-4183398008"
+	newWf, podsToDelete, err := MyFormulateRetryWorkflow(context.Background(), wf, true, selectorStr, []string{})
+
+	require.NoError(err)
+	_ = assert
+	_ = newWf
+	_ = podsToDelete
+
+}
