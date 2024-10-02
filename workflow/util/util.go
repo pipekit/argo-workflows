@@ -886,49 +886,6 @@ type node struct {
 	children []*node
 }
 
-type markType int
-
-const (
-	noMark   markType = 0
-	tempMark markType = 1
-	permMark markType = 2
-)
-
-func topoSortVisitor(q *[]*node, marks map[string]markType, n *node) error {
-	mark := marks[n.n.ID]
-	switch mark {
-	case noMark:
-		marks[n.n.ID] = tempMark
-	case tempMark:
-		return fmt.Errorf("found a cycle")
-	case permMark:
-		return nil
-	}
-
-	for _, child := range n.children {
-		topoSortVisitor(q, marks, child)
-	}
-
-	marks[n.n.ID] = permMark
-	*q = append(*q, n)
-
-	return nil
-}
-
-func topoSort(nodes []*node) ([]*node, error) {
-	queue := []*node{}
-	mark := make(map[string]markType)
-
-	for _, node := range nodes {
-		err := topoSortVisitor(&queue, mark, node)
-		if err != nil {
-			return nil, err
-		}
-	}
-	slices.Reverse(queue)
-	return queue, nil
-}
-
 func newWorkflowsDag(wf *wfv1.Workflow) ([]*node, error) {
 
 	nodes := make(map[string]*node)
@@ -1072,13 +1029,17 @@ func consumeDAG(n *node, resetFunc resetFn) (*node, error) {
 }
 
 func consumePod(n *node, deleteAllContainers bool, resetFunc resetFn, addToDelete deleteFn) (*node, error) {
-	curr := n
-	return curr, nil
-}
-
-func getMustFind(nodeType wfv1.NodeType) {
-	switch nodeType {
+	// this sets to reset but resets are overriden by deletes in the final FormulateRetryWorkflow logic.
+	curr, err := consumeTill(n, wfv1.NodeTypePod, resetFunc, true)
+	if err != nil {
+		return nil, err
 	}
+	addToDelete(curr.n.ID, true)
+	children := getChildren(curr)
+	for childID := range children {
+		addToDelete(childID, true)
+	}
+	return curr, nil
 }
 
 func resetPath(allNodes []*node, toNode string) (map[string]bool, map[string]bool, error) {
@@ -1120,8 +1081,9 @@ func resetPath(allNodes []*node, toNode string) (map[string]bool, map[string]boo
 	var mustFind wfv1.NodeType
 	mustFind = ""
 
-	if curr.n.Type == wfv1.NodeTypePod || curr.n.Type == wfv1.NodeTypePlugin {
-		addToReset(curr.n.ID, false)
+	if curr.n.Type == wfv1.NodeTypeContainer {
+		// special case where the retry node is the container of a containerSet
+		mustFind = wfv1.NodeTypePod
 	}
 
 	for {
@@ -1132,8 +1094,9 @@ func resetPath(allNodes []*node, toNode string) (map[string]bool, map[string]boo
 
 		switch curr.n.Type {
 		case wfv1.NodeTypePod:
+			//ignore
 		case wfv1.NodeTypeContainer:
-			mustFind = wfv1.NodeTypePod
+			//ignore
 		case wfv1.NodeTypeSteps:
 			addToReset(curr.n.ID, false)
 		case wfv1.NodeTypeStepGroup:
@@ -1145,10 +1108,15 @@ func resetPath(allNodes []*node, toNode string) (map[string]bool, map[string]boo
 			addToReset(curr.n.ID, false)
 			mustFind = wfv1.NodeTypeDAG
 		case wfv1.NodeTypeRetry:
+			addToReset(curr.n.ID, false)
 		case wfv1.NodeTypeSkipped:
+			// ignore -> doesn't make sense to reach this
 		case wfv1.NodeTypeSuspend:
+			// ignore
 		case wfv1.NodeTypeHTTP:
+			// ignore
 		case wfv1.NodeTypePlugin:
+			addToReset(curr.n.ID, false)
 		}
 
 		curr = curr.parent
@@ -1163,10 +1131,8 @@ func resetPath(allNodes []*node, toNode string) (map[string]bool, map[string]boo
 
 		err = nil
 		switch mustFind {
-		case wfv1.NodeTypeContainer:
-			return nil, nil, fmt.Errorf("mustFind %s not implemented", mustFind)
 		case wfv1.NodeTypePod:
-			consumePod(curr, true, addToReset, addToDelete)
+			curr, err = consumePod(curr, true, addToReset, addToDelete)
 		case wfv1.NodeTypeSteps:
 			curr, err = consumeSteps(curr, addToReset)
 		case wfv1.NodeTypeStepGroup:
@@ -1177,13 +1143,8 @@ func resetPath(allNodes []*node, toNode string) (map[string]bool, map[string]boo
 			curr, err = consumeTaskGroup(curr, addToReset)
 		default:
 			return nil, nil, fmt.Errorf("invalid mustFind of %s supplied", mustFind)
-			/* case wfv1.NodeTypeRetry:
-			case wfv1.NodeTypeSkipped:
-			case wfv1.NodeTypeSuspend:
-			case wfv1.NodeTypeHTTP:
-			case wfv1.NodeTypePlugin: */
 		}
-
+		mustFind = ""
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1201,17 +1162,6 @@ func setUnion[T comparable](m1 map[T]bool, m2 map[T]bool) map[T]bool {
 
 	for k, v := range m2 {
 		if _, ok := m1[k]; !ok {
-			res[k] = v
-		}
-	}
-	return res
-}
-
-func setIntersection[T comparable](m1 map[T]bool, m2 map[T]bool) map[T]bool {
-	res := make(map[T]bool)
-
-	for k, v := range m1 {
-		if _, ok := m2[k]; ok {
 			res[k] = v
 		}
 	}
@@ -1256,18 +1206,25 @@ func MyFormulateRetryWorkflow(ctx context.Context, wf *wfv1.Workflow, restartSuc
 		return nil, nil, err
 	}
 
-	if len(failed) == 0 && len(deleteNodes) == 0 {
-		return newWf, nil, nil
+	onExitNodeName := wf.ObjectMeta.Name + ".onExit"
+	for _, node := range wf.Status.Nodes {
+		if strings.HasPrefix(node.Name, onExitNodeName) {
+			deleteNodes[node.ID] = true
+			break
+		}
+	}
+
+	for failedNode := range failed {
+		deleteNodes[failedNode] = true
+	}
+
+	if len(deleteNodes) == 0 {
+		return nil, nil, fmt.Errorf("workflow is successful with no nodes to retry")
 	}
 
 	nodes, err := newWorkflowsDag(wf)
 	if err != nil {
 		return nil, nil, err
-	}
-
-	nodesMap := make(map[string]*node)
-	for i := range nodes {
-		nodesMap[nodes[i].n.ID] = nodes[i]
 	}
 
 	templates := make(map[string]*wfv1.Template)
@@ -1290,7 +1247,13 @@ func MyFormulateRetryWorkflow(ctx context.Context, wf *wfv1.Workflow, restartSuc
 	}
 
 	for k := range toReset {
+		// avoid reseting nodes that are marked for deletion
+		if in := toDelete[k]; in {
+			continue
+		}
+
 		n := wf.Status.Nodes[k]
+
 		newWf.Status.Nodes.Set(k, resetNode(n))
 	}
 

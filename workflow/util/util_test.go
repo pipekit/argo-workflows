@@ -2399,10 +2399,6 @@ func TestDagConversion(t *testing.T) {
 
 	assert.Equal(1, numNilParent)
 
-	sortedNodes, err := topoSort(nodes)
-	require.NoError(err)
-	assert.Equal(len(wf.Status.Nodes), len(sortedNodes))
-
 }
 
 const dagDiamondRetry = `apiVersion: argoproj.io/v1alpha1

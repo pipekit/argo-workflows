@@ -26,7 +26,7 @@ spec:
         depends: "A"
         template: whalesay
       - name: G
-        depends: "E && F"
+        depends: "E.Failed && F"
         template: whalesay
 
   - name: whalesay
