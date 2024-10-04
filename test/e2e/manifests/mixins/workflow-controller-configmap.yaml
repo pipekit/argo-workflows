@@ -16,7 +16,7 @@ data:
         memory: 64Mi
       limits:
         cpu: 0.5
-        memory: 256Mi
+        memory: 512Mi
   retentionPolicy: |
     completed: 10
     failed: 2
