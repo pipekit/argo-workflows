@@ -9,7 +9,7 @@ kind: Workflow
 metadata:
   generateName: artifactory-artifact-
   labels:
-    workflows.argoproj.io/no-test: "true"
+    workflows.argoproj.io/do-not-test: "true" # Requires artifactory
 spec:
   entrypoint: artifact-example
   templates:

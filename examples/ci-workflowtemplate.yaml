@@ -10,6 +10,8 @@ metadata:
 
       * Cache restore and store.
       * Publishing test reports.
+  labels:
+    workflows.argoproj.io/do-not-test: "true"
 spec:
   arguments:
     parameters:

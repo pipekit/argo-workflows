@@ -14,7 +14,7 @@ spec:
   templates:
   - name: volumes-emptydir-example
     container:
-      image: debian:latest
+      image: busybox
       command: ["/bin/bash", "-c"]
       args: ["
         vol_found=`mount | grep /mnt/vol` && \
@@ -23,4 +23,3 @@ spec:
       volumeMounts:
       - name: workdir
         mountPath: /mnt/vol
-

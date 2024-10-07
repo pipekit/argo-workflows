@@ -2,6 +2,8 @@ apiVersion: argoproj.io/v1alpha1
 kind: CronWorkflow
 metadata:
   name: hello-world
+  labels:
+    workflows.argoproj.io/do-not-test: "true" # CronWorkflow
 spec:
   schedule: "* * * * *"
   timezone: "America/Los_Angeles"   # Default to local machine timezone

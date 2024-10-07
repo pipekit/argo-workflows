@@ -3,6 +3,8 @@ apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   name: forever
+  labels:
+    workflows.argoproj.io/do-not-test: "true" # Takes 1000 seconds
 spec:
   entrypoint: main
   templates:

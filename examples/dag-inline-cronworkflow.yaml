@@ -6,6 +6,8 @@ metadata:
     workflows.argoproj.io/description: |
       This example demonstrates running cron workflow that has a DAG with inline templates.
     workflows.argoproj.io/version: ">= 3.2.0"
+  labels:
+    workflows.argoproj.io/do-not-test: "true" # CronWorkflow
 spec:
   schedule: "*/5 * * * *"
   workflowSpec:

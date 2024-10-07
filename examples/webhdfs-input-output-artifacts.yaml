@@ -1,11 +1,13 @@
-# This example demonstrates the usage of an input or output artifact via a webhdfs endpoint. 
-# The different providers support different ways of authentication. For Azure datalake, for example, this is done via an oauth2 token. 
+# This example demonstrates the usage of an input or output artifact via a webhdfs endpoint.
+# The different providers support different ways of authentication. For Azure datalake, for example, this is done via an oauth2 token.
 # On the other hand, SAP Hana datalake uses client authentication via certificates.
 # Right now, authentication via certificates and via OAuth2 is supported. The input artifact shows an example for OAuth2 while the output artifact shows an example for using certificates.
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   generateName: input-output-artifact-webhdfs-
+  labels:
+    workflows.argoproj.io/do-not-test: "true" # Requires WebHDFS
 spec:
   entrypoint: input-output-artifact-webhdfs-example
   templates:

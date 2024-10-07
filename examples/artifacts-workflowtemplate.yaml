@@ -5,6 +5,8 @@ metadata:
   annotations:
     workflows.argoproj.io/description: |
       This example shows how to produce different types of artifact.
+  labels:
+    workflows.argoproj.io/do-not-test: "true" # WorkflowTemplate
 spec:
   entrypoint: main
   templates:
@@ -60,11 +62,11 @@ spec:
                 cowsay "hello world" > /out/hello.txt
 
                 cat > /out/hello.json <<EOF
-                {"hello": {"world": true}} 
+                {"hello": {"world": true}}
                 EOF
-                
+
                 echo '* {font-family: sans-serif}' > /out/assets/styles.css
-                
+
                 cat > /out/index.html <<EOF
                 <html>
                   <head>
@@ -76,7 +78,7 @@ spec:
                   </body>
                 </html>
                 EOF
-                
+
                 cat > /out/malicious.html <<EOF
                 <html>
                   <body>

@@ -29,6 +29,8 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   name: buildkit
+  labels:
+    workflows.argoproj.io/do-not-test: "true"
 spec:
   arguments:
     parameters:
