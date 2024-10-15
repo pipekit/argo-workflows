@@ -20,6 +20,7 @@ import (
 	"github.com/argoproj/argo-workflows/v3/errors"
 	"github.com/argoproj/argo-workflows/v3/pkg/apis/workflow"
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	"github.com/argoproj/argo-workflows/v3/util/deprecation"
 	errorsutil "github.com/argoproj/argo-workflows/v3/util/errors"
 	"github.com/argoproj/argo-workflows/v3/util/intstr"
 	"github.com/argoproj/argo-workflows/v3/util/template"
@@ -255,7 +256,7 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 	initCtr := woc.newInitContainer(tmpl)
 	pod.Spec.InitContainers = []apiv1.Container{initCtr}
 
-	woc.addSchedulingConstraints(pod, wfSpec, tmpl, nodeName)
+	woc.addSchedulingConstraints(ctx, pod, wfSpec, tmpl, nodeName)
 	woc.addMetadata(pod, tmpl)
 
 	// Set initial progress from pod metadata if exists.
@@ -296,6 +297,20 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 	}
 
 	envVarTemplateValue := wfv1.MustMarshallJSON(tmpl)
+	if os.Getenv("ARGO_TEMPLATE_WITH_INPUTS_PARAMETERS") == "false" {
+		tmplWithoutInputs := tmpl.DeepCopy()
+		// Preserve Inputs.Artifacts and clear other inputs
+		var artifacts []wfv1.Artifact
+		if len(tmplWithoutInputs.Inputs.Artifacts) > 0 {
+			artifacts = tmplWithoutInputs.Inputs.Artifacts
+		} else {
+			artifacts = []wfv1.Artifact{}
+		}
+		tmplWithoutInputs.Inputs = wfv1.Inputs{
+			Artifacts: artifacts,
+		}
+		envVarTemplateValue = wfv1.MustMarshallJSON(tmplWithoutInputs)
+	}
 
 	// Add standard environment variables, making pod spec larger
 	envVars := []apiv1.EnvVar{
@@ -772,7 +787,7 @@ func (woc *wfOperationCtx) addDNSConfig(pod *apiv1.Pod) {
 }
 
 // addSchedulingConstraints applies any node selectors or affinity rules to the pod, either set in the workflow or the template
-func (woc *wfOperationCtx) addSchedulingConstraints(pod *apiv1.Pod, wfSpec *wfv1.WorkflowSpec, tmpl *wfv1.Template, nodeName string) {
+func (woc *wfOperationCtx) addSchedulingConstraints(ctx context.Context, pod *apiv1.Pod, wfSpec *wfv1.WorkflowSpec, tmpl *wfv1.Template, nodeName string) {
 	// Get boundaryNode Template (if specified)
 	boundaryTemplate, err := woc.GetBoundaryTemplate(nodeName)
 	if err != nil {
@@ -818,8 +833,10 @@ func (woc *wfOperationCtx) addSchedulingConstraints(pod *apiv1.Pod, wfSpec *wfv1
 	// Set priority (if specified)
 	if tmpl.Priority != nil {
 		pod.Spec.Priority = tmpl.Priority
+		deprecation.Record(ctx, deprecation.PodPriority)
 	} else if wfSpec.PodPriority != nil {
 		pod.Spec.Priority = wfSpec.PodPriority
+		deprecation.Record(ctx, deprecation.PodPriority)
 	}
 
 	// set hostaliases
