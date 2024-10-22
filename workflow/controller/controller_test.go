@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/resource"
-
 	"github.com/argoproj/pkg/sync"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	apiv1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
@@ -1149,8 +1149,72 @@ spec:
 	assert.True(t, controller.processNextPodCleanupItem(ctx))
 	assert.Equal(t, wfv1.WorkflowFailed, woc.wf.Status.Phase)
 	pods, err := listPods(woc)
-	assert.NoError(t, err)
-	assert.Len(t, pods.Items, 0)
+	require.NoError(t, err)
+	assert.Empty(t, pods.Items)
+}
+
+func TestPodCleaupPatch(t *testing.T) {
+	wfc := &WorkflowController{}
+
+	pod := &apiv1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Labels:          map[string]string{common.LabelKeyCompleted: "false"},
+			Finalizers:      []string{common.FinalizerPodStatus},
+			ResourceVersion: "123456",
+		},
+	}
+
+	t.Setenv(common.EnvVarPodStatusCaptureFinalizer, "true")
+
+	// pod finalizer enabled, patch label
+	patch, err := wfc.getPodCleanupPatch(pod, true)
+	require.NoError(t, err)
+	expected := `{"metadata":{"resourceVersion":"123456","finalizers":[],"labels":{"workflows.argoproj.io/completed":"true"}}}`
+	assert.JSONEq(t, expected, string(patch))
+
+	// pod finalizer enabled, do not patch label
+	patch, err = wfc.getPodCleanupPatch(pod, false)
+	require.NoError(t, err)
+	expected = `{"metadata":{"resourceVersion":"123456","finalizers":[]}}`
+	assert.JSONEq(t, expected, string(patch))
+
+	// pod finalizer enabled, do not patch label, nil/empty finalizers
+	podWithNilFinalizers := &apiv1.Pod{}
+	patch, err = wfc.getPodCleanupPatch(podWithNilFinalizers, false)
+	require.NoError(t, err)
+	assert.Nil(t, patch)
+
+	t.Setenv(common.EnvVarPodStatusCaptureFinalizer, "false")
+
+	// pod finalizer disabled, patch both
+	patch, err = wfc.getPodCleanupPatch(pod, true)
+	require.NoError(t, err)
+	expected = `{"metadata":{"labels":{"workflows.argoproj.io/completed":"true"}}}`
+	assert.JSONEq(t, expected, string(patch))
+
+	// pod finalizer disabled, do not patch label
+	patch, err = wfc.getPodCleanupPatch(pod, false)
+	require.NoError(t, err)
+	assert.Nil(t, patch)
+}
+
+func TestPendingPodWhenTerminate(t *testing.T) {
+	wf := wfv1.MustUnmarshalWorkflow(helloWorldWf)
+	wf.Spec.Shutdown = wfv1.ShutdownStrategyTerminate
+	wf.Status.Phase = wfv1.WorkflowPending
+
+	cancel, controller := newController(wf)
+	defer cancel()
+
+	ctx := context.Background()
+	assert.True(t, controller.processNextItem(ctx))
+
+	woc := newWorkflowOperationCtx(wf, controller)
+	woc.operate(ctx)
+	assert.Equal(t, wfv1.WorkflowFailed, woc.wf.Status.Phase)
+	for _, node := range woc.wf.Status.Nodes {
+		assert.Equal(t, wfv1.NodeFailed, node.Phase)
+	}
 }
 
 func TestPendingPodWhenTerminate(t *testing.T) {
