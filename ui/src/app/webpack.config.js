@@ -23,7 +23,7 @@ const config = {
   devtool: "source-map",
 
   resolve: {
-    extensions: [".ts", ".tsx", ".js", ".json", ".ttf"]
+    extensions: [".ts", ".tsx", ".js", ".mjs", ".json", ".ttf"]
   },
 
   module: {
@@ -48,7 +48,8 @@ const config = {
       }, {
         test: /\.ttf$/,
         use: ['file-loader']
-      }
+      },
+      { test: /\.mjs$/, include: /node_modules/, type: 'javascript/auto' }
     ]
   },
   node: {

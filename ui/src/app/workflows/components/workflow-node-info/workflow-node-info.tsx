@@ -9,6 +9,7 @@ import {Button} from '../../../shared/components/button';
 import {ClipboardText} from '../../../shared/components/clipboard-text';
 import {DurationPanel} from '../../../shared/components/duration-panel';
 import {InlineTable} from '../../../shared/components/inline-table/inline-table';
+import LinkifiedText from '../../../shared/components/linkified-text';
 import {Links} from '../../../shared/components/links';
 import {Phase} from '../../../shared/components/phase';
 import {Timestamp} from '../../../shared/components/timestamp';
@@ -66,13 +67,13 @@ interface Props {
     onResume?: () => void;
 }
 
-const AttributeRow = (attr: {title: string; value: any}) => (
+const AttributeRow = (attr: {title: string; value: string | JSX.Element}) => (
     <React.Fragment key={attr.title}>
         <div>{attr.title}</div>
-        <div>{attr.value}</div>
+        <div>{typeof attr.value === 'string' ? <LinkifiedText text={attr.value} /> : attr.value}</div>
     </React.Fragment>
 );
-const AttributeRows = (props: {attributes: {title: string; value: any}[]}) => (
+const AttributeRows = (props: {attributes: {title: string; value: string | JSX.Element}[]}) => (
     <div className='workflow-details__attribute-grid'>
         {props.attributes.map(attr => (
             <AttributeRow key={attr.title} {...attr} />
