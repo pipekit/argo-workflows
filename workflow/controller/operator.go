@@ -1348,6 +1348,8 @@ func (woc *wfOperationCtx) assessNodeStatus(ctx context.Context, pod *apiv1.Pod,
 		new.Daemoned = nil
 		if old.Phase != new.Phase || old.Message != new.Message {
 			woc.controller.metrics.ChangePodPending(ctx, new.Message, pod.ObjectMeta.Namespace)
+			namespacedName := woc.wf.ObjectMeta.Namespace + "/" + woc.wf.ObjectMeta.Name
+			woc.controller.tracing.ChangeNodePhase(namespacedName, new.ID, new.Phase, new.Message)
 		}
 	case apiv1.PodSucceeded:
 		new.Phase = wfv1.NodeSucceeded
@@ -1501,7 +1503,7 @@ func (woc *wfOperationCtx) assessNodeStatus(ctx context.Context, pod *apiv1.Pod,
 			WithField("new.progress", new.Progress).
 			Info("node changed")
 		namespacedName := woc.wf.ObjectMeta.Namespace + "/" + woc.wf.ObjectMeta.Name
-		woc.controller.tracing.ChangeNodePhase(namespacedName, new.ID, new.Phase)
+		woc.controller.tracing.ChangeNodePhase(namespacedName, new.ID, new.Phase, new.Message)
 		return new
 	}
 	woc.log.WithField("nodeID", old.ID).
@@ -2382,9 +2384,8 @@ func (woc *wfOperationCtx) markWorkflowPhase(ctx context.Context, phase wfv1.Wor
 		if woc.wf.ObjectMeta.Annotations == nil {
 			woc.wf.ObjectMeta.Annotations = make(map[string]string)
 		}
-		if _, ok := woc.wf.ObjectMeta.Annotations[common.AnnotationKeyTraceID]; !ok {
-			woc.wf.ObjectMeta.Annotations[common.AnnotationKeyTraceID] = trace.SpanFromContext(ctx).SpanContext().TraceID().String()
-		}
+		// Always set this, we don't want the one sourced from anywhere else such as a resubmit
+		woc.wf.ObjectMeta.Annotations[common.AnnotationKeyTraceID] = trace.SpanFromContext(ctx).SpanContext().TraceID().String()
 		if woc.controller.Config.WorkflowEvents.IsEnabled() {
 			switch phase {
 			case wfv1.WorkflowRunning:
@@ -2626,7 +2627,7 @@ func (woc *wfOperationCtx) initializeNode(ctx context.Context, nodeName string, 
 	woc.log.Infof("%s node %v initialized %s%s", node.Type, node.ID, node.Phase, message)
 	woc.updated = true
 	namespacedName := woc.wf.ObjectMeta.Namespace + "/" + woc.wf.ObjectMeta.Name
-	woc.controller.tracing.StartNode(ctx, namespacedName, node.ID, phase)
+	woc.controller.tracing.StartNode(ctx, namespacedName, node.ID, phase, node.Message)
 	return &node
 }
 
@@ -2656,6 +2657,13 @@ func (woc *wfOperationCtx) markNodePhase(nodeName string, phase wfv1.NodePhase, 
 		woc.log.Warningf("workflow '%s' node '%s' uninitialized when marking as %v: %s", woc.wf.Name, nodeName, phase, message)
 		node = &wfv1.NodeStatus{}
 	}
+	if len(message) > 0 {
+		if message[0] != node.Message {
+			woc.log.Infof("node %s message: %s", node.ID, message[0])
+			node.Message = message[0]
+			woc.updated = true
+		}
+	}
 	if node.Phase != phase {
 		if node.Phase.Fulfilled() {
 			woc.log.WithFields(log.Fields{"nodeName": node.Name, "fromPhase": node.Phase, "toPhase": phase}).
@@ -2663,15 +2671,8 @@ func (woc *wfOperationCtx) markNodePhase(nodeName string, phase wfv1.NodePhase, 
 		}
 		woc.log.Infof("node %s phase %s -> %s", node.ID, node.Phase, phase)
 		node.Phase = phase
-		woc.controller.tracing.ChangeNodePhase(namespacedName, node.ID, phase)
+		woc.controller.tracing.ChangeNodePhase(namespacedName, node.ID, phase, node.Message)
 		woc.updated = true
-	}
-	if len(message) > 0 {
-		if message[0] != node.Message {
-			woc.log.Infof("node %s message: %s", node.ID, message[0])
-			node.Message = message[0]
-			woc.updated = true
-		}
 	}
 	if node.Fulfilled() && node.FinishedAt.IsZero() {
 		node.FinishedAt = metav1.Time{Time: time.Now().UTC()}

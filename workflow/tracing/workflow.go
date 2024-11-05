@@ -3,6 +3,7 @@ package tracing
 import (
 	"context"
 	"errors"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
@@ -10,10 +11,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
-	//	"github.com/argoproj/argo-workflows/v3/util/telemetry"
 )
-
-// TODO errors const
 
 func debugTrace(traceType string, span *trace.Span) {
 	log.WithField("trace", (*span).SpanContext().SpanID()).Info(traceType)
@@ -69,7 +67,15 @@ func (trc *Tracing) StartWorkflow(ctx context.Context, id string) context.Contex
 		log.WithField("workflow", id).Error(err)
 		return ctx
 	}
-	ctx, span := trc.Tracer.Start(ctx, "workflow", trace.WithSpanKind(trace.SpanKindConsumer))
+	var ts trace.TraceState
+
+	if ts, err = ts.Insert("workflow", id); err != nil {
+		log.Info("Trace StartWorkflow failed")
+		return ctx
+	}
+	ctx = trace.ContextWithRemoteSpanContext(ctx, trace.SpanContext{}.WithTraceState(ts))
+	ctx, span := trc.Tracer.Start(ctx, "workflow", trace.WithAttributes(attribute.String("workflow", string(id))), trace.WithSpanKind(trace.SpanKindConsumer))
+
 	debugTrace("start", &span)
 	spans.workflow = &span
 	trc.updateWorkflow(id, spans)
@@ -143,7 +149,7 @@ func (trc *Tracing) RecoverWorkflowContext(ctx context.Context, id string) conte
 	return ctx
 }
 
-func (trc *Tracing) StartNode(ctx context.Context, wfId string, nodeId string, phase wfv1.NodePhase) {
+func (trc *Tracing) StartNode(ctx context.Context, wfId string, nodeId string, phase wfv1.NodePhase, message string) {
 	log.Info("Trace Start Node")
 	wf, err := trc.expectWorkflow(wfId)
 	if err != nil {
@@ -159,10 +165,23 @@ func (trc *Tracing) StartNode(ctx context.Context, wfId string, nodeId string, p
 	debugTrace("start", &span)
 	node.node = &span
 	wf.updateNode(nodeId, node)
-	trc.ChangeNodePhase(wfId, nodeId, phase)
+	trc.ChangeNodePhase(wfId, nodeId, phase, message)
 }
 
-func (trc *Tracing) ChangeNodePhase(wfId string, nodeId string, phase wfv1.NodePhase) {
+func phaseMessage(phase wfv1.NodePhase, message string) string {
+	switch phase {
+	case wfv1.NodePending:
+		splitReason := strings.Split(message, `:`)
+		if splitReason[0] == "PodInitializing" {
+			return ""
+		}
+		return splitReason[0]
+	default:
+		return ""
+	}
+}
+
+func (trc *Tracing) ChangeNodePhase(wfId string, nodeId string, phase wfv1.NodePhase, message string) {
 	log.Info("Trace CNP")
 	wf, err := trc.expectWorkflow(wfId)
 	if err != nil {
@@ -174,12 +193,24 @@ func (trc *Tracing) ChangeNodePhase(wfId string, nodeId string, phase wfv1.NodeP
 		log.WithFields(log.Fields{"workflow": wfId, "node": nodeId}).Error(err)
 		return
 	}
+	attribs := []attribute.KeyValue{attribute.String("node", string(nodeId)), attribute.String("phase", string(phase))}
+	shortMsg := phaseMessage(phase, message)
+	if shortMsg != "" {
+		attribs = append(attribs, attribute.String("message", shortMsg))
+	}
+	log.Infof("Trace CNP message >%s< and short >%s<", message, shortMsg)
+	if node.phasePhase == phase && node.phaseMsg == shortMsg {
+		log.Info("Trace CNP no change")
+		return
+	}
 	node.endPhase()
 	ctx := trace.ContextWithSpan(context.Background(), *node.node)
-	if phase.Completed() {
+	node.phasePhase = phase
+	node.phaseMsg = shortMsg
+	if phase.Fulfilled() {
 		trc.EndNode(wfId, nodeId, phase)
 	} else {
-		_, span := trc.Tracer.Start(ctx, "node-phase", trace.WithAttributes(attribute.String("node", string(nodeId)), attribute.String("phase", string(phase))))
+		_, span := trc.Tracer.Start(ctx, "node-phase", trace.WithAttributes(attribs...))
 		debugTrace("start", &span)
 		node.phase = &span
 	}

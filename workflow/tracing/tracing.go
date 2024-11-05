@@ -5,12 +5,15 @@ import (
 
 	"go.opentelemetry.io/otel/trace"
 
+	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/argoproj/argo-workflows/v3/util/telemetry"
 )
 
 type nodeSpans struct {
-	node  *trace.Span
-	phase *trace.Span
+	node       *trace.Span
+	phase      *trace.Span
+	phasePhase wfv1.NodePhase
+	phaseMsg   string
 }
 
 type workflowSpans struct {
