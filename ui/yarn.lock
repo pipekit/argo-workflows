@@ -10,54 +10,6 @@
     "@jridgewell/gen-mapping" "^0.1.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
-"@ant-design/colors@^7.0.0":
-  version "7.0.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@ant-design/colors/-/colors-7.0.0.tgz#eb7eecead124c3533aea05d61254f0a17f2b61b3"
-  integrity sha512-iVm/9PfGCbC0dSMBrz7oiEXZaaGH7ceU40OJEfKmyuzR9R5CRimJYPlRiFtMQGQcbNMea/ePcoIebi4ASGYXtg==
-  dependencies:
-    "@ctrl/tinycolor" "^3.4.0"
-
-"@ant-design/cssinjs@^1.16.0":
-  version "1.16.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@ant-design/cssinjs/-/cssinjs-1.16.1.tgz#0032044db5678dd25ac12def1abb1d52e6a4d583"
-  integrity sha512-KKVB5Or6BDC1Bo3Y4KMlOkyQU0P+6GTodubrQ9YfrtXG1TgO4wpaEfg9I4ZA49R7M+Ij2KKNwb+5abvmXy6K8w==
-  dependencies:
-    "@babel/runtime" "^7.11.1"
-    "@emotion/hash" "^0.8.0"
-    "@emotion/unitless" "^0.7.5"
-    classnames "^2.3.1"
-    csstype "^3.0.10"
-    rc-util "^5.35.0"
-    stylis "^4.0.13"
-
-"@ant-design/icons-svg@^4.3.0":
-  version "4.3.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@ant-design/icons-svg/-/icons-svg-4.3.0.tgz#cd8d3624bba50975e848591cea12cb6be132cd82"
-  integrity sha512-WOgvdH/1Wl8Z7VXigRbCa5djO14zxrNTzvrAQzhWiBQtEKT0uTc8K1ltjKZ8U1gPn/wXhMA8/jE39SJl0WNxSg==
-
-"@ant-design/icons@^5.2.2":
-  version "5.2.4"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@ant-design/icons/-/icons-5.2.4.tgz#ffae1509e38d1a6518b67241ebf3274d625191d8"
-  integrity sha512-WFPLMLiLaTcw7Vzwuglgm7aViI9DJ8SdrLt6r1rI1oxA1yjp02/ZRB4b+OFlFy2F91JMq3FnAQ9K6irq9QiSvw==
-  dependencies:
-    "@ant-design/colors" "^7.0.0"
-    "@ant-design/icons-svg" "^4.3.0"
-    "@babel/runtime" "^7.11.2"
-    classnames "^2.2.6"
-    lodash.camelcase "^4.3.0"
-    rc-util "^5.31.1"
-
-"@ant-design/react-slick@~1.0.0":
-  version "1.0.2"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@ant-design/react-slick/-/react-slick-1.0.2.tgz#241bb412aeacf7ff5d50c61fa5db66773fde6b56"
-  integrity sha512-Wj8onxL/T8KQLFFiCA4t8eIRGpRR+UPgOdac2sYzonv+i0n3kXHmvHLLiOYL655DQx2Umii9Y9nNgL7ssu5haQ==
-  dependencies:
-    "@babel/runtime" "^7.10.4"
-    classnames "^2.2.5"
-    json2mq "^0.2.0"
-    resize-observer-polyfill "^1.5.1"
-    throttle-debounce "^5.0.0"
-
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.22.10", "@babel/code-frame@^7.22.13":
   version "7.22.13"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@babel/code-frame/-/code-frame-7.22.13.tgz#e3c1c099402598483b7a8c46a721d1038803755e"
@@ -959,7 +911,7 @@
     core-js-pure "^3.30.2"
     regenerator-runtime "^0.14.0"
 
-"@babel/runtime@^7.1.2", "@babel/runtime@^7.10.1", "@babel/runtime@^7.10.4", "@babel/runtime@^7.11.1", "@babel/runtime@^7.11.2", "@babel/runtime@^7.12.1", "@babel/runtime@^7.12.5", "@babel/runtime@^7.16.7", "@babel/runtime@^7.18.0", "@babel/runtime@^7.18.3", "@babel/runtime@^7.20.0", "@babel/runtime@^7.20.7", "@babel/runtime@^7.21.0", "@babel/runtime@^7.22.5", "@babel/runtime@^7.3.1", "@babel/runtime@^7.8.4", "@babel/runtime@^7.9.2":
+"@babel/runtime@^7.1.2", "@babel/runtime@^7.12.1", "@babel/runtime@^7.21.0", "@babel/runtime@^7.3.1", "@babel/runtime@^7.8.4", "@babel/runtime@^7.9.2":
   version "7.23.2"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@babel/runtime/-/runtime-7.23.2.tgz#062b0ac103261d68a966c4c7baf2ae3e62ec3885"
   integrity sha512-mM8eg4yl5D6i3lu2QKPuPH4FArvJ8KhTofbE7jwMUv9KX5mBvwPAqnV3MlyBNqdp9RyRKP6Yck8TrfYrPvX3bg==
@@ -1018,25 +970,10 @@
     exec-sh "^0.3.2"
     minimist "^1.2.0"
 
-"@ctrl/tinycolor@^3.4.0", "@ctrl/tinycolor@^3.6.0":
-  version "3.6.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@ctrl/tinycolor/-/tinycolor-3.6.0.tgz#53fa5fe9c34faee89469e48f91d51a3766108bc8"
-  integrity sha512-/Z3l6pXthq0JvMYdUFyX9j0MaCltlIn6mfh9jLyQwg5aPKxkyNa0PTHtU1AlFXLNk55ZuAeJRcpvq+tmLfKmaQ==
-
 "@discoveryjs/json-ext@^0.5.0":
   version "0.5.7"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@discoveryjs/json-ext/-/json-ext-0.5.7.tgz#1d572bfbbe14b7704e0ba0f39b74815b84870d70"
   integrity sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==
-
-"@emotion/hash@^0.8.0":
-  version "0.8.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@emotion/hash/-/hash-0.8.0.tgz#bbbff68978fefdbe68ccb533bc8cbe1d1afb5413"
-  integrity sha512-kBJtf7PH6aWwZ6fka3zQ0p6SBYzx4fl1LoZXE2RrnYST9Xljm7WfKJrU4g/Xr3Beg72MLrp1AWNUmuYJTL7Cow==
-
-"@emotion/unitless@^0.7.5":
-  version "0.7.5"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@emotion/unitless/-/unitless-0.7.5.tgz#77211291c1900a700b8a78cfafda3160d76949ed"
-  integrity sha512-OWORNpfjMsSSUBVrRBVGECkhWcULOAJz9ZW8uK9qgxD+87M7jHRcvh/A96XXNhXTLmKcoYSQtBEX7lHMO7YRwg==
 
 "@fastify/busboy@^2.0.0":
   version "2.0.0"
@@ -1353,73 +1290,6 @@
   version "2.11.8"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@popperjs/core/-/core-2.11.8.tgz#6b79032e760a0899cd4204710beede972a3a185f"
   integrity sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==
-
-"@rc-component/color-picker@~1.4.0":
-  version "1.4.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@rc-component/color-picker/-/color-picker-1.4.1.tgz#dcab0b660e9c4ed63a7582db68ed4a77c862cb93"
-  integrity sha512-vh5EWqnsayZa/JwUznqDaPJz39jznx/YDbyBuVJntv735tKXKwEUZZb2jYEldOg+NKWZwtALjGMrNeGBmqFoEw==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    "@ctrl/tinycolor" "^3.6.0"
-    classnames "^2.2.6"
-    rc-util "^5.30.0"
-
-"@rc-component/context@^1.3.0":
-  version "1.3.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@rc-component/context/-/context-1.3.0.tgz#608ccf0abcbec9406751b17a4b35db08e481c110"
-  integrity sha512-6QdaCJ7Wn5UZLJs15IEfqy4Ru3OaL5ctqpQYWd5rlfV9wwzrzdt6+kgAQZV/qdB0MUPN4nhyBfRembQCIvBf+w==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    rc-util "^5.27.0"
-
-"@rc-component/mini-decimal@^1.0.1":
-  version "1.1.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@rc-component/mini-decimal/-/mini-decimal-1.1.0.tgz#7b7a362b14a0a54cb5bc6fd2b82731f29f11d9b0"
-  integrity sha512-jS4E7T9Li2GuYwI6PyiVXmxTiM6b07rlD9Ge8uGZSCz3WlzcG5ZK7g5bbuKNeZ9pgUuPK/5guV781ujdVpm4HQ==
-  dependencies:
-    "@babel/runtime" "^7.18.0"
-
-"@rc-component/mutate-observer@^1.0.0":
-  version "1.0.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@rc-component/mutate-observer/-/mutate-observer-1.0.0.tgz#ce99af3239ed9c74ee3e7302f1c67098de920b46"
-  integrity sha512-okqRJSfNisXdI6CUeOLZC5ukBW/8kir2Ii4PJiKpUt+3+uS7dxwJUMxsUZquxA1rQuL8YcEmKVp/TCnR+yUdZA==
-  dependencies:
-    "@babel/runtime" "^7.18.0"
-    classnames "^2.3.2"
-    rc-util "^5.24.4"
-
-"@rc-component/portal@^1.0.0-8", "@rc-component/portal@^1.0.0-9", "@rc-component/portal@^1.0.2", "@rc-component/portal@^1.1.0", "@rc-component/portal@^1.1.1":
-  version "1.1.2"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@rc-component/portal/-/portal-1.1.2.tgz#55db1e51d784e034442e9700536faaa6ab63fc71"
-  integrity sha512-6f813C0IsasTZms08kfA8kPAGxbbkYToa8ALaiDIGGECU4i9hj8Plgbx0sNJDrey3EtHO30hmdaxtT0138xZcg==
-  dependencies:
-    "@babel/runtime" "^7.18.0"
-    classnames "^2.3.2"
-    rc-util "^5.24.4"
-
-"@rc-component/tour@~1.8.1":
-  version "1.8.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@rc-component/tour/-/tour-1.8.1.tgz#a820714b66cb17f317ebd21ac1b45733d2b99183"
-  integrity sha512-CsrQnfKgNArxx2j1RNHVLZgVA+rLrEj06lIsl4KSynMqADsqz8eKvVkr0F3p9PA10948M6WEEZt5a/FGAbGR2A==
-  dependencies:
-    "@babel/runtime" "^7.18.0"
-    "@rc-component/portal" "^1.0.0-9"
-    "@rc-component/trigger" "^1.3.6"
-    classnames "^2.3.2"
-    rc-util "^5.24.4"
-
-"@rc-component/trigger@^1.0.4", "@rc-component/trigger@^1.15.0", "@rc-component/trigger@^1.3.6", "@rc-component/trigger@^1.5.0", "@rc-component/trigger@^1.6.2", "@rc-component/trigger@^1.7.0":
-  version "1.15.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/@rc-component/trigger/-/trigger-1.15.1.tgz#2e615ddd6e69f82bf0533c0cc31af26cc316cda1"
-  integrity sha512-U1F9WsIMLXB2JLjLSEa6uWifmTX2vxQ1r0RQCLnor8d/83e3U7TuclNbcWcM/eGcgrT2YUZid3TLDDKbDOHmLg==
-  dependencies:
-    "@babel/runtime" "^7.18.3"
-    "@rc-component/portal" "^1.1.0"
-    classnames "^2.3.2"
-    rc-align "^4.0.0"
-    rc-motion "^2.0.0"
-    rc-resize-observer "^1.3.1"
-    rc-util "^5.33.0"
 
 "@sinclair/typebox@^0.27.8":
   version "0.27.8"
@@ -2433,60 +2303,6 @@ ansi-styles@^4.0.0, ansi-styles@^4.1.0:
   dependencies:
     color-convert "^2.0.1"
 
-antd@^5.6.1:
-  version "5.8.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/antd/-/antd-5.8.1.tgz#4d3ce5f985c447eeeca470315a6e3aa0f3de4c76"
-  integrity sha512-6BEc6QDLzk01RrUjzIQ50oW2+mpscfBU1tusECi4OwEKgZmvmaW8ErvEDWtTHezIdr7dEMOEJlOZaOl8eXuaIw==
-  dependencies:
-    "@ant-design/colors" "^7.0.0"
-    "@ant-design/cssinjs" "^1.16.0"
-    "@ant-design/icons" "^5.2.2"
-    "@ant-design/react-slick" "~1.0.0"
-    "@babel/runtime" "^7.18.3"
-    "@ctrl/tinycolor" "^3.6.0"
-    "@rc-component/color-picker" "~1.4.0"
-    "@rc-component/mutate-observer" "^1.0.0"
-    "@rc-component/tour" "~1.8.1"
-    "@rc-component/trigger" "^1.15.0"
-    classnames "^2.2.6"
-    copy-to-clipboard "^3.2.0"
-    dayjs "^1.11.1"
-    qrcode.react "^3.1.0"
-    rc-cascader "~3.14.0"
-    rc-checkbox "~3.1.0"
-    rc-collapse "~3.7.0"
-    rc-dialog "~9.1.0"
-    rc-drawer "~6.2.0"
-    rc-dropdown "~4.1.0"
-    rc-field-form "~1.36.0"
-    rc-image "~7.1.0"
-    rc-input "~1.1.0"
-    rc-input-number "~8.0.2"
-    rc-mentions "~2.5.0"
-    rc-menu "~9.10.0"
-    rc-motion "^2.7.3"
-    rc-notification "~5.0.4"
-    rc-pagination "~3.5.0"
-    rc-picker "~3.12.0"
-    rc-progress "~3.4.1"
-    rc-rate "~2.12.0"
-    rc-resize-observer "^1.2.0"
-    rc-segmented "~2.2.0"
-    rc-select "~14.7.1"
-    rc-slider "~10.1.0"
-    rc-steps "~6.0.1"
-    rc-switch "~4.1.0"
-    rc-table "~7.32.1"
-    rc-tabs "~12.9.0"
-    rc-textarea "~1.3.3"
-    rc-tooltip "~6.0.0"
-    rc-tree "~5.7.6"
-    rc-tree-select "~5.11.0"
-    rc-upload "~4.3.0"
-    rc-util "^5.32.0"
-    scroll-into-view-if-needed "^3.0.3"
-    throttle-debounce "^5.0.0"
-
 anymatch@^2.0.0:
   version "2.0.0"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/anymatch/-/anymatch-2.0.0.tgz#bcb24b4f37934d9aa7ac17b4adaf89e7c76ef2eb"
@@ -2507,26 +2323,24 @@ arg@^4.1.0:
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/arg/-/arg-4.1.3.tgz#269fc7ad5b8e42cb63c896d5666017261c144089"
   integrity sha512-58S9QDqG0Xx27YwPSt9fJxivjYl432YCwfDMfZ+71RAqUrZef7LrKQZ3LHLOwCS4FLNBplP533Zx895SeOCHvA==
 
-"argo-ui@git+https://github.com/argoproj/argo-ui.git#87d27fb1cb4f6e3ac4a49f85747e471b2efa7512":
+"argo-ui@git+https://bbgithub.dev.bloomberg.com/workflow-orchestration/argo-ui.git#v2.5.1.1":
   version "1.0.0"
-  resolved "git+https://github.com/argoproj/argo-ui.git#87d27fb1cb4f6e3ac4a49f85747e471b2efa7512"
+  resolved "git+https://bbgithub.dev.bloomberg.com/workflow-orchestration/argo-ui.git#7246755f1551fb80e5622d596274bcb3b3897a19"
   dependencies:
     "@fortawesome/fontawesome-free" "^6.2.1"
     "@tippy.js/react" "^3.1.1"
-    antd "^5.6.1"
     classnames "^2.2.6"
-    core-js "^3.30.2"
+    core-js "^3.32.1"
     foundation-sites "^6.4.3"
     history "^4.10.1"
     moment "^2.29.4"
-    moment-timezone "^0.5.34"
     prop-types "^15.8.1"
     react-autocomplete "1.8.1"
     react-form "^2.16.0"
     react-helmet "^6.1.0"
     react-router-dom "^4.2.2"
     react-toastify "9.0.8"
-    rxjs "^7.5.6"
+    rxjs "^7.8.1"
     typescript "^4.9.5"
     uuid "^9.0.0"
     xterm "^4.19.0"
@@ -2568,11 +2382,6 @@ array-flatten@^2.1.2:
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/array-flatten/-/array-flatten-2.1.2.tgz#24ef80a28c1a893617e2149b0c6d0d788293b099"
   integrity sha512-hNfzcOV8W4NdualtqBFPyVO+54DSJuZGY9qT4pRroB6S9e3iiido2ISIC5h9R2sPJ8H3FHCIiEnsv1lPXO3KtQ==
 
-array-tree-filter@^2.1.0:
-  version "2.1.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/array-tree-filter/-/array-tree-filter-2.1.0.tgz#873ac00fec83749f255ac8dd083814b4f6329190"
-  integrity sha512-4ROwICNlNw/Hqa9v+rk5h22KjmzB1JGTMVKP2AKJBOCgb0yL0ASf0+YvCcLNNwquOHNX48jkeZIJ3a+oOQqKcw==
-
 array-unique@^0.3.2:
   version "0.3.2"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/array-unique/-/array-unique-0.3.2.tgz#a894b75d4bc4f6cd679ef3244a9fd8f46ae2d428"
@@ -2587,11 +2396,6 @@ assign-symbols@^1.0.0:
   version "1.0.0"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/assign-symbols/-/assign-symbols-1.0.0.tgz#59667f41fadd4f20ccbc2bb96b8d4f7f78ec0367"
   integrity sha1-WWZ/QfrdTyDMvCu5a41Pf3jsA2c=
-
-async-validator@^4.1.0:
-  version "4.2.5"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/async-validator/-/async-validator-4.2.5.tgz#c96ea3332a521699d0afaaceed510a54656c6339"
-  integrity sha512-7HhHjtERjqlNbZtqNqy2rckN/SpOOlmDliet+lP7k+eKZEjPk3DgyeU9lIXLdeLz0uBbbVp+9Qdow9wJWgwwfg==
 
 asynckit@^0.4.0:
   version "0.4.0"
@@ -2615,10 +2419,10 @@ autolinker@^3.11.0:
   dependencies:
     tslib "^2.3.0"
 
-axios@^1.6.4:
-  version "1.7.8"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/axios/-/axios-1.7.8.tgz#1997b1496b394c21953e68c14aaa51b7b5de3d6e"
-  integrity sha512-Uu0wb7KNqK2t5K+YQyVCLM76prD5sRFjKHbJYCP1J7JFGEQ6nN7HWn9+04LAeiJ3ji54lgS/gZCH1oxyrf1SPw==
+axios@^1.4.0:
+  version "1.7.7"
+  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/axios/-/axios-1.7.7.tgz#2f554296f9892a72ac8d8e4c5b79c14a91d0a47f"
+  integrity sha512-S4kL7XrjgBmvdGut0sN3yJxqYzrDOnivkBiN0OFs6hLiUam3UPvswUo0kqGyhqUZGEOytHyumEdXsAkgCOUf3Q==
   dependencies:
     follow-redirects "^1.15.6"
     form-data "^4.0.0"
@@ -3108,7 +2912,7 @@ class-utils@^0.3.5:
     isobject "^3.0.0"
     static-extend "^0.1.1"
 
-classnames@*, classnames@2.x, classnames@^2.2.1, classnames@^2.2.3, classnames@^2.2.5, classnames@^2.2.6, classnames@^2.3.1, classnames@^2.3.2:
+classnames@*, classnames@^2.2.5, classnames@^2.2.6, classnames@^2.3.1, classnames@^2.3.2:
   version "2.3.2"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/classnames/-/classnames-2.3.2.tgz#351d813bf0137fcc6a76a16b88208d2560a0d924"
   integrity sha512-CSbhY4cFEJRe6/GQzIk5qXZ4Jeg5pcsP7b5peFSDpffpe1cqjASH/n9UTjBwOp6XpMSTwQ8Za2K5V02ueA7Tmw==
@@ -3246,11 +3050,6 @@ compression@^1.7.4:
     safe-buffer "5.1.2"
     vary "~1.1.2"
 
-compute-scroll-into-view@^3.0.2:
-  version "3.0.3"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/compute-scroll-into-view/-/compute-scroll-into-view-3.0.3.tgz#c418900a5c56e2b04b885b54995df164535962b1"
-  integrity sha512-nadqwNxghAGTamwIqQSG433W6OADZx2vCo3UXHNrzTRHK/htu+7+L0zhjEoaeaQVNAi3YgqWDv8+tzf0hRfR+A==
-
 concat-map@0.0.1:
   version "0.0.1"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
@@ -3303,7 +3102,7 @@ copy-descriptor@^0.1.0:
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/copy-descriptor/-/copy-descriptor-0.1.1.tgz#676f6eb3c39997c2ee1ac3a924fd6124748f578d"
   integrity sha1-Z29us8OZl8LuGsOpJP1hJHSPV40=
 
-copy-to-clipboard@^3.2.0, copy-to-clipboard@^3.3.1:
+copy-to-clipboard@^3.3.1:
   version "3.3.3"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/copy-to-clipboard/-/copy-to-clipboard-3.3.3.tgz#55ac43a1db8ae639a4bd99511c148cdd1b83a1b0"
   integrity sha512-2KV8NhB5JqC3ky0r9PMCAZKbUHSwtEo4CwCs0KXgruG43gX5PMqDEBbVU4OUzw2MuAWUfsuFmWvEKG5QRfSnJA==
@@ -3339,10 +3138,10 @@ core-js@^2.4.0:
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/core-js/-/core-js-2.6.12.tgz#d9333dfa7b065e347cc5682219d6f690859cc2ec"
   integrity sha512-Kb2wC0fvsWfQrgk8HU5lW6U/Lcs8+9aaYcy4ZFc6DDlo4nZ7n70dEgE5rtR0oG6ufKDUnrwfWL1mXR5ljDatrQ==
 
-core-js@^3.30.2:
-  version "3.32.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/core-js/-/core-js-3.32.0.tgz#7643d353d899747ab1f8b03d2803b0312a0fb3b6"
-  integrity sha512-rd4rYZNlF3WuoYuRIDEmbR/ga9CeuWX9U05umAvgrrZoHY4Z++cp/xwPQMvUpBB4Ag6J8KfD80G0zwCyaSxDww==
+core-js@^3.32.1:
+  version "3.39.0"
+  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/core-js/-/core-js-3.39.0.tgz#57f7647f4d2d030c32a72ea23a0555b2eaa30f83"
+  integrity sha512-raM0ew0/jJUqkJ0E6e8UDtl+y/7ktFivgWvqw8dNSQeNWoSDLvQ1H/RN3aPXB9tBd4/FhyR4RDPGhsNIMsAn7g==
 
 core-util-is@~1.0.0:
   version "1.0.2"
@@ -3429,11 +3228,6 @@ csstype@^2.2.0:
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/csstype/-/csstype-2.6.14.tgz#004822a4050345b55ad4dcc00be1d9cf2f4296de"
   integrity sha512-2mSc+VEpGPblzAxyeR+vZhJKgYg0Og0nnRi7pmRXFYYxSfnOnW8A5wwQb4n4cE2nIOzqKOAzLCaEX6aBmNEv8A==
 
-csstype@^3.0.10:
-  version "3.1.2"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/csstype/-/csstype-3.1.2.tgz#1d4bf9d572f11c14031f0436e1c10bc1f571f50b"
-  integrity sha512-I7K1Uu0MBPzaFKg4nI5Q7Vs2t+3gWWW648spaF+Rg7pI9ds18Ugn+lvg4SHczUdKlHI5LWBXyqfS8+DufyBsgQ==
-
 dagre@^0.8.5:
   version "0.8.5"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/dagre/-/dagre-0.8.5.tgz#ba30b0055dac12b6c1fcc247817442777d06afee"
@@ -3457,11 +3251,6 @@ date-fns@^2.0.1, date-fns@^2.30.0:
   integrity sha512-fnULvOpxnC5/Vg3NCiWelDsLiUc9bRwAPs/+LfTLNvetFCtCTN+yQz15C/fs4AwX1R9K5GLtLfn8QW+dWisaAw==
   dependencies:
     "@babel/runtime" "^7.21.0"
-
-dayjs@^1.11.1:
-  version "1.11.9"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/dayjs/-/dayjs-1.11.9.tgz#9ca491933fadd0a60a2c19f6c237c03517d71d1a"
-  integrity sha512-QvzAURSbQ0pKdIye2txOzNaHmxtUBXerpY0FJsFXUMKbIZeFm5ht1LS/jFsrncjnmtv8HsG0W2g6c0zUjZWmpA==
 
 debug@2.6.9, debug@^2.2.0, debug@^2.3.3:
   version "2.6.9"
@@ -3614,11 +3403,6 @@ dns-packet@^5.2.2:
   integrity "sha1-roiK1CWp0UeKBnQlarhm3hASzy8= sha512-l4gcSouhcgIKRvyy99RNVOgxXiicE+2jZoNmaNmZ6JXiGajBOJAesk1OBlJuM5k2c+eudGdLxDqXuPCKIj6kpw=="
   dependencies:
     "@leichtgewicht/ip-codec" "^2.0.1"
-
-dom-align@^1.7.0:
-  version "1.12.2"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/dom-align/-/dom-align-1.12.2.tgz#0f8164ebd0c9c21b0c790310493cd855892acd4b"
-  integrity sha512-pHuazgqrsTFrGU2WLDdXxCFabkdQDx72ddkraZNih1KsMcN5qsRSTR9O4VJRlwTPCPb5COYg3LOfiMHHcPInHg==
 
 dom-converter@^0.2.0:
   version "0.2.0"
@@ -5489,13 +5273,6 @@ json-schema-traverse@^1.0.0:
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz#ae7bcb3656ab77a73ba5c49bf654f38e6b6860e2"
   integrity sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==
 
-json2mq@^0.2.0:
-  version "0.2.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/json2mq/-/json2mq-0.2.0.tgz#b637bd3ba9eabe122c83e9720483aeb10d2c904a"
-  integrity sha1-tje9O6nqvhIsg+lyBIOusQ0skEo=
-  dependencies:
-    string-convert "^0.2.0"
-
 json5@2.x, json5@^2.1.2, json5@^2.2.3:
   version "2.2.3"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/json5/-/json5-2.2.3.tgz#78cd6f1a19bdc12b73db5ad0c61efd66c1e29283"
@@ -5603,11 +5380,6 @@ lodash-es@^4.2.1:
   version "4.17.21"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/lodash-es/-/lodash-es-4.17.21.tgz#43e626c46e6591b7750beb2b50117390c609e3ee"
   integrity sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==
-
-lodash.camelcase@^4.3.0:
-  version "4.3.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/lodash.camelcase/-/lodash.camelcase-4.3.0.tgz#b28aa6288a2b9fc651035c7711f65ab6190331a6"
-  integrity sha512-TwuEnCnxbc3rAvhf/LbG7tJUDzhqXyFnv3dtzLOPgCG/hODL7WFnsbwktkD7yUV0RrreP/l1PALq/YSg6VvjlA==
 
 lodash.debounce@^4, lodash.debounce@^4.0.8:
   version "4.0.8"
@@ -5842,7 +5614,7 @@ mkdirp@^0.5.1:
   dependencies:
     minimist "^1.2.6"
 
-moment-timezone@^0.5.34, moment-timezone@^0.5.43:
+moment-timezone@^0.5.43:
   version "0.5.44"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/moment-timezone/-/moment-timezone-0.5.44.tgz#a64a4e47b68a43deeab5ae4eb4f82da77cdf595f"
   integrity sha512-nv3YpzI/8lkQn0U6RkLd+f0W/zy/JnoR5/EyPz/dNkPTBjA2jNLCVxaiQ8QpeLymhSZvX0wCL5s27NQWdOPwAw==
@@ -6446,11 +6218,6 @@ punycode@^2.1.0, punycode@^2.1.1:
   version "2.1.1"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/punycode/-/punycode-2.1.1.tgz#b58b010ac40c22c5657616c8d2c2c02c7bf479ec"
 
-qrcode.react@^3.1.0:
-  version "3.1.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/qrcode.react/-/qrcode.react-3.1.0.tgz#5c91ddc0340f768316fbdb8fff2765134c2aecd8"
-  integrity sha512-oyF+Urr3oAMUG/OiOuONL3HXM+53wvuH3mtIWQrYmsXoAq0DkvZp2RYUWFSMFtbdOpuS++9v+WAkzNVkMlNW6Q==
-
 qs@6.10.3:
   version "6.10.3"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/qs/-/qs-6.10.3.tgz#d6cde1b2ffca87b5aa57889816c5f81535e22e8e"
@@ -6522,366 +6289,6 @@ raw-loader@^4.0.2:
   dependencies:
     loader-utils "^2.0.0"
     schema-utils "^3.0.0"
-
-rc-align@^4.0.0:
-  version "4.0.11"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-align/-/rc-align-4.0.11.tgz#8198c62db266bc1b8ef05e56c13275bf72628a5e"
-  integrity sha512-n9mQfIYQbbNTbefyQnRHZPWuTEwG1rY4a9yKlIWHSTbgwI+XUMGRYd0uJ5pE2UbrNX0WvnMBA1zJ3Lrecpra/A==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    classnames "2.x"
-    dom-align "^1.7.0"
-    lodash "^4.17.21"
-    rc-util "^5.3.0"
-    resize-observer-polyfill "^1.5.1"
-
-rc-cascader@~3.14.0:
-  version "3.14.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-cascader/-/rc-cascader-3.14.1.tgz#495f00b8d047a54fa64df3102f4d6e4a664feaf2"
-  integrity sha512-fCsgjLIQqYZMhFj9UT+x2ZW4uobx7OP5yivcn6Xto5fuxHaldphsryzCeUVmreQOHEo0RP+032Ip9RDzrKVKJA==
-  dependencies:
-    "@babel/runtime" "^7.12.5"
-    array-tree-filter "^2.1.0"
-    classnames "^2.3.1"
-    rc-select "~14.7.0"
-    rc-tree "~5.7.0"
-    rc-util "^5.35.0"
-
-rc-checkbox@~3.1.0:
-  version "3.1.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-checkbox/-/rc-checkbox-3.1.0.tgz#6be0d9d8de2cc96fb5e37f9036a1c3e360d0a42d"
-  integrity sha512-PAwpJFnBa3Ei+5pyqMMXdcKYKNBMS+TvSDiLdDnARnMJHC8ESxwPfm4Ao1gJiKtWLdmGfigascnCpwrHFgoOBQ==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    classnames "^2.3.2"
-    rc-util "^5.25.2"
-
-rc-collapse@~3.7.0:
-  version "3.7.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-collapse/-/rc-collapse-3.7.1.tgz#bda1f7f80adccf3433c1c15d4d9f9ca09910c727"
-  integrity sha512-N/7ejyiTf3XElNJBBpxqnZBUuMsQWEOPjB2QkfNvZ/Ca54eAvJXuOD1EGbCWCk2m7v/MSxku7mRpdeaLOCd4Gg==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    classnames "2.x"
-    rc-motion "^2.3.4"
-    rc-util "^5.27.0"
-
-rc-dialog@~9.1.0:
-  version "9.1.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-dialog/-/rc-dialog-9.1.0.tgz#6bf6fcc0453503b7643e54a5a445e835e3850649"
-  integrity sha512-5ry+JABAWEbaKyYsmITtrJbZbJys8CtMyzV8Xn4LYuXMeUx5XVHNyJRoqLFE4AzBuXXzOWeaC49cg+XkxK6kHA==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    "@rc-component/portal" "^1.0.0-8"
-    classnames "^2.2.6"
-    rc-motion "^2.3.0"
-    rc-util "^5.21.0"
-
-rc-drawer@~6.2.0:
-  version "6.2.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-drawer/-/rc-drawer-6.2.0.tgz#fddf4825b0fa9d60e317b996f70278d594d1f668"
-  integrity sha512-spPkZ3WvP0U0vy5dyzSwlUJ/+vLFtjP/cTwSwejhQRoDBaexSZHsBhELoCZcEggI7LQ7typmtG30lAue2HEhvA==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    "@rc-component/portal" "^1.1.1"
-    classnames "^2.2.6"
-    rc-motion "^2.6.1"
-    rc-util "^5.21.2"
-
-rc-dropdown@~4.1.0:
-  version "4.1.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-dropdown/-/rc-dropdown-4.1.0.tgz#418a68939631520de80d0865d02b440eeeb4168e"
-  integrity sha512-VZjMunpBdlVzYpEdJSaV7WM7O0jf8uyDjirxXLZRNZ+tAC+NzD3PXPEtliFwGzVwBBdCmGuSqiS9DWcOLxQ9tw==
-  dependencies:
-    "@babel/runtime" "^7.18.3"
-    "@rc-component/trigger" "^1.7.0"
-    classnames "^2.2.6"
-    rc-util "^5.17.0"
-
-rc-field-form@~1.36.0:
-  version "1.36.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-field-form/-/rc-field-form-1.36.1.tgz#2d4aae0e0ecc2a27efb6a03c0a215852d5146ea8"
-  integrity sha512-v6CKM4aQ0+U9PPB1y42TB8+n5nCcdJOayJzGUJW5t/+yXLMRyo3SKH9QvHpL5XQY86esuleb7kBAzGxt4IKkvg==
-  dependencies:
-    "@babel/runtime" "^7.18.0"
-    async-validator "^4.1.0"
-    rc-util "^5.32.2"
-
-rc-image@~7.1.0:
-  version "7.1.2"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-image/-/rc-image-7.1.2.tgz#3844b0cbf5d3110781c83265b4660b4b70df4e5a"
-  integrity sha512-Ah2MQ71Z+9SSOL2bK0AvJQ+BLYNk+Kb3k1U7dKY7+ziweDcJd3L5MqYXQXbNY/EEmgr50207rAzLHO8cn2DP6w==
-  dependencies:
-    "@babel/runtime" "^7.11.2"
-    "@rc-component/portal" "^1.0.2"
-    classnames "^2.2.6"
-    rc-dialog "~9.1.0"
-    rc-motion "^2.6.2"
-    rc-util "^5.34.1"
-
-rc-input-number@~8.0.2:
-  version "8.0.4"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-input-number/-/rc-input-number-8.0.4.tgz#d33cfe4126e10f4771fe11a40797222c76d6598f"
-  integrity sha512-TP+G5b7mZtbwXJ/YEZXF/OgbEZ6iqD4+RSuxZJ8VGKGXDcdt0FKIvpFoNQr/knspdFC4OxA0OfsWfFWfN4XSyA==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    "@rc-component/mini-decimal" "^1.0.1"
-    classnames "^2.2.5"
-    rc-input "~1.1.0"
-    rc-util "^5.28.0"
-
-rc-input@~1.1.0:
-  version "1.1.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-input/-/rc-input-1.1.1.tgz#af33b49272220f6d42852d21b22e84c2dc1a87e6"
-  integrity sha512-NTR1Z4em681L8/ewb2KR80RykSmN8I2mzqzJDCoUmTrV1BB9Hk5d7ha4TnfgdEPPL148N+603sW2LExSXk1IbA==
-  dependencies:
-    "@babel/runtime" "^7.11.1"
-    classnames "^2.2.1"
-    rc-util "^5.18.1"
-
-rc-mentions@~2.5.0:
-  version "2.5.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-mentions/-/rc-mentions-2.5.0.tgz#8b936e497e0deb922f40df46e42efc3f596ec207"
-  integrity sha512-rERXsbUTNVrb5T/iDC0ki/SRGWJnOVraDy6O25Us3FSpuUZ3uq2TPZB4fRk0Hss5kyiEPzz2sprhkI4b+F4jUw==
-  dependencies:
-    "@babel/runtime" "^7.22.5"
-    "@rc-component/trigger" "^1.5.0"
-    classnames "^2.2.6"
-    rc-input "~1.1.0"
-    rc-menu "~9.10.0"
-    rc-textarea "~1.3.0"
-    rc-util "^5.22.5"
-
-rc-menu@~9.10.0:
-  version "9.10.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-menu/-/rc-menu-9.10.0.tgz#5e0982e26786d67c8ebdba50406b197884c749a7"
-  integrity sha512-g27kpXaAoJh/fkPZF65/d4V+w4DhDeqomBdPcGnkFAcJnEM4o21TnVccrBUoDedLKzC7wJRw1Q7VTqEsfEufmw==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    "@rc-component/trigger" "^1.6.2"
-    classnames "2.x"
-    rc-motion "^2.4.3"
-    rc-overflow "^1.3.1"
-    rc-util "^5.27.0"
-
-rc-motion@^2.0.0, rc-motion@^2.0.1, rc-motion@^2.3.0, rc-motion@^2.3.4, rc-motion@^2.4.3, rc-motion@^2.4.4, rc-motion@^2.6.0, rc-motion@^2.6.1, rc-motion@^2.6.2, rc-motion@^2.7.3:
-  version "2.7.3"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-motion/-/rc-motion-2.7.3.tgz#126155bb3e687174fb3b92fddade2835c963b04d"
-  integrity sha512-2xUvo8yGHdOHeQbdI8BtBsCIrWKchEmFEIskf0nmHtJsou+meLd/JE+vnvSX2JxcBrJtXY2LuBpxAOxrbY/wMQ==
-  dependencies:
-    "@babel/runtime" "^7.11.1"
-    classnames "^2.2.1"
-    rc-util "^5.21.0"
-
-rc-notification@~5.0.4:
-  version "5.0.5"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-notification/-/rc-notification-5.0.5.tgz#33a86864b7491749742cfaef0df0117a9b967926"
-  integrity sha512-uEz2jggourwv/rR0obe7RHEa63UchqX4k+e+Qt2c3LaY7U9Tc+L6ANhzgCKYSA/afm0ebjmNZHoB5Cv47xEOcA==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    classnames "2.x"
-    rc-motion "^2.6.0"
-    rc-util "^5.20.1"
-
-rc-overflow@^1.3.1:
-  version "1.3.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-overflow/-/rc-overflow-1.3.1.tgz#03224cf90c66aa570eb0deeb4eff6cc96401e979"
-  integrity sha512-RY0nVBlfP9CkxrpgaLlGzkSoh9JhjJLu6Icqs9E7CW6Ewh9s0peF9OHIex4OhfoPsR92LR0fN6BlCY9Z4VoUtA==
-  dependencies:
-    "@babel/runtime" "^7.11.1"
-    classnames "^2.2.1"
-    rc-resize-observer "^1.0.0"
-    rc-util "^5.19.2"
-
-rc-pagination@~3.5.0:
-  version "3.5.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-pagination/-/rc-pagination-3.5.0.tgz#8692a62f3c24d8bfe58f1b3059bc5262ddce5d87"
-  integrity sha512-lUBVtVVUn7gGsq4mTyVpcZQr+AMcljbMiL/HcCmSdFrcsK0iZVKwwbXDxhz2IV0JXUs9Hzepr5sQFaF+9ad/pQ==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    classnames "^2.2.1"
-    rc-util "^5.32.2"
-
-rc-picker@~3.12.0:
-  version "3.12.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-picker/-/rc-picker-3.12.0.tgz#9fa24cfeaa1c7e0265be8a7a14c609796c558ef2"
-  integrity sha512-SsEhK4hbjAh3pvlqujIQaMcx6mLAwc0KN0TS9dJ0rtwGuUnSDa/mKgna/LjZlOT7U//b+dIH5BLSZttpklRG9A==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    "@rc-component/trigger" "^1.5.0"
-    classnames "^2.2.1"
-    rc-util "^5.30.0"
-
-rc-progress@~3.4.1:
-  version "3.4.2"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-progress/-/rc-progress-3.4.2.tgz#f8df9ee95e790490171ab6b31bf07303cdc79980"
-  integrity sha512-iAGhwWU+tsayP+Jkl9T4+6rHeQTG9kDz8JAHZk4XtQOcYN5fj9H34NXNEdRdZx94VUDHMqCb1yOIvi8eJRh67w==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    classnames "^2.2.6"
-    rc-util "^5.16.1"
-
-rc-rate@~2.12.0:
-  version "2.12.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-rate/-/rc-rate-2.12.0.tgz#0182deffed3b009cdcc61660da8746c39ed91ed5"
-  integrity sha512-g092v5iZCdVzbjdn28FzvWebK2IutoVoiTeqoLTj9WM7SjA/gOJIw5/JFZMRyJYYVe1jLAU2UhAfstIpCNRozg==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    classnames "^2.2.5"
-    rc-util "^5.0.1"
-
-rc-resize-observer@^1.0.0, rc-resize-observer@^1.1.0, rc-resize-observer@^1.2.0, rc-resize-observer@^1.3.1:
-  version "1.3.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-resize-observer/-/rc-resize-observer-1.3.1.tgz#b61b9f27048001243617b81f95e53d7d7d7a6a3d"
-  integrity sha512-iFUdt3NNhflbY3mwySv5CA1TC06zdJ+pfo0oc27xpf4PIOvfZwZGtD9Kz41wGYqC4SLio93RVAirSSpYlV/uYg==
-  dependencies:
-    "@babel/runtime" "^7.20.7"
-    classnames "^2.2.1"
-    rc-util "^5.27.0"
-    resize-observer-polyfill "^1.5.1"
-
-rc-segmented@~2.2.0:
-  version "2.2.2"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-segmented/-/rc-segmented-2.2.2.tgz#a34f12ce6c0975fc3042ae7656bcd18e1744798e"
-  integrity sha512-Mq52M96QdHMsNdE/042ibT5vkcGcD5jxKp7HgPC2SRofpia99P5fkfHy1pEaajLMF/kj0+2Lkq1UZRvqzo9mSA==
-  dependencies:
-    "@babel/runtime" "^7.11.1"
-    classnames "^2.2.1"
-    rc-motion "^2.4.4"
-    rc-util "^5.17.0"
-
-rc-select@~14.7.0, rc-select@~14.7.1:
-  version "14.7.3"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-select/-/rc-select-14.7.3.tgz#260bb8611b9643abdc607060f30c141958519de9"
-  integrity sha512-s0SQ6voafPXRYLSmHtB8GrkMJsXi2xS5vigzeaRDEgzHyj6xb2omUTinP7nrTCkBveEzrfy7eV/OillDzmcFTw==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    "@rc-component/trigger" "^1.5.0"
-    classnames "2.x"
-    rc-motion "^2.0.1"
-    rc-overflow "^1.3.1"
-    rc-util "^5.16.1"
-    rc-virtual-list "^3.5.2"
-
-rc-slider@~10.1.0:
-  version "10.1.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-slider/-/rc-slider-10.1.1.tgz#5e82036e60b61021aba3ea0e353744dd7c74e104"
-  integrity sha512-gn8oXazZISEhnmRinI89Z/JD/joAaM35jp+gDtIVSTD/JJMCCBqThqLk1SVJmvtfeiEF/kKaFY0+qt4SDHFUDw==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    classnames "^2.2.5"
-    rc-util "^5.27.0"
-
-rc-steps@~6.0.1:
-  version "6.0.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-steps/-/rc-steps-6.0.1.tgz#c2136cd0087733f6d509209a84a5c80dc29a274d"
-  integrity sha512-lKHL+Sny0SeHkQKKDJlAjV5oZ8DwCdS2hFhAkIjuQt1/pB81M0cA0ErVFdHq9+jmPmFw1vJB2F5NBzFXLJxV+g==
-  dependencies:
-    "@babel/runtime" "^7.16.7"
-    classnames "^2.2.3"
-    rc-util "^5.16.1"
-
-rc-switch@~4.1.0:
-  version "4.1.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-switch/-/rc-switch-4.1.0.tgz#f37d81b4e0c5afd1274fd85367b17306bf25e7d7"
-  integrity sha512-TI8ufP2Az9oEbvyCeVE4+90PDSljGyuwix3fV58p7HV2o4wBnVToEyomJRVyTaZeqNPAp+vqeo4Wnj5u0ZZQBg==
-  dependencies:
-    "@babel/runtime" "^7.21.0"
-    classnames "^2.2.1"
-    rc-util "^5.30.0"
-
-rc-table@~7.32.1:
-  version "7.32.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-table/-/rc-table-7.32.1.tgz#7130a94727ac3870a6ddb9778b6f8496e388bce0"
-  integrity sha512-fHMQteKMocUC9I9Vex3eBLH7QsiaMR/qtzh3B1Ty2PoNGwVTwVdDFyRL05zch+JU3KnNNczgQeVvtf/p//gdrQ==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    "@rc-component/context" "^1.3.0"
-    classnames "^2.2.5"
-    rc-resize-observer "^1.1.0"
-    rc-util "^5.27.1"
-
-rc-tabs@~12.9.0:
-  version "12.9.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-tabs/-/rc-tabs-12.9.0.tgz#6d9af43d8ad2c47be00c75bee92417a4842d29d2"
-  integrity sha512-2HnVowgMVrq0DfQtyu4mCd9E6pXlWNdM6VaDvOOHMsLYqPmpY+7zBqUC6YrrQ9xYXHciTS0e7TtjOHIvpVCHLQ==
-  dependencies:
-    "@babel/runtime" "^7.11.2"
-    classnames "2.x"
-    rc-dropdown "~4.1.0"
-    rc-menu "~9.10.0"
-    rc-motion "^2.6.2"
-    rc-resize-observer "^1.0.0"
-    rc-util "^5.16.0"
-
-rc-textarea@~1.3.0, rc-textarea@~1.3.3:
-  version "1.3.4"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-textarea/-/rc-textarea-1.3.4.tgz#e77baf2202ac8f7e34a50ec9e15dd1dcb1501455"
-  integrity sha512-wn0YjTpvcVolcfXa0HtzL+jgV2QcwtfB29RwNAKj8hMgZOju1V24M3TfEDjABeQEAQbUGbjMbISREOX/YSVKhg==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    classnames "^2.2.1"
-    rc-input "~1.1.0"
-    rc-resize-observer "^1.0.0"
-    rc-util "^5.27.0"
-
-rc-tooltip@~6.0.0:
-  version "6.0.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-tooltip/-/rc-tooltip-6.0.1.tgz#6a5e33bd6c3f6afe8851ea90e7af43e5c26b3cc6"
-  integrity sha512-MdvPlsD1fDSxKp9+HjXrc/CxLmA/s11QYIh1R7aExxfodKP7CZA++DG1AjrW80F8IUdHYcR43HAm0Y2BYPelHA==
-  dependencies:
-    "@babel/runtime" "^7.11.2"
-    "@rc-component/trigger" "^1.0.4"
-    classnames "^2.3.1"
-
-rc-tree-select@~5.11.0:
-  version "5.11.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-tree-select/-/rc-tree-select-5.11.0.tgz#063d228db9a68acef297e6c3577137018a040cda"
-  integrity sha512-9vFRaLL9BMNUmR83OW4ACynZ2KsOWmdrYVcjqWWpA1s2SbDw+XuuOfPWd8JKGrxyP2/RzJM+TeKGxSVk9ukaoA==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    classnames "2.x"
-    rc-select "~14.7.0"
-    rc-tree "~5.7.0"
-    rc-util "^5.16.1"
-
-rc-tree@~5.7.0, rc-tree@~5.7.6:
-  version "5.7.9"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-tree/-/rc-tree-5.7.9.tgz#e0df730ffbba1df95901fd3b108267288056e162"
-  integrity sha512-1hKkToz/EVjJlMVwmZnpXeLXt/1iQMsaAq9m+GNkUbK746gkc7QpJXSN/TzjhTI5Hi+LOSlrMaXLMT0bHPqILQ==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    classnames "2.x"
-    rc-motion "^2.0.1"
-    rc-util "^5.16.1"
-    rc-virtual-list "^3.5.1"
-
-rc-upload@~4.3.0:
-  version "4.3.3"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-upload/-/rc-upload-4.3.3.tgz#e237aa525e5313fa16f4d04d27f53c2f0e157bb8"
-  integrity sha512-YoJ0phCRenMj1nzwalXzciKZ9/FAaCrFu84dS5pphwucTC8GUWClcDID/WWNGsLFcM97NqIboDqrV82rVRhW/w==
-  dependencies:
-    "@babel/runtime" "^7.10.1"
-    classnames "^2.2.5"
-    rc-util "^5.2.0"
-
-rc-util@^5.0.1, rc-util@^5.15.0, rc-util@^5.16.0, rc-util@^5.16.1, rc-util@^5.17.0, rc-util@^5.18.1, rc-util@^5.19.2, rc-util@^5.2.0, rc-util@^5.20.1, rc-util@^5.21.0, rc-util@^5.21.2, rc-util@^5.22.5, rc-util@^5.24.4, rc-util@^5.25.2, rc-util@^5.27.0, rc-util@^5.27.1, rc-util@^5.28.0, rc-util@^5.3.0, rc-util@^5.30.0, rc-util@^5.31.1, rc-util@^5.32.0, rc-util@^5.32.2, rc-util@^5.33.0, rc-util@^5.34.1, rc-util@^5.35.0:
-  version "5.35.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-util/-/rc-util-5.35.0.tgz#bed1986248b7be525cc0894109e609ac60207f29"
-  integrity sha512-MTXlixb3EoSTEchsOc7XWsVyoUQqoCsh2Z1a2IptwNgqleMF6ZgQeY52UzUbNj5CcVBg9YljOWjuOV07jSSm4Q==
-  dependencies:
-    "@babel/runtime" "^7.18.3"
-    react-is "^16.12.0"
-
-rc-virtual-list@^3.5.1, rc-virtual-list@^3.5.2:
-  version "3.5.3"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rc-virtual-list/-/rc-virtual-list-3.5.3.tgz#84f82d3257f6c520106a6285558dfc764c41c076"
-  integrity sha512-rG6IuD4EYM8K6oZ8Shu2BC/CmcTdqng4yBWkc/5fjWhB20bl6QwR2Upyt7+MxvfscoVm8zOQY+tcpEO5cu4GaQ==
-  dependencies:
-    "@babel/runtime" "^7.20.0"
-    classnames "^2.2.6"
-    rc-resize-observer "^1.0.0"
-    rc-util "^5.15.0"
 
 rc@^1.2.7:
   version "1.2.8"
@@ -7007,7 +6414,7 @@ react-inspector@^6.0.1:
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/react-inspector/-/react-inspector-6.0.2.tgz#aa3028803550cb6dbd7344816d5c80bf39d07e9d"
   integrity sha512-x+b7LxhmHXjHoU/VrFAzw5iutsILRoYyDq97EDYdFpPLcvqtEzk4ZSZSQjnFPbr5T57tLXnHcqFYoN1pI6u8uQ==
 
-react-is@^16.12.0, react-is@^16.13.1, react-is@^16.6.0, react-is@^16.7.0:
+react-is@^16.13.1, react-is@^16.6.0, react-is@^16.7.0:
   version "16.13.1"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
   integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
@@ -7342,11 +6749,6 @@ reselect@^4.1.8:
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/reselect/-/reselect-4.1.8.tgz#3f5dc671ea168dccdeb3e141236f69f02eaec524"
   integrity sha512-ab9EmR80F/zQTMNeneUr4cv+jSwPJgIlvEmVwLerwrWVbpLlBuls9XHzIeTFy4cegU2NHBp3va0LKOzU5qFEYQ==
 
-resize-observer-polyfill@^1.5.1:
-  version "1.5.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/resize-observer-polyfill/-/resize-observer-polyfill-1.5.1.tgz#0e9020dd3d21024458d4ebd27e23e40269810464"
-  integrity sha512-LwZrotdHOo12nQuZlHEmtuXdqGoOD0OhaxopaNFxWzInpEgaLWoVuAMbTzixuosCx2nEG58ngzW3vxdWoxIgdg==
-
 resolve-cwd@^3.0.0:
   version "3.0.0"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/resolve-cwd/-/resolve-cwd-3.0.0.tgz#0f0075f1bb2544766cf73ba6a6e2adfebcb13f2d"
@@ -7424,7 +6826,7 @@ run-parallel@^1.1.9:
   dependencies:
     queue-microtask "^1.2.2"
 
-rxjs@^7.5.6:
+rxjs@^7.8.1:
   version "7.8.1"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/rxjs/-/rxjs-7.8.1.tgz#6f6f3d99ea8044291efd92e7c7fcf562c4057543"
   integrity sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==
@@ -7525,13 +6927,6 @@ schema-utils@^4.0.0:
     ajv "^8.8.0"
     ajv-formats "^2.1.1"
     ajv-keywords "^5.0.0"
-
-scroll-into-view-if-needed@^3.0.3:
-  version "3.0.10"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/scroll-into-view-if-needed/-/scroll-into-view-if-needed-3.0.10.tgz#38fbfe770d490baff0fb2ba34ae3539f6ec44e13"
-  integrity sha512-t44QCeDKAPf1mtQH3fYpWz8IM/DyvHLjs8wUvvwMYxk5moOqCzrMSxK6HQVD0QVmVjXFavoFIPRVrMuJPKAvtg==
-  dependencies:
-    compute-scroll-into-view "^3.0.2"
 
 select-hose@^2.0.0:
   version "2.0.0"
@@ -7922,11 +7317,6 @@ statuses@2.0.1:
   version "1.5.0"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/statuses/-/statuses-1.5.0.tgz#161c7dac177659fd9811f43771fa99381478628c"
 
-string-convert@^0.2.0:
-  version "0.2.1"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/string-convert/-/string-convert-0.2.1.tgz#6982cc3049fbb4cd85f8b24568b9d9bf39eeff97"
-  integrity sha1-aYLMMEn7tM2F+LJFaLnZvznu/5c=
-
 string-length@^4.0.1:
   version "4.0.1"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/string-length/-/string-length-4.0.1.tgz#4a973bf31ef77c4edbceadd6af2611996985f8a1"
@@ -7984,11 +7374,6 @@ style-loader@^1.3.0:
   dependencies:
     loader-utils "^2.0.0"
     schema-utils "^2.7.0"
-
-stylis@^4.0.13:
-  version "4.3.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/stylis/-/stylis-4.3.0.tgz#abe305a669fc3d8777e10eefcfc73ad861c5588c"
-  integrity sha512-E87pIogpwUsUwXw7dNyU4QDjdgVMy52m+XEOPEKUn161cCzWjjhPSQhByfd1CcNvrOLnXQ6OnnZDwnJrz/Z4YQ==
 
 superagent-promise@^1.1.0:
   version "1.1.0"
@@ -8183,11 +7568,6 @@ throat@^5.0.0:
   version "5.0.0"
   resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/throat/-/throat-5.0.0.tgz#c5199235803aad18754a667d659b5e72ce16764b"
   integrity sha512-fcwX4mndzpLQKBS1DVYhGAcYaYt7vsHNIvQV+WXMvnow5cgjPphq5CaayLaGsjRdSCKZFNGt7/GYAuXaNOiYCA==
-
-throttle-debounce@^5.0.0:
-  version "5.0.0"
-  resolved "https://artprod.dev.bloomberg.com/artifactory/api/npm/npm-repos/throttle-debounce/-/throttle-debounce-5.0.0.tgz#a17a4039e82a2ed38a5e7268e4132d6960d41933"
-  integrity sha512-2iQTSgkkc1Zyk0MeVrt/3BvuOXYPl/R8Z0U2xxo9rjwNciaHDG3R+Lm6dh4EeUci49DanvBnuqI6jshoQQRGEg==
 
 thunky@^1.0.2:
   version "1.0.2"
