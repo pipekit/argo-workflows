@@ -10,6 +10,7 @@ import {ConditionsPanel} from '../../shared/conditions-panel';
 import {Consumer} from '../../shared/context';
 import {wfDuration} from '../../shared/duration';
 import {ResourcesDuration} from '../../shared/resources-duration';
+import {TIMESTAMP_KEYS} from '../../shared/use-timestamp';
 import {WorkflowCreatorInfo} from './workflow-creator-info/workflow-creator-info';
 import {WorkflowFrom} from './workflow-from';
 import {WorkflowLabels} from './workflow-labels/workflow-labels';
@@ -36,8 +37,8 @@ export const WorkflowSummaryPanel = (props: {workflow: Workflow}) => (
                         </Consumer>
                     )
                 },
-                {title: 'Started', value: <Timestamp date={props.workflow.status.startedAt} />},
-                {title: 'Finished ', value: <Timestamp date={props.workflow.status.finishedAt} />},
+                {title: 'Started', value: <Timestamp date={props.workflow.status.startedAt} timestampKey={TIMESTAMP_KEYS.WORKFLOW_SUMMARY_PANEL_START} />},
+                {title: 'Finished ', value: <Timestamp date={props.workflow.status.finishedAt} timestampKey={TIMESTAMP_KEYS.WORKFLOW_SUMMARY_PANEL_END} />},
                 {
                     title: 'Duration',
                     value: (

@@ -31,6 +31,14 @@
     &__labels-container {
         height: 100%;
     }
+    
+    &__timestamp {
+        white-space: break-spaces !important;
+        line-height: normal;
+        align-items: center;
+        display: flex;
+        word-break: break-word;
+    }
 
     &__title {
         font-weight: bolder;

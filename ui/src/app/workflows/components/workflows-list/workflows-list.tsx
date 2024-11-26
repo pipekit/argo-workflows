@@ -11,6 +11,7 @@ import {ErrorNotice} from '../../../shared/components/error-notice';
 import {ExampleManifests} from '../../../shared/components/example-manifests';
 import {Loading} from '../../../shared/components/loading';
 import {PaginationPanel} from '../../../shared/components/pagination-panel';
+import {TimestampSwitch} from '../../../shared/components/timestamp';
 import {useCollectEvent} from '../../../shared/components/use-collect-event';
 import {ZeroState} from '../../../shared/components/zero-state';
 import {Context} from '../../../shared/context';
@@ -19,6 +20,7 @@ import {ListWatch, sortByYouth} from '../../../shared/list-watch';
 import {Pagination, parseLimit} from '../../../shared/pagination';
 import {ScopedLocalStorage} from '../../../shared/scoped-local-storage';
 import {services} from '../../../shared/services';
+import useTimestamp, {TIMESTAMP_KEYS} from '../../../shared/use-timestamp';
 import {Utils} from '../../../shared/utils';
 import * as Actions from '../../../shared/workflow-operations-map';
 import {WorkflowCreator} from '../workflow-creator';
@@ -51,6 +53,8 @@ const storage = new ScopedLocalStorage('ListOptions');
 export function WorkflowsList({match, location, history}: RouteComponentProps<any>) {
     const queryParams = new URLSearchParams(location.search);
     const {navigation} = useContext(Context);
+    const [storedDisplayISOFormatStart, setStoredDisplayISOFormatStart] = useTimestamp(TIMESTAMP_KEYS.WORKFLOWS_ROW_STARTED);
+    const [storedDisplayISOFormatFinished, setStoredDisplayISOFormatFinished] = useTimestamp(TIMESTAMP_KEYS.WORKFLOWS_ROW_FINISHED);
 
     const [namespace, setNamespace] = useState(Utils.getNamespace(match.params.namespace) || '');
     const [pagination, setPagination] = useState<Pagination>(() => {
@@ -255,8 +259,17 @@ export function WorkflowsList({match, location, history}: RouteComponentProps<an
                                     <div className='row small-11'>
                                         <div className='columns small-2'>NAME</div>
                                         <div className='columns small-1'>NAMESPACE</div>
-                                        <div className='columns small-1'>STARTED</div>
-                                        <div className='columns small-1'>FINISHED</div>
+                                        <div className='columns small-1'>
+                                            STARTED{' '}
+                                            <TimestampSwitch storedDisplayISOFormat={storedDisplayISOFormatStart} setStoredDisplayISOFormat={setStoredDisplayISOFormatStart} />
+                                        </div>
+                                        <div className='columns small-1'>
+                                            FINISHED{' '}
+                                            <TimestampSwitch
+                                                storedDisplayISOFormat={storedDisplayISOFormatFinished}
+                                                setStoredDisplayISOFormat={setStoredDisplayISOFormatFinished}
+                                            />
+                                        </div>
                                         <div className='columns small-1'>DURATION</div>
                                         <div className='columns small-1'>PROGRESS</div>
                                         <div className='columns small-2'>MESSAGE</div>
@@ -304,6 +317,8 @@ export function WorkflowsList({match, location, history}: RouteComponentProps<an
                                                 }
                                                 setSelectedWorkflows(newSelections);
                                             }}
+                                            displayISOFormatStart={storedDisplayISOFormatStart}
+                                            displayISOFormatFinished={storedDisplayISOFormatFinished}
                                         />
                                     );
                                 })}
