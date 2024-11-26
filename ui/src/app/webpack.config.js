@@ -27,7 +27,7 @@ const config = {
   devtool: "source-map",
 
   resolve: {
-    extensions: [".ts", ".tsx", ".js", ".json", ".ttf"],
+    extensions: [".ts", ".tsx", ".js", ".mjs", ".json", ".ttf"],
     fallback: { fs: false }, // ignore `node:fs` on front-end
   },
 
@@ -57,6 +57,7 @@ const config = {
         test: /\.(woff|woff2|eot|ttf|otf)$/i,
         type: 'asset/resource',
       },
+      { test: /\.mjs$/, include: /node_modules/, type: 'javascript/auto' }
     ]
   },
   plugins: [
