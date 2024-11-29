@@ -87,6 +87,7 @@ node(agent_label) {
 
     j.workflow("SimpleFlow")
                 .infoUsing(infoAgent)
+                .setReleaseBranch("release-3.5")
                 .buildUsingParallel([workflow_controller, argoexec, argoui, argocli])
                 .publishUsing(workflow_controller)
                 .publishUsing(argoexec)
