@@ -2,7 +2,7 @@ import {EMPTY, from, Observable, of} from 'rxjs';
 import {catchError, filter, map, mergeMap, switchMap} from 'rxjs/operators';
 import * as models from '../../../models';
 import {Event, LogEntry, NodeStatus, Workflow, WorkflowList, WorkflowPhase} from '../../../models';
-import {SubmitOpts} from '../../../models/submit-opts';
+import {ResubmitOpts, RetryOpts, SubmitOpts} from '../../../models/submit-opts';
 import {uiUrl} from '../base';
 import {Pagination} from '../pagination';
 import {Utils} from '../utils';
@@ -99,12 +99,25 @@ export class WorkflowsService {
         return requests.loadEventSource(url).pipe(map(data => data && (JSON.parse(data).result as models.kubernetes.WatchEvent<Workflow>)));
     }
 
-    public retry(name: string, namespace: string) {
-        return requests.put(`api/v1/workflows/${namespace}/${name}/retry`).then(res => res.body as Workflow);
+    public retry(name: string, namespace: string, opts?: RetryOpts) {
+        return requests
+            .put(`api/v1/workflows/${namespace}/${name}/retry`)
+            .send(opts)
+            .then(res => res.body as Workflow);
     }
 
-    public resubmit(name: string, namespace: string) {
-        return requests.put(`api/v1/workflows/${namespace}/${name}/resubmit`).then(res => res.body as Workflow);
+    public retryArchived(uid: string, namespace: string, opts?: RetryOpts) {
+        return requests
+            .put(`api/v1/archived-workflows/${uid}/retry`)
+            .send({namespace, ...opts})
+            .then(res => res.body as Workflow);
+    }
+
+    public resubmit(name: string, namespace: string, opts?: ResubmitOpts) {
+        return requests
+            .put(`api/v1/workflows/${namespace}/${name}/resubmit`)
+            .send(opts)
+            .then(res => res.body as Workflow);
     }
 
     public suspend(name: string, namespace: string) {

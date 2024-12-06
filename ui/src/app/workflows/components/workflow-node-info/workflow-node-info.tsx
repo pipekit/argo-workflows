@@ -65,6 +65,7 @@ interface Props {
     onTabSelected?: (tabSelected: string) => void;
     selectedTabKey?: string;
     onResume?: () => void;
+    onRetryNode?: () => void;
 }
 
 const AttributeRow = (attr: {title: string; value: string | JSX.Element}) => (
@@ -193,6 +194,11 @@ const WorkflowNodeSummary = (props: Props) => {
                 {props.node.type !== 'Container' && props.onShowYaml && (
                     <Button icon='file-code' onClick={() => props.onShowYaml(props.node.id)}>
                         MANIFEST
+                    </Button>
+                )}{' '}
+                {props.onRetryNode && ['Succeeded', 'Failed'].includes(props.node.phase) && (
+                    <Button icon='undo-alt' onClick={() => props.onRetryNode()}>
+                        RETRY NODE
                     </Button>
                 )}{' '}
                 {props.node.type === 'Pod' && props.onShowContainerLogs && (

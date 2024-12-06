@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import * as React from 'react';
 import {useContext, useEffect, useRef, useState} from 'react';
 import {RouteComponentProps} from 'react-router';
-import {ArtifactRepository, execSpec, Link, NodeStatus, Parameter, Workflow} from '../../../../models';
+import {ArtifactRepository, execSpec, isArchivedWorkflow, isWorkflowInCluster, Link, NodeStatus, Parameter, Workflow} from '../../../../models';
 import {ANNOTATION_KEY_POD_NAME_VERSION} from '../../../shared/annotations';
 import {artifactRepoHasLocation, findArtifact} from '../../../shared/artifacts';
 import {uiUrl} from '../../../shared/base';
@@ -26,6 +26,7 @@ import * as Operations from '../../../shared/workflow-operations-map';
 import {WorkflowOperations} from '../../../shared/workflow-operations-map';
 import {WidgetGallery} from '../../../widgets/widget-gallery';
 import {EventsPanel} from '../events-panel';
+import {RetryWorkflowNode} from '../retry-workflow-node-panel';
 import {WorkflowArtifacts} from '../workflow-artifacts';
 import {WorkflowLogsViewer} from '../workflow-logs-viewer/workflow-logs-viewer';
 import {WorkflowNodeInfo} from '../workflow-node-info/workflow-node-info';
@@ -62,6 +63,7 @@ export const WorkflowDetails = ({history, location, match}: RouteComponentProps<
     const [nodeId, setNodeId] = useState(queryParams.get('nodeId'));
     const [nodePanelView, setNodePanelView] = useState(queryParams.get('nodePanelView'));
     const [sidePanel, setSidePanel] = useState(queryParams.get('sidePanel'));
+    const [showRetryNode, setShowRetryNode] = useState<boolean>();
     const [parameters, setParameters] = useState<Parameter[]>([]);
     const sidePanelRef = useRef<HTMLDivElement>(null);
     const [workflow, setWorkflow] = useState<Workflow>();
@@ -448,11 +450,28 @@ export const WorkflowDetails = ({history, location, match}: RouteComponentProps<
                                     transition: isSidePanelAnimating ? `width ${ANIMATION_MS}ms` : 'unset',
                                     width: isSidePanelExpanded ? `${sidePanelWidth}px` : 0
                                 }}>
-                                <button className='workflow-details__step-info-close' onClick={() => setNodeId(null)}>
+                                <button
+                                    className='workflow-details__step-info-close'
+                                    onClick={() => {
+                                        if (showRetryNode) {
+                                            setShowRetryNode(false);
+                                        } else {
+                                            setNodeId(null);
+                                        }
+                                    }}>
                                     <i className='argo-icon-close' />
                                 </button>
                                 <div className='workflow-details__step-info-drag-handle' {...sidePanelDragHandleProps} />
-                                {selectedNode && (
+                                {selectedNode && showRetryNode && (
+                                    <RetryWorkflowNode
+                                        nodeId={selectedNode.id}
+                                        workflow={workflow}
+                                        isArchived={isArchivedWorkflow(workflow)}
+                                        isWorkflowInCluster={isWorkflowInCluster(workflow)}
+                                        onRetrySuccess={() => setShowRetryNode(false)}
+                                    />
+                                )}
+                                {selectedNode && !showRetryNode && (
                                     <WorkflowNodeInfo
                                         node={selectedNode}
                                         onTabSelected={setNodePanelView}
@@ -462,6 +481,7 @@ export const WorkflowDetails = ({history, location, match}: RouteComponentProps<
                                         onShowContainerLogs={(x, container) => setSidePanel(`logs:${x}:${container}`)}
                                         onShowEvents={() => setSidePanel(`events:${nodeId}`)}
                                         onShowYaml={() => setSidePanel(`yaml:${nodeId}`)}
+                                        onRetryNode={() => setShowRetryNode(true)}
                                         archived={false}
                                         onResume={() => renderResumePopup()}
                                     />
