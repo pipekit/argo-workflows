@@ -22,6 +22,7 @@ apt-get install -y node yarn
 export YARN_CACHE_FOLDER=/root/.yarn
 npm config delete noproxy proxy https-proxy -g
 cd ui
+npm install -g webpack webpack-cli
 yarn  --verbose --prefer-offline  --network-timeout 600000 build
 yarn  --verbose --prefer-offline  --network-timeout 600000 install
 ```
