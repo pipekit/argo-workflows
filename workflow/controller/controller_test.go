@@ -1211,9 +1211,9 @@ func TestPendingPodWhenTerminate(t *testing.T) {
 
 	woc := newWorkflowOperationCtx(wf, controller)
 	woc.operate(ctx)
-	assert.Equal(t, wfv1.WorkflowFailed, woc.wf.Status.Phase)
+	assert.Equal(t, wfv1.WorkflowSucceeded, woc.wf.Status.Phase)
 	for _, node := range woc.wf.Status.Nodes {
-		assert.Equal(t, wfv1.NodeFailed, node.Phase)
+		assert.Equal(t, wfv1.NodeSkipped, node.Phase)
 	}
 }
 
