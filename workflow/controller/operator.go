@@ -1142,8 +1142,9 @@ func (woc *wfOperationCtx) podReconciliation(ctx context.Context) (error, bool) 
 		node, err := woc.wf.Status.Nodes.Get(nodeID)
 		if err == nil {
 			if newState := woc.assessNodeStatus(ctx, pod, node); newState != nil {
-				// update if the node phase differs or if a pod deletion timestamp exists
-				if node.Phase != newState.Phase || pod.DeletionTimestamp != nil && newState.Fulfilled() {
+				// update if a pod deletion timestamp exists on a completed workflow, ensures this pod is always looked at
+				// in the pod cleanup process
+				if pod.DeletionTimestamp != nil && newState.Fulfilled() {
 					woc.updated = true
 				}
 				// Check whether its taskresult is in an incompleted state.
