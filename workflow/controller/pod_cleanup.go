@@ -39,12 +39,11 @@ func (woc *wfOperationCtx) queuePodsForCleanup() {
 		if !nodePhase.Fulfilled() {
 			continue
 		}
-		switch determinePodCleanupAction(selector, pod.Labels, strategy, workflowPhase, pod.Status.Phase, pod.Finalizers) {
-		case deletePod:
-			woc.controller.queuePodForCleanupAfter(pod.Namespace, pod.Name, deletePod, delay)
-		case removeFinalizer:
-		case labelPodCompleted:
-			woc.controller.queuePodForCleanup(pod.Namespace, pod.Name, labelPodCompleted)
+		action := determinePodCleanupAction(selector, pod.Labels, strategy, workflowPhase, pod.Status.Phase, pod.Finalizers)
+		if action == deletePod {
+			woc.controller.queuePodForCleanupAfter(pod.Namespace, pod.Name, action, delay)
+		} else {
+			woc.controller.queuePodForCleanup(pod.Namespace, pod.Name, action)
 		}
 	}
 }
