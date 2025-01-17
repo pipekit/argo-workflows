@@ -1113,8 +1113,10 @@ func (woc *wfOperationCtx) processNodeRetries(node *wfv1.NodeStatus, retryStrate
 // after successful persist of the workflow.
 // returns whether pod reconciliation successfully completed
 func (woc *wfOperationCtx) podReconciliation(ctx context.Context) (error, bool) {
+	woc.log.Infof("running pod reconciliation")
 	podList, err := woc.getAllWorkflowPods()
 	if err != nil {
+		woc.log.Errorf("was unable to retrieve workflow pods for %s", woc.wf.Name)
 		return err, false
 	}
 	seenPods := make(map[string]*apiv1.Pod)
@@ -1140,6 +1142,10 @@ func (woc *wfOperationCtx) podReconciliation(ctx context.Context) (error, bool) 
 		node, err := woc.wf.Status.Nodes.Get(nodeID)
 		if err == nil {
 			if newState := woc.assessNodeStatus(ctx, pod, node); newState != nil {
+				// update if the node phase differs or if a pod deletion timestamp exists
+				if node.Phase != newState.Phase || pod.DeletionTimestamp != nil && newState.Fulfilled() {
+					woc.updated = true
+				}
 				// Check whether its taskresult is in an incompleted state.
 				if newState.Succeeded() && woc.wf.Status.IsTaskResultIncomplete(node.ID) {
 					woc.log.WithFields(log.Fields{"nodeID": newState.ID}).Debug("Taskresult of the node not yet completed")
@@ -1169,7 +1175,11 @@ func (woc *wfOperationCtx) podReconciliation(ctx context.Context) (error, bool) 
 						printPodSpecLog(pod, woc.wf.Name)
 					}
 				}
+			} else {
+				woc.log.Error("was unable to assess node status")
 			}
+		} else {
+			woc.log.Warning("didn't find node %s but its pod exists", node.Name)
 		}
 	}
 
