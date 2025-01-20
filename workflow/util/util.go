@@ -77,6 +77,16 @@ func NewWorkflowInformer(dclient dynamic.Interface, ns string, resyncPeriod time
 	return informer
 }
 
+// GetResource returns the workflows resource
+func GetResource() *schema.GroupVersionResource {
+	resource := schema.GroupVersionResource{
+		Group:    workflow.Group,
+		Version:  "v1alpha1",
+		Resource: workflow.WorkflowPlural,
+	}
+	return &resource
+}
+
 // InstanceIDRequirement returns the label requirement to filter against a controller instance (or not)
 func InstanceIDRequirement(instanceID string) labels.Requirement {
 	var instanceIDReq *labels.Requirement
