@@ -257,6 +257,12 @@ func (wfc *WorkflowController) runGCcontroller(ctx context.Context, workflowTTLW
 	}
 }
 
+func (wfc *WorkflowController) runPodController(ctx context.Context, numWorkers int) {
+	defer runtimeutil.HandleCrashWithContext(ctx, runtimeutil.PanicHandlers...)
+
+	podCtrl := pod.NewPodController(ctx, nil, wfc.wfclientset, wfc.wfInformer, wfc.podInformer)
+}
+
 func (wfc *WorkflowController) runCronController(ctx context.Context, cronWorkflowWorkers int) {
 	defer runtimeutil.HandleCrashWithContext(ctx, runtimeutil.PanicHandlers...)
 
