@@ -1,4 +1,4 @@
-package controller
+package pod
 
 import (
 	"testing"
