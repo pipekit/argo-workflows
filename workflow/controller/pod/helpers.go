@@ -1,3 +1,4 @@
+// Package pod implements pod life cycle management
 package pod
 
 import (
@@ -30,8 +31,9 @@ import (
 	// "k8s.io/utils/clock"
 )
 
-func (c *Controller) SignalContainers(ctx context.Context, namespace string, podName string, sig syscall.Signal) (time.Duration, error) {
-	pod, err := c.getPod(namespace, podName)
+// SignalContainers signals all containers of a pod
+func (ctrl *Controller) SignalContainers(ctx context.Context, namespace string, podName string, sig syscall.Signal) (time.Duration, error) {
+	pod, err := ctrl.getPod(namespace, podName)
 	if pod == nil || err != nil {
 		return 0, err
 	}
@@ -41,7 +43,7 @@ func (c *Controller) SignalContainers(ctx context.Context, namespace string, pod
 			continue
 		}
 		// problems are already logged at info level, so we just ignore errors here
-		_ = signal.SignalContainer(ctx, c.restConfig, pod, c.Name, sig)
+		_ = signal.SignalContainer(ctx, ctrl.restConfig, pod, c.Name, sig)
 	}
 	if pod.Spec.TerminationGracePeriodSeconds == nil {
 		return 30 * time.Second, nil
@@ -49,8 +51,8 @@ func (c *Controller) SignalContainers(ctx context.Context, namespace string, pod
 	return time.Duration(*pod.Spec.TerminationGracePeriodSeconds) * time.Second, nil
 }
 
-func (c *Controller) getPod(namespace string, podName string) (*apiv1.Pod, error) {
-	obj, exists, err := c.podInformer.GetStore().GetByKey(namespace + "/" + podName)
+func (ctrl *Controller) getPod(namespace string, podName string) (*apiv1.Pod, error) {
+	obj, exists, err := ctrl.podInformer.GetStore().GetByKey(namespace + "/" + podName)
 	if err != nil {
 		return nil, err
 	}

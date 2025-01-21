@@ -32,7 +32,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-	//apiwatch "k8s.io/client-go/tools/watch"
+
+	apiwatch "k8s.io/client-go/tools/watch"
 	"k8s.io/client-go/util/workqueue"
 
 	"github.com/argoproj/argo-workflows/v3"
@@ -256,7 +257,7 @@ func (wfc *WorkflowController) runGCcontroller(ctx context.Context, workflowTTLW
 func (wfc *WorkflowController) runPodController(ctx context.Context, podGCWorkers int) {
 	defer runtimeutil.HandleCrash(runtimeutil.PanicHandlers...)
 
-	wfc.PodController = pod.NewController(ctx, &wfc.Config.InstanceID, wfc.GetManagedNamespace(), wfc.kubeclientset, wfc.wfInformer /* , wfc.podInformer */, wfc.metrics)
+	wfc.PodController = pod.NewController(ctx, wfc.restConfig, &wfc.Config.InstanceID, wfc.GetManagedNamespace(), wfc.kubeclientset, wfc.wfInformer /* , wfc.podInformer */, wfc.metrics, func(*apiv1.Pod) error { return nil })
 	wfc.PodController.Run(ctx, podGCWorkers)
 }
 
@@ -312,7 +313,6 @@ func (wfc *WorkflowController) Run(ctx context.Context, wfWorkers, workflowTTLWo
 	if err != nil {
 		log.Fatal(err)
 	}
-	wfc.podInformer = wfc.newPodInformer(ctx)
 	wfc.updateEstimatorFactory()
 
 	wfc.configMapInformer = wfc.newConfigMapInformer()
@@ -330,7 +330,6 @@ func (wfc *WorkflowController) Run(ctx context.Context, wfWorkers, workflowTTLWo
 
 	go wfc.wfInformer.Run(ctx.Done())
 	go wfc.wftmplInformer.Informer().Run(ctx.Done())
-	go wfc.podInformer.Run(ctx.Done())
 	go wfc.configMapInformer.Run(ctx.Done())
 	go wfc.wfTaskSetInformer.Informer().Run(ctx.Done())
 	go wfc.artGCTaskInformer.Informer().Run(ctx.Done())
@@ -946,7 +945,7 @@ func (wfc *WorkflowController) addWorkflowInformerHandlers(ctx context.Context) 
 						log.Infof("deleting workflow %s - pod %v", obj.(*unstructured.Unstructured).GetName(), p.Name)
 						if slices.Contains(p.Finalizers, common.FinalizerPodStatus) {
 							log.Infof("deleting workflow %s - pod %v needs finalizer removal", obj.(*unstructured.Unstructured).GetName(), p.Name)
-							wfc.queuePodForCleanup(p.Namespace, p.Name, removeFinalizer)
+							// wfc.queuePodForCleanup(p.Namespace, p.Name, removeFinalizer)
 						}
 					}
 

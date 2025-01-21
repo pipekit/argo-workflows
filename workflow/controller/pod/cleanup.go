@@ -10,7 +10,6 @@ import (
 	"github.com/argoproj/argo-workflows/v3/workflow/common"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
-	"github.com/argoproj/argo-workflows/v3/workflow/controller/indexes"
 	log "github.com/sirupsen/logrus"
 )
 

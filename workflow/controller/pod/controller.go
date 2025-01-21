@@ -3,12 +3,15 @@ package pod
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
+
 	//	wfclientset "github.com/argoproj/argo-workflows/v3/pkg/client/clientset/versioned"
+	argoConfig "github.com/argoproj/argo-workflows/v3/config"
 	"github.com/argoproj/argo-workflows/v3/util/diff"
 	"github.com/argoproj/argo-workflows/v3/workflow/common"
 	"github.com/argoproj/argo-workflows/v3/workflow/controller/indexes"
@@ -16,15 +19,19 @@ import (
 	"github.com/argoproj/argo-workflows/v3/workflow/util"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	//	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+
 	// coreinformers "k8s.io/client-go/informers/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
+
 	// corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/utils/clock"
@@ -37,24 +44,24 @@ const (
 var (
 	incompleteReq, _ = labels.NewRequirement(common.LabelKeyCompleted, selection.Equals, []string{"false"})
 	workflowReq, _   = labels.NewRequirement(common.LabelKeyWorkflow, selection.Exists, nil)
+	keyFunc          = cache.DeletionHandlingMetaNamespaceKeyFunc
 )
 
 type podEventCallback func(pod *apiv1.Pod) error
 
 // Controller is a controller for pods
 type Controller struct {
-	config // Copy of controller config in here probably makes sense - for instanceId, GC delays, namespace instead of passing them in
-	//	wfclientset      wfclientset.Interface
+	config           argoConfig.Controller
 	kubeclientset    kubernetes.Interface
 	wfInformer       cache.SharedIndexInformer
 	wfInformerSynced cache.InformerSynced
 	workqueue        workqueue.RateLimitingInterface
 	clock            clock.WithTickerAndDelayedExecution
-	//	metrics         *metrics.Metrics
-	// podLister       corelisters.PodLister
-	// podListerSynced cache.InformerSynced
-	podInformer cache.SharedIndexInformer
-	callBack    podEventCallback
+	podListerSynced  cache.InformerSynced
+	podInformer      cache.SharedIndexInformer
+	callBack         podEventCallback
+	log              *logrus.Logger
+	restConfig       *rest.Config
 }
 
 func newWorkflowPodWatch(ctx context.Context, clientSet kubernetes.Interface, instanceID, namespace *string) *cache.ListWatch {
@@ -62,6 +69,7 @@ func newWorkflowPodWatch(ctx context.Context, clientSet kubernetes.Interface, in
 	// completed=false
 	labelSelector := labels.NewSelector().
 		Add(*workflowReq).
+		// not sure if we should do this
 		Add(*incompleteReq).
 		Add(util.InstanceIDRequirement(*instanceID))
 
@@ -89,16 +97,16 @@ func newInformer(ctx context.Context, clientSet kubernetes.Interface, instanceID
 }
 
 // NewController creates a pod controller
-func NewController(ctx context.Context, instanceID *string, namespace string, clientSet kubernetes.Interface, wfInformer cache.SharedIndexInformer /* podInformer coreinformers.PodInformer,  */, metrics *metrics.Metrics, callback podEventCallback) *Controller {
+func NewController(ctx context.Context, restConfig *rest.Config, instanceID *string, namespace string, clientSet kubernetes.Interface, wfInformer cache.SharedIndexInformer /* podInformer coreinformers.PodInformer,  */, metrics *metrics.Metrics, callback podEventCallback) *Controller {
+	log := logrus.New()
 	podController := &Controller{
-		//		wfclientset:      wfClientSet,
 		wfInformer:       wfInformer,
 		wfInformerSynced: wfInformer.HasSynced,
-		// workqueue:        workqueue.NewTypedDelayingQueueWithConfig(workqueue.TypedDelayingQueueConfig[string]{Name: "orphaned_pods_workflows"}),
-		workqueue:   metrics.RateLimiterWithBusyWorkers(ctx, workqueue.DefaultControllerRateLimiter(), "pod_cleanup_queue"),
-		podInformer: newInformer(ctx, clientSet, instanceID, &namespace),
-		// podLister: podInformer.Lister(),
-		// podListerSynced: podInformer.Informer().HasSynced,
+		workqueue:        metrics.RateLimiterWithBusyWorkers(ctx, workqueue.DefaultControllerRateLimiter(), "pod_cleanup_queue"),
+		podInformer:      newInformer(ctx, clientSet, instanceID, &namespace),
+		log:              log,
+		callBack:         callback,
+		restConfig:       restConfig,
 	}
 	podController.podInformer.AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
@@ -108,15 +116,10 @@ func NewController(ctx context.Context, instanceID *string, namespace string, cl
 					log.WithError(err).Error("object from informer wasn't a pod")
 					return
 				}
-				err = callback(pod)
-				if err != nil {
-					log.WithError(err).Warn("could not enqueue workflow from pod label on add")
-					return
-				}
 				podController.addPod(pod)
 			},
 			UpdateFunc: func(old, newVal interface{}) {
-				key, err := cache.MetaNamespaceKeyFunc(newVal)
+				key, err := keyFunc(newVal)
 				if err != nil {
 					return
 				}
@@ -129,62 +132,15 @@ func NewController(ctx context.Context, instanceID *string, namespace string, cl
 					diff.LogChanges(oldPod, newPod)
 					return
 				}
-				err = callback(newPod)
-				if err != nil {
-					log.WithField("key", key).WithError(err).Warn("could not enqueue workflow from pod label on add")
-					return
-				}
 				podController.updatePod(oldPod, newPod)
 			},
 			DeleteFunc: func(obj interface{}) {
 				// IndexerInformer uses a delta queue, therefore for deletes we have to use this
 				// key function.
-
-				// Enqueue the workflow for deleted pod
-				pod, err := podFromObj(obj)
-				if err != nil {
-					log.WithError(err).Error("object from informer wasn't a pod")
-					return
-				}
-				err = callback(pod)
-				if err != nil {
-					log.WithError(err).Warn("could not enqueue workflow from pod label on delete")
-					return
-				}
-				podController.deletePod(pod)
+				podController.deletePod(obj)
 			},
 		},
 	)
-	// podController.wfInformer.AddEventHandler(cache.FilteringResourceEventHandler{
-	// 	FilterFunc: func(obj interface{}) bool {
-	// 		un, ok := obj.(*unstructured.Unstructured)
-	// 		return ok && common.IsDone(un)
-	// 	},
-	// 	Handler: cache.ResourceEventHandlerFuncs{}
-	// 		DeleteFunc: func(obj interface{}) {
-	// 		},
-	// 	},
-	// })
-
-	// podInformer.Informer().AddEventHandler(cache.FilteringResourceEventHandler{
-	// 	FilterFunc: func(obj interface{}) bool {
-	// 		un, ok := obj.(*unstructured.Unstructured)
-	// 		labels := un.GetLabels()
-	// 		_ = labels
-	// 		return ok
-	// 	},
-	// 	Handler: cache.ResourceEventHandlerFuncs{
-	// 		AddFunc: func(obj interface{}) {
-	// 			// call add self.addFunc
-	// 		},
-	// 		UpdateFunc: func(old, new interface{}) {
-	// 			// call self.updateFunc
-	// 		},
-	// 		DeleteFunc: func(obj interface{}) {
-	// 			// call self.deleteFunc
-	// 		},
-	// 	},
-	// })
 	return podController
 }
 
@@ -194,13 +150,50 @@ func startTerminating(old *v1.Pod, newPod *v1.Pod) bool {
 }
 
 func (c *Controller) addPod(pod *v1.Pod) {
+	key, err := keyFunc(pod)
+	if err != nil {
+		return
+	}
+	err = c.callBack(pod)
+	if err != nil {
+		return
+	}
+	c.workqueue.Add(key)
 }
 
 func (c *Controller) updatePod(old *v1.Pod, newPod *v1.Pod) {
 	// This is only called for actual updates, where there are "significant changes"
+	key, err := keyFunc(newPod)
+	if err != nil {
+		return
+	}
+	if startTerminating(old, newPod) {
+		c.log.Infof("termination event detected for pod %s", old.Name)
+	}
+	err = c.callBack(newPod)
+	if err != nil {
+		return
+	}
+	c.workqueue.Add(key)
 }
 
-func (c *Controller) deletePod(pod *v1.Pod) {
+func (c *Controller) deletePod(obj interface{}) {
+	pod, ok := obj.(*apiv1.Pod)
+	if !ok {
+		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
+		if !ok {
+			return
+		}
+		pod, ok = tombstone.Obj.(*apiv1.Pod)
+		if !ok {
+			return
+		}
+	}
+	key, err := keyFunc(pod)
+	if err != nil {
+		return
+	}
+	c.workqueue.Add(key)
 }
 
 // Run runs the pod controller
@@ -214,13 +207,14 @@ func (c *Controller) Run(ctx context.Context, workers int) {
 	}
 }
 
+// GetPodPhaseMetrics obtains pod metrics
 func (c *Controller) GetPodPhaseMetrics() map[string]int64 {
 	result := make(map[string]int64, 0)
 	if c.podInformer != nil {
 		for _, phase := range []apiv1.PodPhase{apiv1.PodRunning, apiv1.PodPending} {
 			objs, err := c.podInformer.GetIndexer().IndexKeys(indexes.PodPhaseIndex, string(phase))
 			if err != nil {
-				log.WithError(err).Errorf("failed to  list pods in phase %s", phase)
+				c.log.WithError(err).Errorf("failed to  list pods in phase %s", phase)
 			} else {
 				result[string(phase)] = int64(len(objs))
 			}
@@ -235,4 +229,20 @@ func podFromObj(obj interface{}) (*apiv1.Pod, error) {
 		return nil, fmt.Errorf("Object is not a pod")
 	}
 	return pod, nil
+}
+
+// GetPod checks the informer cache to see if a pod exists
+func (c *Controller) GetPod(key cache.ExplicitKey) (*apiv1.Pod, bool, error) {
+	obj, exists, err := c.podInformer.GetStore().Get(key)
+	if err != nil {
+		return nil, exists, fmt.Errorf("failed to get pod from informer store: %w", err)
+	}
+	if exists {
+		existing, ok := obj.(*apiv1.Pod)
+		if ok {
+			return existing, exists, nil
+		}
+		return nil, exists, errors.New("failed to convert object into pod")
+	}
+	return nil, false, nil
 }

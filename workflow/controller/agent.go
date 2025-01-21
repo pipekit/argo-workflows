@@ -113,16 +113,12 @@ func (woc *wfOperationCtx) createAgentPod(ctx context.Context) (*apiv1.Pod, erro
 	podName := woc.getAgentPodName()
 	log := woc.log.WithField("podName", podName)
 
-	obj, exists, err := woc.controller.podInformer.GetStore().Get(cache.ExplicitKey(woc.wf.Namespace + "/" + podName))
+	pod, exists, err := woc.controller.PodController.GetPod(cache.ExplicitKey(fmt.Sprintf("%s/%s", woc.wf.Namespace, podName)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pod from informer store: %w", err)
 	}
 	if exists {
-		existing, ok := obj.(*apiv1.Pod)
-		if ok {
-			log.WithField("podPhase", existing.Status.Phase).Debug("Skipped pod creation: already exists")
-			return existing, nil
-		}
+		return pod, nil
 	}
 
 	certVolume, certVolumeMount, err := woc.getCertVolumeMount(ctx, common.CACertificatesVolumeMountName)
@@ -197,7 +193,7 @@ func (woc *wfOperationCtx) createAgentPod(ctx context.Context) (*apiv1.Pod, erro
 	agentMainCtr.Name = common.MainContainerName
 	agentMainCtr.Args = append([]string{"agent", "main"}, woc.getExecutorLogOpts()...)
 
-	pod := &apiv1.Pod{
+	pod = &apiv1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
 			Namespace: woc.wf.ObjectMeta.Namespace,
