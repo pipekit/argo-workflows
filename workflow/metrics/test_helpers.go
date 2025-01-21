@@ -48,6 +48,7 @@ func createTestMetrics(config *telemetry.Config, callbacks Callbacks) (*Metrics,
 	ctx /* with cancel*/ := context.Background()
 	te := telemetry.NewTestMetricsExporter()
 
-	m, err := New(ctx, telemetry.TestScopeName, telemetry.TestScopeName, config, callbacks, metric.WithReader(te))
+	m, err := New(ctx, telemetry.TestScopeName, telemetry.TestScopeName, config, metric.WithReader(te))
+	m.SetCallbacks(callbacks)
 	return m, te, err
 }

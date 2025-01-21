@@ -3,7 +3,6 @@ package pod
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -34,7 +33,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	"k8s.io/utils/clock"
+	//	"k8s.io/utils/clock"
 )
 
 const (
@@ -51,59 +50,28 @@ type podEventCallback func(pod *apiv1.Pod) error
 
 // Controller is a controller for pods
 type Controller struct {
-	config           argoConfig.Controller
+	config           *argoConfig.Config
 	kubeclientset    kubernetes.Interface
 	wfInformer       cache.SharedIndexInformer
 	wfInformerSynced cache.InformerSynced
 	workqueue        workqueue.RateLimitingInterface
-	clock            clock.WithTickerAndDelayedExecution
-	podListerSynced  cache.InformerSynced
-	podInformer      cache.SharedIndexInformer
-	callBack         podEventCallback
-	log              *logrus.Logger
-	restConfig       *rest.Config
-}
-
-func newWorkflowPodWatch(ctx context.Context, clientSet kubernetes.Interface, instanceID, namespace *string) *cache.ListWatch {
-	c := clientSet.CoreV1().Pods(*namespace)
-	// completed=false
-	labelSelector := labels.NewSelector().
-		Add(*workflowReq).
-		// not sure if we should do this
-		Add(*incompleteReq).
-		Add(util.InstanceIDRequirement(*instanceID))
-
-	listFunc := func(options metav1.ListOptions) (runtime.Object, error) {
-		options.LabelSelector = labelSelector.String()
-		return c.List(ctx, options)
-	}
-	watchFunc := func(options metav1.ListOptions) (watch.Interface, error) {
-		options.Watch = true
-		options.LabelSelector = labelSelector.String()
-		return c.Watch(ctx, options)
-	}
-	return &cache.ListWatch{ListFunc: listFunc, WatchFunc: watchFunc}
-}
-
-func newInformer(ctx context.Context, clientSet kubernetes.Interface, instanceID, namespace *string) cache.SharedIndexInformer {
-	source := newWorkflowPodWatch(ctx, clientSet, instanceID, namespace)
-	informer := cache.NewSharedIndexInformer(source, &apiv1.Pod{}, podResyncPeriod, cache.Indexers{
-		indexes.WorkflowIndex: indexes.MetaWorkflowIndexFunc,
-		indexes.NodeIDIndex:   indexes.MetaNodeIDIndexFunc,
-		indexes.PodPhaseIndex: indexes.PodPhaseIndexFunc,
-	})
-	//nolint:errcheck // the error only happens if the informer was stopped, and it hasn't even started (https://github.com/kubernetes/client-go/blob/46588f2726fa3e25b1704d6418190f424f95a990/tools/cache/shared_informer.go#L580)
-	return informer
+	//	clock            clock.WithTickerAndDelayedExecution
+	podInformer cache.SharedIndexInformer
+	callBack    podEventCallback
+	log         *logrus.Logger
+	restConfig  *rest.Config
 }
 
 // NewController creates a pod controller
-func NewController(ctx context.Context, restConfig *rest.Config, instanceID *string, namespace string, clientSet kubernetes.Interface, wfInformer cache.SharedIndexInformer /* podInformer coreinformers.PodInformer,  */, metrics *metrics.Metrics, callback podEventCallback) *Controller {
+func NewController(ctx context.Context, config *argoConfig.Config, restConfig *rest.Config, namespace string, clientSet kubernetes.Interface, wfInformer cache.SharedIndexInformer /* podInformer coreinformers.PodInformer,  */, metrics *metrics.Metrics, callback podEventCallback) *Controller {
 	log := logrus.New()
 	podController := &Controller{
+		config:           config,
+		kubeclientset:    clientSet,
 		wfInformer:       wfInformer,
 		wfInformerSynced: wfInformer.HasSynced,
 		workqueue:        metrics.RateLimiterWithBusyWorkers(ctx, workqueue.DefaultControllerRateLimiter(), "pod_cleanup_queue"),
-		podInformer:      newInformer(ctx, clientSet, instanceID, &namespace),
+		podInformer:      newInformer(ctx, clientSet, &config.InstanceID, &namespace),
 		log:              log,
 		callBack:         callback,
 		restConfig:       restConfig,
@@ -141,7 +109,39 @@ func NewController(ctx context.Context, restConfig *rest.Config, instanceID *str
 			},
 		},
 	)
+	go podController.podInformer.Run(ctx.Done())
 	return podController
+}
+
+func (c *Controller) HasSynced() func() bool {
+	return c.podInformer.HasSynced
+}
+
+// Run runs the pod controller
+func (c *Controller) Run(ctx context.Context, workers int) {
+	if !cache.WaitForCacheSync(ctx.Done(), c.HasSynced(), c.wfInformerSynced) {
+		return
+	}
+	defer c.workqueue.ShutDown()
+	for i := 0; i < workers; i++ {
+		go wait.UntilWithContext(ctx, c.runPodCleanup, time.Second)
+	}
+}
+
+// GetPodPhaseMetrics obtains pod metrics
+func (c *Controller) GetPodPhaseMetrics() map[string]int64 {
+	result := make(map[string]int64, 0)
+	if c.podInformer != nil {
+		for _, phase := range []apiv1.PodPhase{apiv1.PodRunning, apiv1.PodPending} {
+			objs, err := c.podInformer.GetIndexer().IndexKeys(indexes.PodPhaseIndex, string(phase))
+			if err != nil {
+				c.log.WithError(err).Errorf("failed to  list pods in phase %s", phase)
+			} else {
+				result[string(phase)] = int64(len(objs))
+			}
+		}
+	}
+	return result
 }
 
 // log something after calling this function maybe?
@@ -196,31 +196,36 @@ func (c *Controller) deletePod(obj interface{}) {
 	c.workqueue.Add(key)
 }
 
-// Run runs the pod controller
-func (c *Controller) Run(ctx context.Context, workers int) {
-	if !cache.WaitForCacheSync(ctx.Done(), c.podListerSynced, c.wfInformerSynced) {
-		return
+func newWorkflowPodWatch(ctx context.Context, clientSet kubernetes.Interface, instanceID, namespace *string) *cache.ListWatch {
+	c := clientSet.CoreV1().Pods(*namespace)
+	// completed=false
+	labelSelector := labels.NewSelector().
+		Add(*workflowReq).
+		// not sure if we should do this
+		Add(*incompleteReq).
+		Add(util.InstanceIDRequirement(*instanceID))
+
+	listFunc := func(options metav1.ListOptions) (runtime.Object, error) {
+		options.LabelSelector = labelSelector.String()
+		return c.List(ctx, options)
 	}
-	defer c.workqueue.ShutDown()
-	for i := 0; i < workers; i++ {
-		go wait.UntilWithContext(ctx, c.runPodCleanup, time.Second)
+	watchFunc := func(options metav1.ListOptions) (watch.Interface, error) {
+		options.Watch = true
+		options.LabelSelector = labelSelector.String()
+		return c.Watch(ctx, options)
 	}
+	return &cache.ListWatch{ListFunc: listFunc, WatchFunc: watchFunc}
 }
 
-// GetPodPhaseMetrics obtains pod metrics
-func (c *Controller) GetPodPhaseMetrics() map[string]int64 {
-	result := make(map[string]int64, 0)
-	if c.podInformer != nil {
-		for _, phase := range []apiv1.PodPhase{apiv1.PodRunning, apiv1.PodPending} {
-			objs, err := c.podInformer.GetIndexer().IndexKeys(indexes.PodPhaseIndex, string(phase))
-			if err != nil {
-				c.log.WithError(err).Errorf("failed to  list pods in phase %s", phase)
-			} else {
-				result[string(phase)] = int64(len(objs))
-			}
-		}
-	}
-	return result
+func newInformer(ctx context.Context, clientSet kubernetes.Interface, instanceID, namespace *string) cache.SharedIndexInformer {
+	source := newWorkflowPodWatch(ctx, clientSet, instanceID, namespace)
+	informer := cache.NewSharedIndexInformer(source, &apiv1.Pod{}, podResyncPeriod, cache.Indexers{
+		indexes.WorkflowIndex: indexes.MetaWorkflowIndexFunc,
+		indexes.NodeIDIndex:   indexes.MetaNodeIDIndexFunc,
+		indexes.PodPhaseIndex: indexes.PodPhaseIndexFunc,
+	})
+	//nolint:errcheck // the error only happens if the informer was stopped, and it hasn't even started (https://github.com/kubernetes/client-go/blob/46588f2726fa3e25b1704d6418190f424f95a990/tools/cache/shared_informer.go#L580)
+	return informer
 }
 
 func podFromObj(obj interface{}) (*apiv1.Pod, error) {
@@ -231,18 +236,30 @@ func podFromObj(obj interface{}) (*apiv1.Pod, error) {
 	return pod, nil
 }
 
-// GetPod checks the informer cache to see if a pod exists
-func (c *Controller) GetPod(key cache.ExplicitKey) (*apiv1.Pod, bool, error) {
-	obj, exists, err := c.podInformer.GetStore().Get(key)
-	if err != nil {
-		return nil, exists, fmt.Errorf("failed to get pod from informer store: %w", err)
-	}
-	if exists {
-		existing, ok := obj.(*apiv1.Pod)
-		if ok {
-			return existing, exists, nil
-		}
-		return nil, exists, errors.New("failed to convert object into pod")
-	}
-	return nil, false, nil
+// // GetPod checks the informer cache to see if a pod exists
+// func (c *Controller) GetPod(key cache.ExplicitKey) (*apiv1.Pod, bool, error) {
+// 	obj, exists, err := c.podInformer.GetStore().Get(key)
+// 	if err != nil {
+// 		return nil, exists, fmt.Errorf("failed to get pod from informer store: %w", err)
+// 	}
+// 	if exists {
+// 		existing, ok := obj.(*apiv1.Pod)
+// 		if ok {
+// 			return existing, exists, nil
+// 		}
+// 		return nil, exists, errors.New("failed to convert object into pod")
+// 	}
+// 	return nil, false, nil
+// }
+
+func (c *Controller) TestingPodInformer() cache.SharedIndexInformer {
+	return c.podInformer
+}
+
+func (c *Controller) TestingProcessNextItem(ctx context.Context) bool {
+	return c.processNextPodCleanupItem(ctx)
+}
+
+func (c *Controller) TestingQueueNumRequeues(key interface{}) int {
+	return c.workqueue.NumRequeues(key)
 }

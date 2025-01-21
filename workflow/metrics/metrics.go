@@ -15,7 +15,7 @@ type Metrics struct {
 	realtimeWorkflows map[string][]realtimeTracker
 }
 
-func New(ctx context.Context, serviceName, prometheusName string, config *telemetry.Config, callbacks Callbacks, extraOpts ...metricsdk.Option) (*Metrics, error) {
+func New(ctx context.Context, serviceName, prometheusName string, config *telemetry.Config, extraOpts ...metricsdk.Option) (*Metrics, error) {
 	m, err := telemetry.NewMetrics(ctx, serviceName, prometheusName, config, extraOpts...)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,6 @@ func New(ctx context.Context, serviceName, prometheusName string, config *teleme
 
 	metrics := &Metrics{
 		Metrics:           m,
-		callbacks:         callbacks,
 		realtimeWorkflows: make(map[string][]realtimeTracker),
 	}
 
@@ -72,4 +71,10 @@ func (m *Metrics) populate(ctx context.Context, adders ...addMetric) error {
 		}
 	}
 	return nil
+}
+
+func (m *Metrics) SetCallbacks(callbacks Callbacks) {
+	m.Mutex.Lock()
+	defer m.Mutex.Unlock()
+	m.callbacks = callbacks
 }

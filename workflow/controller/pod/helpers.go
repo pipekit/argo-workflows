@@ -31,19 +31,19 @@ import (
 	// "k8s.io/utils/clock"
 )
 
-// SignalContainers signals all containers of a pod
-func (ctrl *Controller) SignalContainers(ctx context.Context, namespace string, podName string, sig syscall.Signal) (time.Duration, error) {
-	pod, err := ctrl.getPod(namespace, podName)
+// signalContainers signals all containers of a pod
+func (c *Controller) signalContainers(ctx context.Context, namespace string, podName string, sig syscall.Signal) (time.Duration, error) {
+	pod, err := c.GetPod(namespace, podName)
 	if pod == nil || err != nil {
 		return 0, err
 	}
 
-	for _, c := range pod.Status.ContainerStatuses {
-		if c.State.Running == nil {
+	for _, container := range pod.Status.ContainerStatuses {
+		if container.State.Running == nil {
 			continue
 		}
 		// problems are already logged at info level, so we just ignore errors here
-		_ = signal.SignalContainer(ctx, ctrl.restConfig, pod, c.Name, sig)
+		_ = signal.SignalContainer(ctx, c.restConfig, pod, container.Name, sig)
 	}
 	if pod.Spec.TerminationGracePeriodSeconds == nil {
 		return 30 * time.Second, nil
@@ -51,8 +51,8 @@ func (ctrl *Controller) SignalContainers(ctx context.Context, namespace string, 
 	return time.Duration(*pod.Spec.TerminationGracePeriodSeconds) * time.Second, nil
 }
 
-func (ctrl *Controller) getPod(namespace string, podName string) (*apiv1.Pod, error) {
-	obj, exists, err := ctrl.podInformer.GetStore().GetByKey(namespace + "/" + podName)
+func (c *Controller) GetPod(namespace string, podName string) (*apiv1.Pod, error) {
+	obj, exists, err := c.podInformer.GetStore().GetByKey(namespace + "/" + podName)
 	if err != nil {
 		return nil, err
 	}
@@ -64,4 +64,17 @@ func (ctrl *Controller) getPod(namespace string, podName string) (*apiv1.Pod, er
 		return nil, fmt.Errorf("object is not a pod")
 	}
 	return pod, nil
+}
+
+// TODO - return []*apiv1.Pod instead, save on duplicating this
+func (c *Controller) GetPodsByIndex(index, key string) ([]interface{}, error) {
+	return c.podInformer.GetIndexer().ByIndex(index, key)
+}
+
+func (c *Controller) TerminateContainers(namespace, name string) {
+	c.queuePodForCleanup(namespace, name, terminateContainers)
+}
+
+func (c *Controller) DeletePod(namespace, name string) {
+	c.queuePodForCleanup(namespace, name, deletePod)
 }

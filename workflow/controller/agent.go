@@ -10,7 +10,6 @@ import (
 	apierr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/utils/ptr"
 
 	"github.com/argoproj/argo-workflows/v3/errors"
@@ -113,11 +112,11 @@ func (woc *wfOperationCtx) createAgentPod(ctx context.Context) (*apiv1.Pod, erro
 	podName := woc.getAgentPodName()
 	log := woc.log.WithField("podName", podName)
 
-	pod, exists, err := woc.controller.PodController.GetPod(cache.ExplicitKey(fmt.Sprintf("%s/%s", woc.wf.Namespace, podName)))
+	pod, err := woc.controller.PodController.GetPod(woc.wf.Namespace, podName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pod from informer store: %w", err)
 	}
-	if exists {
+	if pod != nil {
 		return pod, nil
 	}
 

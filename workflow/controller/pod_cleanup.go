@@ -1,14 +1,9 @@
 package controller
 
 import (
-	"slices"
-
 	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/argoproj/argo-workflows/v3/workflow/common"
-
-	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/argoproj/argo-workflows/v3/workflow/controller/indexes"
 )
 
@@ -24,7 +19,7 @@ func (woc *wfOperationCtx) queuePodsForCleanup() {
 	strategy := podGC.GetStrategy()
 	selector, _ := podGC.GetLabelSelector()
 	workflowPhase := woc.wf.Status.Phase
-	objs, _ := woc.controller.PodInformer./*GetIndexer().ByIndex(indexes.WorkflowIndex, woc.wf.Namespace+"/"+woc.wf.Name)*/ // Add a function to podInformer to get by index
+	objs, _ := woc.controller.PodController.GetPodsByIndex(indexes.WorkflowIndex, woc.wf.Namespace+"/"+woc.wf.Name)
 	for _, obj := range objs {
 		pod := obj.(*apiv1.Pod)
 		if _, ok := pod.Labels[common.LabelKeyComponent]; ok { // for these types we don't want to do PodGC

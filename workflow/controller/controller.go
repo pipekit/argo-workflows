@@ -213,12 +213,7 @@ func NewWorkflowController(ctx context.Context, restConfig *rest.Config, kubecli
 		`workflows-controller`,
 		`argo_workflows`,
 		wfc.getMetricsServerConfig(),
-		metrics.Callbacks{
-			PodPhase:          wfc.PodController.GetPodPhaseMetrics,
-			WorkflowPhase:     wfc.getWorkflowPhaseMetrics,
-			WorkflowCondition: wfc.getWorkflowConditionMetrics,
-			IsLeader:          wfc.IsLeader,
-		})
+	)
 	deprecation.Initialize(wfc.metrics.Metrics.DeprecatedFeature)
 
 	if err != nil {
@@ -257,7 +252,6 @@ func (wfc *WorkflowController) runGCcontroller(ctx context.Context, workflowTTLW
 func (wfc *WorkflowController) runPodController(ctx context.Context, podGCWorkers int) {
 	defer runtimeutil.HandleCrash(runtimeutil.PanicHandlers...)
 
-	wfc.PodController = pod.NewController(ctx, wfc.restConfig, &wfc.Config.InstanceID, wfc.GetManagedNamespace(), wfc.kubeclientset, wfc.wfInformer /* , wfc.podInformer */, wfc.metrics, func(*apiv1.Pod) error { return nil })
 	wfc.PodController.Run(ctx, podGCWorkers)
 }
 
@@ -313,6 +307,8 @@ func (wfc *WorkflowController) Run(ctx context.Context, wfWorkers, workflowTTLWo
 	if err != nil {
 		log.Fatal(err)
 	}
+	wfc.PodController = pod.NewController(ctx, &wfc.Config, wfc.restConfig, wfc.GetManagedNamespace(), wfc.kubeclientset, wfc.wfInformer, wfc.metrics, wfc.enqueueWfFromPodLabel)
+
 	wfc.updateEstimatorFactory()
 
 	wfc.configMapInformer = wfc.newConfigMapInformer()
@@ -335,13 +331,17 @@ func (wfc *WorkflowController) Run(ctx context.Context, wfWorkers, workflowTTLWo
 	go wfc.artGCTaskInformer.Informer().Run(ctx.Done())
 	go wfc.taskResultInformer.Run(ctx.Done())
 	wfc.createClusterWorkflowTemplateInformer(ctx)
+	log.Warn("runPC")
+	go wfc.runPodController(ctx, podCleanupWorkers)
+	log.Warn("runPC done")
 
 	// Wait for all involved caches to be synced, before processing items from the queue is started
+	log.Warn("WFCS")
 	if !cache.WaitForCacheSync(
 		ctx.Done(),
 		wfc.wfInformer.HasSynced,
 		wfc.wftmplInformer.Informer().HasSynced,
-		//		wfc.podInformer.HasSynced,
+		wfc.PodController.HasSynced(),
 		wfc.configMapInformer.HasSynced,
 		wfc.wfTaskSetInformer.Informer().HasSynced,
 		wfc.artGCTaskInformer.Informer().HasSynced,
@@ -349,6 +349,13 @@ func (wfc *WorkflowController) Run(ctx context.Context, wfWorkers, workflowTTLWo
 	) {
 		log.Fatal("Timed out waiting for caches to sync")
 	}
+	log.Warn("WFCS done, callbacks")
+	wfc.metrics.SetCallbacks(metrics.Callbacks{
+		PodPhase:          nil,
+		WorkflowPhase:     wfc.getWorkflowPhaseMetrics,
+		WorkflowCondition: wfc.getWorkflowConditionMetrics,
+		IsLeader:          wfc.IsLeader,
+	})
 
 	// for i := 0; i < podCleanupWorkers; i++ {
 	// 	go wait.UntilWithContext(ctx, wfc.runPodCleanup, time.Second)
@@ -356,7 +363,6 @@ func (wfc *WorkflowController) Run(ctx context.Context, wfWorkers, workflowTTLWo
 	go wfc.workflowGarbageCollector(ctx.Done())
 	go wfc.archivedWorkflowGarbageCollector(ctx.Done())
 
-	go wfc.runPodController(ctx, podCleanupWorkers)
 	go wfc.runGCcontroller(ctx, workflowTTLWorkers)
 	go wfc.runCronController(ctx, cronWorkflowWorkers)
 

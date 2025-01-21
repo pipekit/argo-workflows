@@ -13,41 +13,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// // undo this and move back to main controller execWf
-// func QueuePodsForCleanup(workflow, execwf) {
-// 	log.Warnf("queuePodsForCleanup")
-
-// 	delay := c.config.GetPodGCDeleteDelayDuration()
-// 	podGC := execworkflow.Spec.PodGC
-// 	podGCDelay, err := podGC.GetDeleteDelayDuration()
-// 	if err != nil {
-// 		log.WithError(err).Warn("failed to parse podGC.deleteDelayDuration")
-// 	} else if podGCDelay >= 0 {
-// 		delay = podGCDelay
-// 	}
-// 	strategy := podGC.GetStrategy()
-// 	selector, _ := podGC.GetLabelSelector()
-// 	workflowPhase := woc.wf.Status.Phase
-// 	objs, _ := c.podInformer.GetIndexer().ByIndex(indexes.WorkflowIndex, woc.wf.Namespace+"/"+woc.wf.Name)
-// 	for _, obj := range objs {
-// 		pod := obj.(*apiv1.Pod)
-// 		if _, ok := pod.Labels[common.LabelKeyComponent]; ok { // for these types we don't want to do PodGC
-// 			continue
-// 		}
-// 		nodeID := woc.nodeID(pod)
-// 		nodePhase, err := woc.wf.Status.Nodes.GetPhase(nodeID)
-// 		if err != nil {
-// 			woc.log.Errorf("pod cleanup: was unable to obtain node for %s", nodeID)
-// 			continue
-// 		}
-// 		woc.log.Infof("pod cleanup: pod %s is fulfilled %t", pod.Name, nodePhase.Fulfilled())
-// 		if !nodePhase.Fulfilled() {
-// 			continue
-// 		}
-// 		PodCleanupAction(selector, pod, strategy, workflowPhase, delay)
-// 	}
-// }
-
 func (c *Controller) EnactAnyPodCleanup(
 	selector labels.Selector,
 	pod *apiv1.Pod,

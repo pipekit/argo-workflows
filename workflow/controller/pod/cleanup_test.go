@@ -12,7 +12,7 @@ import (
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 )
 
-func Test_determinePodCleanupAction(t *testing.T) {
+func TestDeterminePodCleanupAction(t *testing.T) {
 	finalizersNotOurs := []string{}
 	finalizersOurs := append(finalizersNotOurs, common.FinalizerPodStatus)
 	assert.Equal(t, labelPodCompleted, determinePodCleanupAction(labels.Nothing(), nil, wfv1.PodGCOnPodCompletion, wfv1.WorkflowSucceeded, apiv1.PodSucceeded, finalizersOurs))

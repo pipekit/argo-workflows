@@ -3,6 +3,7 @@ package pod
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"slices"
 	"syscall"
@@ -67,7 +68,7 @@ func (c *Controller) getPodCleanupPatch(pod *apiv1.Pod, labelPodCompleted bool) 
 }
 
 func (c *Controller) patchPodForCleanup(ctx context.Context, pods typedv1.PodInterface, namespace, podName string, labelPodCompleted bool) error {
-	pod, err := c.getPod(namespace, podName)
+	pod, err := c.GetPod(namespace, podName)
 	// err is always nil in all kind of caches for now
 	if err != nil {
 		return err
@@ -106,24 +107,25 @@ func (c *Controller) processNextPodCleanupItem(ctx context.Context) bool {
 	}()
 
 	namespace, podName, action := parsePodCleanupKey(key.(podCleanupKey))
-	logCtx := log.WithFields(log.Fields{"key": key, "action": action})
+	logCtx := log.WithFields(log.Fields{"key": key, "action": action, "namespace": namespace, "podName": podName})
 	logCtx.Info("cleaning up pod")
 	err := func() error {
 		switch action {
 		case terminateContainers:
-			pod, err := c.getPod(namespace, podName)
+			pod, err := c.GetPod(namespace, podName)
 			if err == nil && pod != nil && pod.Status.Phase == apiv1.PodPending {
 				c.queuePodForCleanup(namespace, podName, deletePod)
-			} else if terminationGracePeriod, err := c.SignalContainers(ctx, namespace, podName, syscall.SIGTERM); err != nil {
+			} else if terminationGracePeriod, err := c.signalContainers(ctx, namespace, podName, syscall.SIGTERM); err != nil {
 				return err
 			} else if terminationGracePeriod > 0 {
 				c.queuePodForCleanupAfter(namespace, podName, killContainers, terminationGracePeriod)
 			}
 		case killContainers:
-			if _, err := c.SignalContainers(ctx, namespace, podName, syscall.SIGKILL); err != nil {
+			if _, err := c.signalContainers(ctx, namespace, podName, syscall.SIGKILL); err != nil {
 				return err
 			}
 		case labelPodCompleted:
+			fmt.Printf("%v\n", c)
 			pods := c.kubeclientset.CoreV1().Pods(namespace)
 			if err := c.patchPodForCleanup(ctx, pods, namespace, podName, true); err != nil {
 				return err
