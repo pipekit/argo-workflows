@@ -98,6 +98,7 @@ func (c *Controller) patchPodForCleanup(ctx context.Context, pods typedv1.PodInt
 func (c *Controller) processNextPodCleanupItem(ctx context.Context) bool {
 	key, quit := c.workqueue.Get()
 	if quit {
+		log.Info("quit process next pod cleanup")
 		return false
 	}
 
@@ -162,9 +163,13 @@ func (c *Controller) processNextPodCleanupItem(ctx context.Context) bool {
 }
 
 func (c *Controller) queuePodForCleanup(namespace string, podName string, action podCleanupAction) {
+	logCtx := log.WithFields(log.Fields{"namespace": namespace, "podName": podName, "action": action})
+	logCtx.Info("queueing for cleanup")
 	c.workqueue.AddRateLimited(newPodCleanupKey(namespace, podName, action))
 }
 
 func (c *Controller) queuePodForCleanupAfter(namespace string, podName string, action podCleanupAction, duration time.Duration) {
+	logCtx := log.WithFields(log.Fields{"namespace": namespace, "podName": podName, "action": action})
+	logCtx.Info("queueing for cleanup after")
 	c.workqueue.AddAfter(newPodCleanupKey(namespace, podName, action), duration)
 }

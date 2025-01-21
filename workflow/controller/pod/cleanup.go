@@ -23,6 +23,8 @@ func (c *Controller) EnactAnyPodCleanup(
 	action := determinePodCleanupAction(selector, pod.Labels, strategy, workflowPhase, pod.Status.Phase, pod.Finalizers)
 	log.Infof("pod cleanup: pod %s is action %s", pod.Name, action)
 	switch action {
+	case noAction: // ignore
+		break
 	case deletePod:
 		c.queuePodForCleanupAfter(pod.Namespace, pod.Name, action, delay)
 	default:
@@ -59,7 +61,7 @@ func determinePodCleanupAction(
 	case hasOurFinalizer(finalizers):
 		return removeFinalizer
 	}
-	return ""
+	return noAction
 }
 
 func hasOurFinalizer(finalizers []string) bool {

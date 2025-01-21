@@ -15,6 +15,7 @@ type (
 )
 
 const (
+	noAction            podCleanupAction = ""
 	deletePod           podCleanupAction = "deletePod"
 	labelPodCompleted   podCleanupAction = "labelPodCompleted"
 	terminateContainers podCleanupAction = "terminateContainers"
@@ -23,10 +24,13 @@ const (
 )
 
 func newPodCleanupKey(namespace string, podName string, action podCleanupAction) podCleanupKey {
-	return fmt.Sprintf("%s/%s/%v", namespace, podName, action)
+	val := fmt.Sprintf("%s/%s/%v", namespace, podName, action)
+	fmt.Printf("newPodCleanupKey: %s\n", val)
+	return val
 }
 
 func parsePodCleanupKey(k podCleanupKey) (namespace string, podName string, action podCleanupAction) {
+	fmt.Printf("parsePodCleanupKey: %s\n", k)
 	parts := strings.Split(k, "/")
 	if len(parts) != 3 {
 		return "", "", ""

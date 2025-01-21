@@ -70,7 +70,7 @@ func NewController(ctx context.Context, config *argoConfig.Config, restConfig *r
 		kubeclientset:    clientSet,
 		wfInformer:       wfInformer,
 		wfInformerSynced: wfInformer.HasSynced,
-		workqueue:        metrics.RateLimiterWithBusyWorkers(ctx, workqueue.DefaultControllerRateLimiter(), "pod_cleanup_queue"),
+		workqueue:        workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()), //metrics.RateLimiterWithBusyWorkers(ctx, workqueue.DefaultControllerRateLimiter(), "pod_cleanup_queue"),
 		podInformer:      newInformer(ctx, clientSet, &config.InstanceID, &namespace),
 		log:              log,
 		callBack:         callback,
@@ -150,50 +150,50 @@ func startTerminating(old *v1.Pod, newPod *v1.Pod) bool {
 }
 
 func (c *Controller) addPod(pod *v1.Pod) {
-	key, err := keyFunc(pod)
+	// key, err := keyFunc(pod)
+	// if err != nil {
+	// 	return
+	// }
+	err := c.callBack(pod)
 	if err != nil {
 		return
 	}
-	err = c.callBack(pod)
-	if err != nil {
-		return
-	}
-	c.workqueue.Add(key)
+	//	c.workqueue.Add(key)
 }
 
 func (c *Controller) updatePod(old *v1.Pod, newPod *v1.Pod) {
 	// This is only called for actual updates, where there are "significant changes"
-	key, err := keyFunc(newPod)
-	if err != nil {
-		return
-	}
+	// key, err := keyFunc(newPod)
+	// if err != nil {
+	// 	return
+	// }
 	if startTerminating(old, newPod) {
 		c.log.Infof("termination event detected for pod %s", old.Name)
 	}
-	err = c.callBack(newPod)
+	err := c.callBack(newPod)
 	if err != nil {
 		return
 	}
-	c.workqueue.Add(key)
+	//	c.workqueue.Add(key)
 }
 
-func (c *Controller) deletePod(obj interface{}) {
-	pod, ok := obj.(*apiv1.Pod)
-	if !ok {
-		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
-		if !ok {
-			return
-		}
-		pod, ok = tombstone.Obj.(*apiv1.Pod)
-		if !ok {
-			return
-		}
-	}
-	key, err := keyFunc(pod)
-	if err != nil {
-		return
-	}
-	c.workqueue.Add(key)
+func (c *Controller) deletePod(_ interface{}) {
+	// pod, ok := obj.(*apiv1.Pod)
+	// if !ok {
+	// 	tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
+	// 	if !ok {
+	// 		return
+	// 	}
+	// 	pod, ok = tombstone.Obj.(*apiv1.Pod)
+	// 	if !ok {
+	// 		return
+	// 	}
+	// }
+	// key, err := keyFunc(pod)
+	// if err != nil {
+	// 	return
+	// }
+	//c.workqueue.Add(key)
 }
 
 func newWorkflowPodWatch(ctx context.Context, clientSet kubernetes.Interface, instanceID, namespace *string) *cache.ListWatch {
