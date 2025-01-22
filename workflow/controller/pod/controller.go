@@ -122,10 +122,10 @@ func (c *Controller) Run(ctx context.Context, workers int) {
 	if !cache.WaitForCacheSync(ctx.Done(), c.HasSynced(), c.wfInformerSynced) {
 		return
 	}
-	defer c.workqueue.ShutDown()
 	for i := 0; i < workers; i++ {
 		go wait.UntilWithContext(ctx, c.runPodCleanup, time.Second)
 	}
+	<-ctx.Done()
 }
 
 // GetPodPhaseMetrics obtains pod metrics
