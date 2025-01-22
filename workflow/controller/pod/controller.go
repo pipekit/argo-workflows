@@ -119,6 +119,7 @@ func (c *Controller) HasSynced() func() bool {
 
 // Run runs the pod controller
 func (c *Controller) Run(ctx context.Context, workers int) {
+	defer c.workqueue.ShutDown()
 	if !cache.WaitForCacheSync(ctx.Done(), c.HasSynced(), c.wfInformerSynced) {
 		return
 	}
