@@ -1159,6 +1159,7 @@ func (woc *wfOperationCtx) processNodeRetries(node *wfv1.NodeStatus, retryStrate
 func (woc *wfOperationCtx) podReconciliation(ctx context.Context) (error, bool) {
 	podList, err := woc.getAllWorkflowPods()
 	if err != nil {
+		woc.log.Error("was unable to retrieve workflow pods")
 		return err, false
 	}
 	seenPods := make(map[string]*apiv1.Pod)
@@ -1184,6 +1185,11 @@ func (woc *wfOperationCtx) podReconciliation(ctx context.Context) (error, bool) 
 		node, err := woc.wf.Status.Nodes.Get(nodeID)
 		if err == nil {
 			if newState := woc.assessNodeStatus(pod, node); newState != nil {
+				// update if a pod deletion timestamp exists on a completed workflow, ensures this pod is always looked at
+				// in the pod cleanup process
+				if pod.DeletionTimestamp != nil && newState.Fulfilled() {
+					woc.updated = true
+				}
 				// Check whether its taskresult is in an incompleted state.
 				if newState.Succeeded() && woc.wf.Status.IsTaskResultIncomplete(node.ID) {
 					woc.log.WithFields(log.Fields{"nodeID": newState.ID}).Debug("Taskresult of the node not yet completed")
@@ -1352,7 +1358,7 @@ func (woc *wfOperationCtx) failNodesWithoutCreatedPodsAfterDeadlineOrShutdown() 
 
 // getAllWorkflowPods returns all pods related to the current workflow
 func (woc *wfOperationCtx) getAllWorkflowPods() ([]*apiv1.Pod, error) {
-	objs, err := woc.controller.podInformer.GetIndexer().ByIndex(indexes.WorkflowIndex, indexes.WorkflowIndexValue(woc.wf.Namespace, woc.wf.Name))
+	objs, err := woc.controller.PodController.GetPodsByIndex(indexes.WorkflowIndex, indexes.WorkflowIndexValue(woc.wf.Namespace, woc.wf.Name))
 	if err != nil {
 		return nil, err
 	}
@@ -1613,7 +1619,7 @@ func podHasContainerNeedingTermination(pod *apiv1.Pod, tmpl wfv1.Template) bool 
 
 func (woc *wfOperationCtx) cleanUpPod(pod *apiv1.Pod, tmpl wfv1.Template) {
 	if podHasContainerNeedingTermination(pod, tmpl) {
-		woc.controller.queuePodForCleanup(woc.wf.Namespace, pod.Name, terminateContainers)
+		woc.controller.PodController.TerminateContainers(woc.wf.Namespace, pod.Name)
 	}
 }
 
@@ -2480,7 +2486,7 @@ func (woc *wfOperationCtx) markWorkflowPhase(ctx context.Context, phase wfv1.Wor
 		}
 		woc.updated = true
 		if woc.hasTaskSetNodes() {
-			woc.controller.queuePodForCleanup(woc.wf.Namespace, woc.getAgentPodName(), deletePod)
+			woc.controller.PodController.DeletePod(woc.wf.Namespace, woc.getAgentPodName())
 		}
 	}
 }
@@ -2716,7 +2722,7 @@ func (woc *wfOperationCtx) getPodByNode(node *wfv1.NodeStatus) (*apiv1.Pod, erro
 	}
 
 	podName := woc.getPodName(node.Name, wfutil.GetTemplateFromNode(*node))
-	return woc.controller.getPod(woc.wf.GetNamespace(), podName)
+	return woc.controller.PodController.GetPod(woc.wf.GetNamespace(), podName)
 }
 
 func (woc *wfOperationCtx) recordNodePhaseEvent(node *wfv1.NodeStatus) {

@@ -1,4 +1,4 @@
-package controller
+package pod
 
 import (
 	"testing"
@@ -12,7 +12,7 @@ import (
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 )
 
-func Test_determinePodCleanupAction(t *testing.T) {
+func TestDeterminePodCleanupAction(t *testing.T) {
 	finalizersNotOurs := []string{}
 	finalizersOurs := append(finalizersNotOurs, common.FinalizerPodStatus)
 	assert.Equal(t, labelPodCompleted, determinePodCleanupAction(labels.Nothing(), nil, wfv1.PodGCOnPodCompletion, wfv1.WorkflowSucceeded, apiv1.PodSucceeded, finalizersOurs))
@@ -28,13 +28,6 @@ func Test_determinePodCleanupAction(t *testing.T) {
 		Fields fields           `json:"fields"`
 		Want   podCleanupAction `json:"want,omitempty"`
 	}{
-
-		// strategy = 4 options
-		// workflow phase = 3 options
-		// pod phase = 2 options
-
-		// 4 * 3 * 2 = 24 options
-
 		{fields{wfv1.PodGCOnPodNone, wfv1.WorkflowRunning, apiv1.PodSucceeded, finalizersNotOurs}, labelPodCompleted},
 		{fields{wfv1.PodGCOnPodNone, wfv1.WorkflowRunning, apiv1.PodFailed, finalizersNotOurs}, labelPodCompleted},
 		{fields{wfv1.PodGCOnPodNone, wfv1.WorkflowRunning, apiv1.PodSucceeded, finalizersOurs}, labelPodCompleted},
