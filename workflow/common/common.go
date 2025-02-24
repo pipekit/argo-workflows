@@ -59,6 +59,9 @@ const (
 	// the strategy whose artifacts are being deleted
 	AnnotationKeyArtifactGCStrategy = workflow.WorkflowFullName + "/artifact-gc-strategy"
 
+	// LabelParallelismLimit is a label applied on namespace objects to control the per namespace parallelism.
+	LabelParallelismLimit = workflow.WorkflowFullName + "/parallelism-limit"
+
 	// LabelKeyControllerInstanceID is the label the controller will carry forward to workflows/pod labels
 	// for the purposes of workflow segregation
 	LabelKeyControllerInstanceID = workflow.WorkflowFullName + "/controller-instanceid"
