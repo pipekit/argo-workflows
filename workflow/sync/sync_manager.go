@@ -19,7 +19,7 @@ type (
 
 type Manager struct {
 	syncLockMap  map[string]semaphore
-	lock         *sync.Mutex
+	lock         *sync.RWMutex
 	nextWorkflow NextWorkflow
 	getSyncLimit GetSyncLimit
 	isWFDeleted  IsWorkflowDeleted
@@ -28,7 +28,7 @@ type Manager struct {
 func NewLockManager(getSyncLimit GetSyncLimit, nextWorkflow NextWorkflow, isWFDeleted IsWorkflowDeleted) *Manager {
 	return &Manager{
 		syncLockMap:  make(map[string]semaphore),
-		lock:         &sync.Mutex{},
+		lock:         &sync.RWMutex{},
 		nextWorkflow: nextWorkflow,
 		getSyncLimit: getSyncLimit,
 		isWFDeleted:  isWFDeleted,
@@ -48,6 +48,9 @@ func (sm *Manager) getWorkflowKey(key string) (string, error) {
 
 func (sm *Manager) CheckWorkflowExistence() {
 	defer runtimeutil.HandleCrash(runtimeutil.PanicHandlers...)
+
+	sm.lock.RLock()
+	defer sm.lock.RUnlock()
 
 	log.Debug("Check the workflow existence")
 	for _, lock := range sm.syncLockMap {
@@ -310,8 +313,8 @@ func (sm *Manager) Release(wf *wfv1.Workflow, nodeName string, syncRef *wfv1.Syn
 		return
 	}
 
-	sm.lock.Lock()
-	defer sm.lock.Unlock()
+	sm.lock.RLock()
+	defer sm.lock.RUnlock()
 
 	holderKey := getHolderKey(wf, nodeName)
 	// Ignoring error here is as good as it's going to be, we shouldn't get here as we should
@@ -335,8 +338,8 @@ func (sm *Manager) Release(wf *wfv1.Workflow, nodeName string, syncRef *wfv1.Syn
 }
 
 func (sm *Manager) ReleaseAll(wf *wfv1.Workflow) bool {
-	sm.lock.Lock()
-	defer sm.lock.Unlock()
+	sm.lock.RLock()
+	defer sm.lock.RUnlock()
 
 	if wf.Status.Synchronization == nil {
 		return true
