@@ -609,8 +609,6 @@ func (m *mockGetSyncLimit) getSyncLimit(s string) (int, error) {
 }
 
 func TestSemaphoreSizeCache(t *testing.T) {
-	ctx := context.Background()
-
 	mockedNow := time.Now()
 	nowFn = func() time.Time {
 		return mockedNow
@@ -628,7 +626,7 @@ func TestSemaphoreSizeCache(t *testing.T) {
 		wf := wfv1.MustUnmarshalWorkflow(wfWithSemaphore)
 		wf.CreationTimestamp = metav1.Time{Time: time.Now()}
 
-		status, wfUpdate, msg, failedLockName, err := syncManager.TryAcquire(ctx, wf, "", wf.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err := syncManager.TryAcquire(wf, "", wf.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.Empty(t, msg)
 		assert.Empty(t, failedLockName)
@@ -639,7 +637,7 @@ func TestSemaphoreSizeCache(t *testing.T) {
 		semaphore := syncManager.syncLockMap["default/ConfigMap/my-config/workflow"]
 		assert.Equal(t, 10, semaphore.getLimit())
 
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf, "", wf.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf, "", wf.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.True(t, status)
 		assert.Empty(t, failedLockName)
@@ -653,7 +651,7 @@ func TestSemaphoreSizeCache(t *testing.T) {
 		// increase semaphore age to force update
 		semaphore.(*prioritySemaphore).limitTimestamp = mockedNow.Add(-1)
 
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf, "", wf.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf, "", wf.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.True(t, status)
 		assert.Empty(t, failedLockName)
@@ -665,7 +663,7 @@ func TestSemaphoreSizeCache(t *testing.T) {
 		assert.Equal(t, 10, semaphore.getLimit())
 
 		// semaphore age should be updated to now
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf, "", wf.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf, "", wf.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.True(t, status)
 		assert.Empty(t, failedLockName)
@@ -680,7 +678,7 @@ func TestSemaphoreSizeCache(t *testing.T) {
 		semaphore.(*prioritySemaphore).limitTimestamp = mockedNow.Add(-1)
 		mock.outputSize = 20
 
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf, "", wf.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf, "", wf.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.True(t, status)
 		assert.Empty(t, failedLockName)
@@ -692,7 +690,7 @@ func TestSemaphoreSizeCache(t *testing.T) {
 		assert.Equal(t, 20, semaphore.getLimit())
 
 		// semaphore age should be updated to now again
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf, "", wf.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf, "", wf.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.True(t, status)
 		assert.Empty(t, failedLockName)
@@ -713,7 +711,7 @@ func TestSemaphoreSizeCache(t *testing.T) {
 		wf := wfv1.MustUnmarshalWorkflow(wfWithTmplSemaphore)
 		tmpl := wf.Spec.Templates[2]
 
-		status, wfUpdate, msg, failedLockName, err := syncManager.TryAcquire(ctx, wf, "semaphore-tmpl-level-xjvln-3448864205", tmpl.Synchronization)
+		status, wfUpdate, msg, failedLockName, err := syncManager.TryAcquire(wf, "semaphore-tmpl-level-xjvln-3448864205", tmpl.Synchronization)
 		require.NoError(t, err)
 		assert.Empty(t, msg)
 		assert.Empty(t, failedLockName)
@@ -724,7 +722,7 @@ func TestSemaphoreSizeCache(t *testing.T) {
 		semaphore := syncManager.syncLockMap["default/ConfigMap/my-config/template"]
 		assert.Equal(t, 10, semaphore.getLimit())
 
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf, "semaphore-tmpl-level-xjvln-3448864205", tmpl.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf, "semaphore-tmpl-level-xjvln-3448864205", tmpl.Synchronization)
 		require.NoError(t, err)
 		assert.True(t, status)
 		assert.Empty(t, failedLockName)
@@ -738,7 +736,7 @@ func TestSemaphoreSizeCache(t *testing.T) {
 		// increase semaphore age to force update
 		semaphore.(*prioritySemaphore).limitTimestamp = mockedNow.Add(-1)
 
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf, "semaphore-tmpl-level-xjvln-3448864205", tmpl.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf, "semaphore-tmpl-level-xjvln-3448864205", tmpl.Synchronization)
 		require.NoError(t, err)
 		assert.True(t, status)
 		assert.Empty(t, failedLockName)
@@ -750,7 +748,7 @@ func TestSemaphoreSizeCache(t *testing.T) {
 		assert.Equal(t, 10, semaphore.getLimit())
 
 		// semaphore age should be updated to now
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf, "semaphore-tmpl-level-xjvln-3448864205", tmpl.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf, "semaphore-tmpl-level-xjvln-3448864205", tmpl.Synchronization)
 		require.NoError(t, err)
 		assert.True(t, status)
 		assert.Empty(t, failedLockName)
@@ -765,7 +763,7 @@ func TestSemaphoreSizeCache(t *testing.T) {
 		semaphore.(*prioritySemaphore).limitTimestamp = mockedNow.Add(-1)
 		mock.outputSize = 20
 
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf, "semaphore-tmpl-level-xjvln-3448864205", tmpl.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf, "semaphore-tmpl-level-xjvln-3448864205", tmpl.Synchronization)
 		require.NoError(t, err)
 		assert.True(t, status)
 		assert.Empty(t, failedLockName)
@@ -777,7 +775,7 @@ func TestSemaphoreSizeCache(t *testing.T) {
 		assert.Equal(t, 20, semaphore.getLimit())
 
 		// semaphore age should be updated to now again
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf, "semaphore-tmpl-level-xjvln-3448864205", tmpl.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf, "semaphore-tmpl-level-xjvln-3448864205", tmpl.Synchronization)
 		require.NoError(t, err)
 		assert.True(t, status)
 		assert.Empty(t, failedLockName)
