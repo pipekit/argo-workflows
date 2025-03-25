@@ -113,7 +113,7 @@ func TestMutexLock(t *testing.T) {
 	kube := fake.NewSimpleClientset()
 	syncLimitFunc := GetSyncLimitFunc(kube)
 	t.Run("InitializeSynchronization", func(t *testing.T) {
-		syncManager := NewLockManager(syncLimitFunc, func(key string) {
+		syncManager := NewLockManager(syncLimitFunc, 0, func(key string) {
 		}, WorkflowExistenceFunc)
 		wf := wfv1.MustUnmarshalWorkflow(mutexwfstatus)
 		wfclientset := fakewfclientset.NewSimpleClientset(wf)
@@ -126,7 +126,7 @@ func TestMutexLock(t *testing.T) {
 	})
 	t.Run("WfLevelMutexAcquireAndRelease", func(t *testing.T) {
 		var nextWorkflow string
-		syncManager := NewLockManager(syncLimitFunc, func(key string) {
+		syncManager := NewLockManager(syncLimitFunc, 0, func(key string) {
 			nextWorkflow = key
 		}, WorkflowExistenceFunc)
 		wf := wfv1.MustUnmarshalWorkflow(mutexWf)
@@ -207,7 +207,7 @@ func TestMutexLock(t *testing.T) {
 
 	t.Run("WfLevelMutexOthernamespace", func(t *testing.T) {
 		var nextWorkflow string
-		syncManager := NewLockManager(syncLimitFunc, func(key string) {
+		syncManager := NewLockManager(syncLimitFunc, 0, func(key string) {
 			nextWorkflow = key
 		}, WorkflowExistenceFunc)
 		wf := wfv1.MustUnmarshalWorkflow(mutexWfNamespaced)
@@ -397,7 +397,7 @@ func TestMutexTmplLevel(t *testing.T) {
 	syncLimitFunc := GetSyncLimitFunc(kube)
 	t.Run("TemplateLevelAcquireAndRelease", func(t *testing.T) {
 		// var nextKey string
-		syncManager := NewLockManager(syncLimitFunc, func(key string) {
+		syncManager := NewLockManager(syncLimitFunc, 0, func(key string) {
 			// nextKey = key
 		}, WorkflowExistenceFunc)
 		wf := wfv1.MustUnmarshalWorkflow(mutexWfWithTmplLevel)
