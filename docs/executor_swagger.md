@@ -2473,6 +2473,7 @@ than the MaxAge, it will be ignored. |  |
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| database | boolean| `bool` |  | | Database specifies this is database controlled if this is set true |  |
 | name | string| `string` |  | | name of the mutex |  |
 | namespace | string| `string` |  | `"[namespace of workflow]"`|  |  |
 
@@ -4238,6 +4239,7 @@ Note that this field cannot be set when spec.os.name is windows.
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | configMapKeyRef | [ConfigMapKeySelector](#config-map-key-selector)| `ConfigMapKeySelector` |  | |  |  |
+| database | [SyncDatabaseRef](#sync-database-ref)| `SyncDatabaseRef` |  | |  |  |
 | namespace | string| `string` |  | `"[namespace of workflow]"`|  |  |
 
 
@@ -4362,6 +4364,21 @@ Namespaces that do not pre-exist within StorageOS will be created.
 |------|------|---------|:--------:| ------- |-------------|---------|
 | duration | string| `string` |  | | Duration is the seconds to wait before automatically resuming a template. Must be a string. Default unit is seconds.
 Could also be a Duration, e.g.: "2m", "6h" |  |
+
+
+
+### <span id="sync-database-ref"></span> SyncDatabaseRef
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| key | string| `string` |  | |  |  |
 
 
 

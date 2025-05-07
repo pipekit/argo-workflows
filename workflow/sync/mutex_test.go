@@ -112,8 +112,9 @@ status:
 func TestMutexLock(t *testing.T) {
 	kube := fake.NewSimpleClientset()
 	syncLimitFunc := GetSyncLimitFunc(kube)
+	ctx := context.Background()
 	t.Run("InitializeSynchronization", func(t *testing.T) {
-		syncManager := NewLockManager(syncLimitFunc, 0, func(key string) {
+		syncManager := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
 		}, WorkflowExistenceFunc)
 		wf := wfv1.MustUnmarshalWorkflow(mutexwfstatus)
 		wfclientset := fakewfclientset.NewSimpleClientset(wf)
@@ -126,14 +127,14 @@ func TestMutexLock(t *testing.T) {
 	})
 	t.Run("WfLevelMutexAcquireAndRelease", func(t *testing.T) {
 		var nextWorkflow string
-		syncManager := NewLockManager(syncLimitFunc, 0, func(key string) {
+		syncManager := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
 			nextWorkflow = key
 		}, WorkflowExistenceFunc)
 		wf := wfv1.MustUnmarshalWorkflow(mutexWf)
 		wf1 := wf.DeepCopy()
 		wf2 := wf.DeepCopy()
 		wf3 := wf.DeepCopy()
-		status, wfUpdate, msg, failedLockName, err := syncManager.TryAcquire(wf, "", wf.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err := syncManager.TryAcquire(ctx, wf, "", wf.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.Empty(t, msg)
 		assert.Empty(t, failedLockName)
@@ -145,7 +146,7 @@ func TestMutexLock(t *testing.T) {
 		assert.Equal(t, getHolderKey(wf, ""), wf.Status.Synchronization.Mutex.Holding[0].Holder)
 
 		// Try to acquire again
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf, "", wf.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf, "", wf.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.True(t, status)
 		assert.Empty(t, msg)
@@ -153,7 +154,7 @@ func TestMutexLock(t *testing.T) {
 		assert.False(t, wfUpdate)
 
 		wf1.Name = "two"
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf1, "", wf1.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf1, "", wf1.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.NotEmpty(t, msg)
 		assert.Equal(t, "default/Mutex/test", failedLockName)
@@ -163,7 +164,7 @@ func TestMutexLock(t *testing.T) {
 		wf2.Name = "three"
 		wf2.Spec.Priority = pointer.Int32Ptr(5)
 		holderKey2 := getHolderKey(wf2, "")
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf2, "", wf2.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf2, "", wf2.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.NotEmpty(t, msg)
 		assert.Equal(t, "default/Mutex/test", failedLockName)
@@ -171,7 +172,7 @@ func TestMutexLock(t *testing.T) {
 		assert.True(t, wfUpdate)
 
 		wf3.Name = "four"
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf3, "", wf3.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf3, "", wf3.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.NotEmpty(t, msg)
 		assert.Equal(t, "default/Mutex/test", failedLockName)
@@ -184,7 +185,7 @@ func TestMutexLock(t *testing.T) {
 		assert.Empty(t, wf.Status.Synchronization.Mutex.Holding)
 
 		// Low priority workflow try to acquire the lock
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf1, "", wf1.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf1, "", wf1.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.NotEmpty(t, msg)
 		assert.Equal(t, "default/Mutex/test", failedLockName)
@@ -192,7 +193,7 @@ func TestMutexLock(t *testing.T) {
 		assert.False(t, wfUpdate)
 
 		// High Priority workflow acquires the lock
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf2, "", wf2.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf2, "", wf2.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.Empty(t, msg)
 		assert.Empty(t, failedLockName)
@@ -207,14 +208,14 @@ func TestMutexLock(t *testing.T) {
 
 	t.Run("WfLevelMutexOthernamespace", func(t *testing.T) {
 		var nextWorkflow string
-		syncManager := NewLockManager(syncLimitFunc, 0, func(key string) {
+		syncManager := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
 			nextWorkflow = key
 		}, WorkflowExistenceFunc)
 		wf := wfv1.MustUnmarshalWorkflow(mutexWfNamespaced)
 		wf1 := wf.DeepCopy()
 		wf2 := wf.DeepCopy()
 		wf3 := wf.DeepCopy()
-		status, wfUpdate, msg, failedLockName, err := syncManager.TryAcquire(wf, "", wf.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err := syncManager.TryAcquire(ctx, wf, "", wf.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.Empty(t, msg)
 		assert.Empty(t, failedLockName)
@@ -227,7 +228,7 @@ func TestMutexLock(t *testing.T) {
 		assert.Equal(t, expected, wf.Status.Synchronization.Mutex.Holding[0].Holder)
 
 		// Try to acquire again
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf, "", wf.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf, "", wf.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.True(t, status)
 		assert.Empty(t, failedLockName)
@@ -236,7 +237,7 @@ func TestMutexLock(t *testing.T) {
 
 		wf1.Name = "two"
 		wf1.Namespace = "two"
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf1, "", wf1.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf1, "", wf1.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.NotEmpty(t, msg)
 		assert.Equal(t, "other/Mutex/test", failedLockName)
@@ -247,7 +248,7 @@ func TestMutexLock(t *testing.T) {
 		wf2.Namespace = "three"
 		wf2.Spec.Priority = pointer.Int32Ptr(5)
 		holderKey2 := getHolderKey(wf2, "")
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf2, "", wf2.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf2, "", wf2.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.NotEmpty(t, msg)
 		assert.Equal(t, "other/Mutex/test", failedLockName)
@@ -256,7 +257,7 @@ func TestMutexLock(t *testing.T) {
 
 		wf3.Name = "four"
 		wf3.Namespace = "four"
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf3, "", wf3.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf3, "", wf3.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.NotEmpty(t, msg)
 		assert.Equal(t, "other/Mutex/test", failedLockName)
@@ -269,7 +270,7 @@ func TestMutexLock(t *testing.T) {
 		assert.Empty(t, wf.Status.Synchronization.Mutex.Holding)
 
 		// Low priority workflow try to acquire the lock
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf1, "", wf1.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf1, "", wf1.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.NotEmpty(t, msg)
 		assert.Equal(t, "other/Mutex/test", failedLockName)
@@ -277,7 +278,7 @@ func TestMutexLock(t *testing.T) {
 		assert.False(t, wfUpdate)
 
 		// High Priority workflow acquires the lock
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf2, "", wf2.Spec.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf2, "", wf2.Spec.Synchronization)
 		require.NoError(t, err)
 		assert.Empty(t, msg)
 		assert.Empty(t, failedLockName)
@@ -393,17 +394,17 @@ status:
 
 func TestMutexTmplLevel(t *testing.T) {
 	kube := fake.NewSimpleClientset()
-
+	ctx := context.Background()
 	syncLimitFunc := GetSyncLimitFunc(kube)
 	t.Run("TemplateLevelAcquireAndRelease", func(t *testing.T) {
 		// var nextKey string
-		syncManager := NewLockManager(syncLimitFunc, 0, func(key string) {
+		syncManager := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
 			// nextKey = key
 		}, WorkflowExistenceFunc)
 		wf := wfv1.MustUnmarshalWorkflow(mutexWfWithTmplLevel)
 		tmpl := wf.Spec.Templates[1]
 
-		status, wfUpdate, msg, failedLockName, err := syncManager.TryAcquire(wf, "synchronization-tmpl-level-mutex-vjcdk-3941195474", tmpl.Synchronization)
+		status, wfUpdate, msg, failedLockName, err := syncManager.TryAcquire(ctx, wf, "synchronization-tmpl-level-mutex-vjcdk-3941195474", tmpl.Synchronization)
 		require.NoError(t, err)
 		assert.Empty(t, msg)
 		assert.Empty(t, failedLockName)
@@ -415,14 +416,14 @@ func TestMutexTmplLevel(t *testing.T) {
 		assert.Equal(t, expected, wf.Status.Synchronization.Mutex.Holding[0].Holder)
 
 		// Try to acquire again
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf, "synchronization-tmpl-level-mutex-vjcdk-2216915482", tmpl.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf, "synchronization-tmpl-level-mutex-vjcdk-2216915482", tmpl.Synchronization)
 		require.NoError(t, err)
 		assert.True(t, wfUpdate)
 		assert.Equal(t, "default/Mutex/welcome", failedLockName)
 		assert.False(t, status)
 		assert.NotEmpty(t, msg)
 
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf, "synchronization-tmpl-level-mutex-vjcdk-1432992664", tmpl.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf, "synchronization-tmpl-level-mutex-vjcdk-1432992664", tmpl.Synchronization)
 		require.NoError(t, err)
 		assert.NotEmpty(t, msg)
 		assert.Equal(t, "default/Mutex/welcome", failedLockName)
@@ -436,7 +437,7 @@ func TestMutexTmplLevel(t *testing.T) {
 		require.NotNil(t, wf.Status.Synchronization.Mutex)
 		assert.Empty(t, wf.Status.Synchronization.Mutex.Holding)
 
-		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(wf, "synchronization-tmpl-level-mutex-vjcdk-2216915482", tmpl.Synchronization)
+		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf, "synchronization-tmpl-level-mutex-vjcdk-2216915482", tmpl.Synchronization)
 		require.NoError(t, err)
 		assert.Empty(t, msg)
 		assert.Empty(t, failedLockName)

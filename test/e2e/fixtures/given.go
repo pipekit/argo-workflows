@@ -14,6 +14,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/yaml"
 
+	"github.com/argoproj/argo-workflows/v3/config"
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/argoproj/argo-workflows/v3/pkg/client/clientset/versioned/typed/workflow/v1alpha1"
 	"github.com/argoproj/argo-workflows/v3/workflow/hydrator"
@@ -36,6 +37,7 @@ type Given struct {
 	kubeClient        kubernetes.Interface
 	bearerToken       string
 	restConfig        *rest.Config
+	config            *config.Config
 }
 
 // creates a workflow based on the parameter, this may be:
@@ -46,6 +48,14 @@ func (g *Given) Workflow(text string) *Given {
 	g.t.Helper()
 	g.wf = &wfv1.Workflow{}
 	g.readResource(text, g.wf)
+	g.checkImages(g.wf)
+	return g
+}
+
+// Load created workflow
+func (g *Given) WorkflowWorkflow(wf *wfv1.Workflow) *Given {
+	g.t.Helper()
+	g.wf = wf
 	g.checkImages(g.wf)
 	return g
 }
@@ -233,5 +243,6 @@ func (g *Given) When() *When {
 		kubeClient:        g.kubeClient,
 		bearerToken:       g.bearerToken,
 		restConfig:        g.restConfig,
+		config:            g.config,
 	}
 }

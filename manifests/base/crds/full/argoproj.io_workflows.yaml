@@ -1884,6 +1884,8 @@ spec:
                 properties:
                   mutex:
                     properties:
+                      database:
+                        type: boolean
                       name:
                         type: string
                       namespace:
@@ -1892,6 +1894,8 @@ spec:
                   mutexes:
                     items:
                       properties:
+                        database:
+                          type: boolean
                         name:
                           type: string
                         namespace:
@@ -1911,6 +1915,13 @@ spec:
                         required:
                         - key
                         type: object
+                      database:
+                        properties:
+                          key:
+                            type: string
+                        required:
+                        - key
+                        type: object
                       namespace:
                         type: string
                     type: object
@@ -1925,6 +1936,13 @@ spec:
                               type: string
                             optional:
                               type: boolean
+                          required:
+                          - key
+                          type: object
+                        database:
+                          properties:
+                            key:
+                              type: string
                           required:
                           - key
                           type: object
@@ -9397,6 +9415,8 @@ spec:
                     properties:
                       mutex:
                         properties:
+                          database:
+                            type: boolean
                           name:
                             type: string
                           namespace:
@@ -9405,6 +9425,8 @@ spec:
                       mutexes:
                         items:
                           properties:
+                            database:
+                              type: boolean
                             name:
                               type: string
                             namespace:
@@ -9424,6 +9446,13 @@ spec:
                             required:
                             - key
                             type: object
+                          database:
+                            properties:
+                              key:
+                                type: string
+                            required:
+                            - key
+                            type: object
                           namespace:
                             type: string
                         type: object
@@ -9438,6 +9467,13 @@ spec:
                                   type: string
                                 optional:
                                   type: boolean
+                              required:
+                              - key
+                              type: object
+                            database:
+                              properties:
+                                key:
+                                  type: string
                               required:
                               - key
                               type: object
@@ -17610,6 +17646,8 @@ spec:
                       properties:
                         mutex:
                           properties:
+                            database:
+                              type: boolean
                             name:
                               type: string
                             namespace:
@@ -17618,6 +17656,8 @@ spec:
                         mutexes:
                           items:
                             properties:
+                              database:
+                                type: boolean
                               name:
                                 type: string
                               namespace:
@@ -17637,6 +17677,13 @@ spec:
                               required:
                               - key
                               type: object
+                            database:
+                              properties:
+                                key:
+                                  type: string
+                              required:
+                              - key
+                              type: object
                             namespace:
                               type: string
                           type: object
@@ -17651,6 +17698,13 @@ spec:
                                     type: string
                                   optional:
                                     type: boolean
+                                required:
+                                - key
+                                type: object
+                              database:
+                                properties:
+                                  key:
+                                    type: string
                                 required:
                                 - key
                                 type: object
@@ -29471,6 +29525,8 @@ spec:
                       properties:
                         mutex:
                           properties:
+                            database:
+                              type: boolean
                             name:
                               type: string
                             namespace:
@@ -29479,6 +29535,8 @@ spec:
                         mutexes:
                           items:
                             properties:
+                              database:
+                                type: boolean
                               name:
                                 type: string
                               namespace:
@@ -29498,6 +29556,13 @@ spec:
                               required:
                               - key
                               type: object
+                            database:
+                              properties:
+                                key:
+                                  type: string
+                              required:
+                              - key
+                              type: object
                             namespace:
                               type: string
                           type: object
@@ -29512,6 +29577,13 @@ spec:
                                     type: string
                                   optional:
                                     type: boolean
+                                required:
+                                - key
+                                type: object
+                              database:
+                                properties:
+                                  key:
+                                    type: string
                                 required:
                                 - key
                                 type: object
@@ -32065,6 +32137,8 @@ spec:
                     properties:
                       mutex:
                         properties:
+                          database:
+                            type: boolean
                           name:
                             type: string
                           namespace:
@@ -32073,6 +32147,8 @@ spec:
                       mutexes:
                         items:
                           properties:
+                            database:
+                              type: boolean
                             name:
                               type: string
                             namespace:
@@ -32092,6 +32168,13 @@ spec:
                             required:
                             - key
                             type: object
+                          database:
+                            properties:
+                              key:
+                                type: string
+                            required:
+                            - key
+                            type: object
                           namespace:
                             type: string
                         type: object
@@ -32106,6 +32189,13 @@ spec:
                                   type: string
                                 optional:
                                   type: boolean
+                              required:
+                              - key
+                              type: object
+                            database:
+                              properties:
+                                key:
+                                  type: string
                               required:
                               - key
                               type: object
@@ -39578,6 +39668,8 @@ spec:
                         properties:
                           mutex:
                             properties:
+                              database:
+                                type: boolean
                               name:
                                 type: string
                               namespace:
@@ -39586,6 +39678,8 @@ spec:
                           mutexes:
                             items:
                               properties:
+                                database:
+                                  type: boolean
                                 name:
                                   type: string
                                 namespace:
@@ -39605,6 +39699,13 @@ spec:
                                 required:
                                 - key
                                 type: object
+                              database:
+                                properties:
+                                  key:
+                                    type: string
+                                required:
+                                - key
+                                type: object
                               namespace:
                                 type: string
                             type: object
@@ -39619,6 +39720,13 @@ spec:
                                       type: string
                                     optional:
                                       type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                database:
+                                  properties:
+                                    key:
+                                      type: string
                                   required:
                                   - key
                                   type: object
@@ -47791,6 +47899,8 @@ spec:
                           properties:
                             mutex:
                               properties:
+                                database:
+                                  type: boolean
                                 name:
                                   type: string
                                 namespace:
@@ -47799,6 +47909,8 @@ spec:
                             mutexes:
                               items:
                                 properties:
+                                  database:
+                                    type: boolean
                                   name:
                                     type: string
                                   namespace:
@@ -47818,6 +47930,13 @@ spec:
                                   required:
                                   - key
                                   type: object
+                                database:
+                                  properties:
+                                    key:
+                                      type: string
+                                  required:
+                                  - key
+                                  type: object
                                 namespace:
                                   type: string
                               type: object
@@ -47832,6 +47951,13 @@ spec:
                                         type: string
                                       optional:
                                         type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                  database:
+                                    properties:
+                                      key:
+                                        type: string
                                     required:
                                     - key
                                     type: object
