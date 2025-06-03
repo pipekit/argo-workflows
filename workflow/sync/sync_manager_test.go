@@ -309,6 +309,7 @@ spec:
      command: [cowsay]
      args: ["hello world"]
 `
+
 // Workflow with database semaphore
 const wfWithDBSemaphore = `
 apiVersion: argoproj.io/v1alpha1
@@ -417,7 +418,7 @@ func TestSemaphoreWfLevel(t *testing.T) {
 		assert.True(t, status)
 		assert.Empty(t, msg)
 		assert.Empty(t, failedLockName)
-		assert.False(t, wfUpdate)0
+		assert.False(t, wfUpdate)
 
 		wf1.Name = "two"
 		status, wfUpdate, msg, failedLockName, err = syncManager.TryAcquire(ctx, wf1, "", wf1.Spec.Synchronization)
@@ -505,6 +506,8 @@ func TestSemaphoreWfLevel(t *testing.T) {
 		// Create two workflows that both need all semaphores
 		wf1 := wfv1.MustUnmarshalWorkflow(wfWithSemaphore)
 		wf1.Name = "wf1"
+		// Clear the original semaphore field to avoid conflict
+		wf1.Spec.Synchronization.Semaphore = nil
 		wf1.Spec.Synchronization.Semaphores = []*wfv1.SemaphoreRef{
 			{
 				ConfigMapKeyRef: &v1.ConfigMapKeySelector{
@@ -1035,7 +1038,7 @@ func TestCheckWorkflowExistence(t *testing.T) {
 
 	ctx := context.Background()
 	_, err := kube.CoreV1().ConfigMaps("default").Create(ctx, &cm, metav1.CreateOptions{})
-	assert.NoError(t,err)
+	assert.NoError(t, err)
 
 	syncLimitFunc := GetSyncLimitFunc(kube)
 	t.Run("WorkflowDeleted", func(t *testing.T) {
