@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	apierr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -1576,6 +1577,56 @@ func TestNestedTemplateRef(t *testing.T) {
 	assert.NoError(t, err)
 	err = validate(nestedTemplateRef)
 	assert.NoError(t, err)
+}
+
+var templateRefTargetWithInput = `
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: template-ref-target-with-input
+spec:
+  templates:
+  - name: A
+    inputs:
+      parameters:
+        - name: message
+    container:
+      image: alpine:3.11
+      command: [sh, -c]
+      args: ["echo {{inputs.parameters.message}}"]
+`
+
+var nestedTemplateRefWithError = `
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: template-ref-
+spec:
+  entrypoint: main
+  templates:
+  - name: main
+    steps:
+      - - name: call-A
+          templateRef:
+            name: template-ref-target
+            template: A
+      - - name: call-A-input
+          template: A
+  - name: A
+    steps:
+      - - name: call-B
+          templateRef:
+            name: template-ref-target-with-input
+            template: A
+`
+
+func TestNestedTemplateRefWithError(t *testing.T) {
+	err := createWorkflowTemplateFromSpec(templateRefTarget)
+	require.NoError(t, err)
+	err = createWorkflowTemplateFromSpec(templateRefTargetWithInput)
+	require.NoError(t, err)
+	err = validate(nestedTemplateRefWithError)
+	require.EqualError(t, err, "templates.main.steps[1].call-A-input templates.A.steps[0].call-B templates.A inputs.parameters.message was not supplied")
 }
 
 var undefinedTemplateRef = `
@@ -3342,4 +3393,73 @@ func TestShouldCheckValidationToSpacedParameters(t *testing.T) {
 	if assert.NotNil(t, err) {
 		assert.Contains(t, err.Error(), "failed to resolve {{  workflow.thisdoesnotexist  }}")
 	}
+}
+
+var dynamicWorkflowTemplateARefB = `
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: workflow-template-a
+spec:
+  templates:
+  - name: template-a
+    inputs:
+      parameters:
+        - name: message
+    steps:
+      - - name: step-a
+          templateRef:
+            name: workflow-template-b
+            template: "{{ inputs.parameters.message }}"
+`
+
+var dynamicWorkflowTemplateRefB = `
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: workflow-template-b
+spec:
+  templates:
+  - name: template-b
+    container:
+      image: docker/whalesay
+      command: [cowsay]
+      args: ["hello from template"]
+`
+
+var dynamicTemplateRefWorkflow = `
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: dynamic-workflow-
+spec:
+  entrypoint: whalesay
+  templates:
+  - name: whalesay
+    steps:
+      - - name: whalesay
+          templateRef:
+            name: workflow-template-a
+            template: template-a
+          arguments:
+            parameters:
+              - name: message
+                value: "template-b"
+`
+
+func TestDynamicWorkflowTemplateRef(t *testing.T) {
+	wf := wfv1.MustUnmarshalWorkflow(dynamicTemplateRefWorkflow)
+	wftmplA := wfv1.MustUnmarshalWorkflowTemplate(dynamicWorkflowTemplateARefB)
+	wftmplB := wfv1.MustUnmarshalWorkflowTemplate(dynamicWorkflowTemplateRefB)
+
+	err := createWorkflowTemplate(wftmplA)
+	require.NoError(t, err)
+	err = createWorkflowTemplate(wftmplB)
+	require.NoError(t, err)
+
+	err = ValidateWorkflow(wftmplGetter, cwftmplGetter, wf, ValidateOpts{})
+	require.NoError(t, err)
+
+	_ = deleteWorkflowTemplate(wftmplA.Name)
+	_ = deleteWorkflowTemplate(wftmplB.Name)
 }

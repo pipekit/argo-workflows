@@ -23,8 +23,8 @@ export YARN_CACHE_FOLDER=/root/.yarn
 npm config delete noproxy proxy https-proxy -g
 cd ui
 npm install -g webpack webpack-cli
-yarn  --verbose --prefer-offline  --network-timeout 600000 build
 yarn  --verbose --prefer-offline  --network-timeout 600000 install
+yarn  --verbose --prefer-offline  --network-timeout 600000 build
 ```
 * To build the docker images locally, use [`.github/bb-build-docker.sh`](.github/bb-build-docker.sh)
 * These images can be used for testing on QA clusters, etc.
