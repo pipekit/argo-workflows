@@ -1644,10 +1644,14 @@ type TemplateRef struct {
 
 // Synchronization holds synchronization lock configuration
 type Synchronization struct {
-	// Semaphore holds the Semaphore configuration
+	// Semaphore holds the Semaphore configuration - deprecated, use semaphores instead
 	Semaphore *SemaphoreRef `json:"semaphore,omitempty" protobuf:"bytes,1,opt,name=semaphore"`
-	// Mutex holds the Mutex lock details
+	// Mutex holds the Mutex lock details - deprecated, use mutexes instead
 	Mutex *Mutex `json:"mutex,omitempty" protobuf:"bytes,2,opt,name=mutex"`
+	// v3.6 and after: Semaphores holds the list of Semaphores configuration
+	Semaphores []*SemaphoreRef `json:"semaphores,omitempty" protobuf:"bytes,3,opt,name=semaphores"`
+	// v3.6 and after: Mutexes holds the list of Mutex lock details
+	Mutexes []*Mutex `json:"mutexes,omitempty" protobuf:"bytes,4,opt,name=mutexes"`
 }
 
 func (s *Synchronization) getSemaphoreConfigMapRef() *apiv1.ConfigMapKeySelector {
@@ -1657,29 +1661,18 @@ func (s *Synchronization) getSemaphoreConfigMapRef() *apiv1.ConfigMapKeySelector
 	return nil
 }
 
-type SynchronizationType string
-
-const (
-	SynchronizationTypeSemaphore SynchronizationType = "Semaphore"
-	SynchronizationTypeMutex     SynchronizationType = "Mutex"
-	SynchronizationTypeUnknown   SynchronizationType = "Unknown"
-)
-
-func (s *Synchronization) GetType() SynchronizationType {
-	if s.Semaphore != nil {
-		return SynchronizationTypeSemaphore
-	} else if s.Mutex != nil {
-		return SynchronizationTypeMutex
-	}
-	return SynchronizationTypeUnknown
+type SyncDatabaseRef struct {
+	Key string `json:"key" protobuf:"bytes,1,name=key"`
 }
 
 // SemaphoreRef is a reference of Semaphore
 type SemaphoreRef struct {
-	// ConfigMapKeyRef is configmap selector for Semaphore configuration
+	// ConfigMapKeyRef is a configmap selector for Semaphore configuration
 	ConfigMapKeyRef *apiv1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty" protobuf:"bytes,1,opt,name=configMapKeyRef"`
 	// Namespace is the namespace of the configmap, default: [namespace of workflow]
 	Namespace string `json:"namespace,omitempty" protobuf:"bytes,2,opt,name=namespace"`
+	// SyncDatabaseRef is a database reference for Semaphore configuration
+	Database *SyncDatabaseRef `json:"database,omitempty" protobuf:"bytes,3,opt,name=database"`
 }
 
 // Mutex holds Mutex configuration
@@ -1688,6 +1681,8 @@ type Mutex struct {
 	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
 	// Namespace is the namespace of the mutex, default: [namespace of workflow]
 	Namespace string `json:"namespace,omitempty" protobuf:"bytes,2,opt,name=namespace"`
+	// Database specifies this is database controlled if this is set true
+	Database bool `json:"database,omitempty" protobuf:"bytes,3,opt,name=database"`
 }
 
 // WorkflowTemplateRef is a reference to a WorkflowTemplate resource.
@@ -3904,6 +3899,14 @@ type SynchronizationStatus struct {
 	// Mutex stores this workflow's mutex holder details
 	Mutex *MutexStatus `json:"mutex,omitempty" protobuf:"bytes,2,opt,name=mutex"`
 }
+
+type SynchronizationType string
+
+const (
+	SynchronizationTypeSemaphore SynchronizationType = "Semaphore"
+	SynchronizationTypeMutex     SynchronizationType = "Mutex"
+	SynchronizationTypeUnknown   SynchronizationType = "Unknown"
+)
 
 func (ss *SynchronizationStatus) GetStatus(syncType SynchronizationType) SynchronizationAction {
 	switch syncType {

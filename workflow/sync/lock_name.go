@@ -4,26 +4,29 @@ import (
 	"fmt"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/argoproj/argo-workflows/v3/errors"
 	"github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 )
 
-type LockKind string
+type lockKind string
 
 const (
-	LockKindConfigMap LockKind = "ConfigMap"
-	LockKindMutex     LockKind = "Mutex"
+	lockKindConfigMap lockKind = "ConfigMap"
+	lockKindDatabase  lockKind = "Database"
+	lockKindMutex     lockKind = "Mutex"
 )
 
-type LockName struct {
+type lockName struct {
 	Namespace    string
 	ResourceName string
 	Key          string
-	Kind         LockKind
+	Kind         lockKind
 }
 
-func NewLockName(namespace, resourceName, lockKey string, kind LockKind) *LockName {
-	return &LockName{
+func newLockName(namespace, resourceName, lockKey string, kind lockKind) *lockName {
+	return &lockName{
 		Namespace:    namespace,
 		ResourceName: resourceName,
 		Key:          lockKey,
@@ -31,68 +34,92 @@ func NewLockName(namespace, resourceName, lockKey string, kind LockKind) *LockNa
 	}
 }
 
-func GetLockName(sync *v1alpha1.Synchronization, wfNamespace string) (*LockName, error) {
-	switch sync.GetType() {
-	case v1alpha1.SynchronizationTypeSemaphore:
-		if sync.Semaphore.ConfigMapKeyRef != nil {
-			namespace := sync.Semaphore.Namespace
-			if namespace == "" {
-				namespace = wfNamespace
-			}
-			return NewLockName(namespace, sync.Semaphore.ConfigMapKeyRef.Name, sync.Semaphore.ConfigMapKeyRef.Key, LockKindConfigMap), nil
-		}
-		return nil, fmt.Errorf("cannot get LockName for a Semaphore without a ConfigMapRef")
-	case v1alpha1.SynchronizationTypeMutex:
-		namespace := sync.Mutex.Namespace
+func getSemaphoreLockName(sem *v1alpha1.SemaphoreRef, wfNamespace string) (*lockName, error) {
+	switch {
+	case sem.ConfigMapKeyRef != nil && sem.Database != nil:
+		return nil, fmt.Errorf("invalid semaphore with both ConfigMapKeyRef and Database")
+	case sem.ConfigMapKeyRef != nil:
+		namespace := sem.Namespace
 		if namespace == "" {
 			namespace = wfNamespace
 		}
-		return NewLockName(namespace, sync.Mutex.Name, "", LockKindMutex), nil
+		return newLockName(namespace, sem.ConfigMapKeyRef.Name, sem.ConfigMapKeyRef.Key, lockKindConfigMap), nil
+	case sem.Database != nil:
+		namespace := sem.Namespace
+		if namespace == "" {
+			namespace = wfNamespace
+		}
+		return newLockName(namespace, sem.Database.Key, "", lockKindDatabase), nil
 	default:
-		return nil, fmt.Errorf("cannot get LockName for a Sync of Unknown type")
+		return nil, fmt.Errorf("cannot get LockName for a Semaphore without a ConfigMapRef or Database")
 	}
 }
 
-func DecodeLockName(lockName string) (*LockName, error) {
-	items := strings.SplitN(lockName, "/", 3)
+func getMutexLockName(mtx *v1alpha1.Mutex, wfNamespace string) *lockName {
+	namespace := mtx.Namespace
+	if namespace == "" {
+		namespace = wfNamespace
+	}
+	if mtx.Database {
+		return newLockName(namespace, mtx.Name, "", lockKindDatabase)
+	}
+	return newLockName(namespace, mtx.Name, "", lockKindMutex)
+}
+
+func (item *syncItem) lockName(wfNamespace string) (*lockName, error) {
+	switch {
+	case item.semaphore != nil:
+		return getSemaphoreLockName(item.semaphore, wfNamespace)
+	case item.mutex != nil:
+		return getMutexLockName(item.mutex, wfNamespace), nil
+	default:
+		return nil, fmt.Errorf("cannot get lockName if not semaphore or mutex")
+	}
+}
+
+func DecodeLockName(name string) (*lockName, error) {
+	log.Infof("DecodeLockName %s", name)
+	items := strings.SplitN(name, "/", 3)
 	if len(items) < 3 {
 		return nil, errors.New(errors.CodeBadRequest, "Invalid lock key: unknown format")
 	}
 
-	var lock LockName
-	lockKind := LockKind(items[1])
+	var lock lockName
+	lockKind := lockKind(items[1])
 	namespace := items[0]
 
 	switch lockKind {
-	case LockKindMutex:
-		lock = LockName{Namespace: namespace, Kind: lockKind, ResourceName: items[2]}
-	case LockKindConfigMap:
+	case lockKindMutex, lockKindDatabase:
+		lock = lockName{Namespace: namespace, Kind: lockKind, ResourceName: items[2]}
+	case lockKindConfigMap:
 		components := strings.Split(items[2], "/")
 
 		if len(components) != 2 {
 			return nil, errors.New(errors.CodeBadRequest, "Invalid ConfigMap lock key: unknown format")
 		}
 
-		lock = LockName{Namespace: namespace, Kind: lockKind, ResourceName: components[0], Key: components[1]}
+		lock = lockName{Namespace: namespace, Kind: lockKind, ResourceName: components[0], Key: components[1]}
 	default:
 		return nil, errors.New(errors.CodeBadRequest, fmt.Sprintf("Invalid lock key, unexpected kind: %s", lockKind))
 	}
 
-	err := lock.Validate()
+	err := lock.validate()
 	if err != nil {
 		return nil, err
 	}
 	return &lock, nil
 }
 
-func (ln *LockName) EncodeName() string {
-	if ln.Kind == LockKindMutex {
-		return ln.ValidateEncoding(fmt.Sprintf("%s/%s/%s", ln.Namespace, ln.Kind, ln.ResourceName))
+func (ln *lockName) String() string {
+	switch ln.Kind {
+	case lockKindMutex, lockKindDatabase:
+		return ln.validateEncoding(fmt.Sprintf("%s/%s/%s", ln.Namespace, ln.Kind, ln.ResourceName))
+	default:
+		return ln.validateEncoding(fmt.Sprintf("%s/%s/%s/%s", ln.Namespace, ln.Kind, ln.ResourceName, ln.Key))
 	}
-	return ln.ValidateEncoding(fmt.Sprintf("%s/%s/%s/%s", ln.Namespace, ln.Kind, ln.ResourceName, ln.Key))
 }
 
-func (ln *LockName) Validate() error {
+func (ln *lockName) validate() error {
 	if ln.Namespace == "" {
 		return errors.New(errors.CodeBadRequest, "Invalid lock key: Namespace is missing")
 	}
@@ -102,19 +129,37 @@ func (ln *LockName) Validate() error {
 	if ln.ResourceName == "" {
 		return errors.New(errors.CodeBadRequest, "Invalid lock key: ResourceName is missing")
 	}
-	if ln.Kind == LockKindConfigMap && ln.Key == "" {
+	if ln.Kind == lockKindConfigMap && ln.Key == "" {
 		return errors.New(errors.CodeBadRequest, "Invalid lock key: Key is missing for ConfigMap lock")
 	}
 	return nil
 }
 
-func (ln *LockName) ValidateEncoding(encoding string) string {
+func (ln *lockName) validateEncoding(encoding string) string {
 	decoded, err := DecodeLockName(encoding)
 	if err != nil {
-		panic(fmt.Sprintf("bug: unable to decode lock that was just encoded: %s", err))
+		panic(fmt.Sprintf("bug: unable to decode lock (%s) that was just encoded: %s", encoding, err))
 	}
 	if ln.Namespace != decoded.Namespace || ln.Kind != decoded.Kind || ln.ResourceName != decoded.ResourceName || ln.Key != decoded.Key {
 		panic("bug: lock that was just encoded does not match encoding")
 	}
 	return encoding
+}
+
+func (ln *lockName) dbKey() string {
+	return fmt.Sprintf("%s/%s", ln.Namespace, ln.ResourceName)
+}
+
+func needDBSession(lockKeys []string) (bool, error) {
+	for _, key := range lockKeys {
+		lock, err := DecodeLockName(key)
+		if err != nil {
+			return false, err
+		}
+		switch lock.Kind {
+		case lockKindDatabase:
+			return true, nil
+		}
+	}
+	return false, nil
 }

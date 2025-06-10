@@ -8406,10 +8406,10 @@ func TestMutexWfPendingWithNoPod(t *testing.T) {
 	cancel, controller := newController(wf)
 	defer cancel()
 	ctx := context.Background()
-	controller.syncManager = sync.NewLockManager(GetSyncLimitFunc(ctx, controller.kubeclientset), func(key string) {
+	controller.syncManager = sync.NewLockManager(ctx, controller.kubeclientset, controller.namespace, nil, getSyncLimitFunc(ctx, controller.kubeclientset), func(key string) {
 	}, workflowExistenceFunc)
-	_, _, _, err := controller.syncManager.TryAcquire(wf, "test", &wfv1.Synchronization{Mutex: &wfv1.Mutex{Name: "welcome"}})
-	assert.NoError(t, err)
+	_, _, _, _, err := controller.syncManager.TryAcquire(ctx, wf, "test", &wfv1.Synchronization{Mutex: &wfv1.Mutex{Name: "welcome"}})
+	require.NoError(t, err)
 	woc := newWorkflowOperationCtx(wf, controller)
 
 	woc.operate(ctx)
@@ -8417,7 +8417,7 @@ func TestMutexWfPendingWithNoPod(t *testing.T) {
 	assert.Equal(t, wfv1.NodePending, woc.wf.Status.Nodes.FindByDisplayName("hello-world-mpdht").Phase)
 }
 
-var wfGlopalArtifactNil = `apiVersion: argoproj.io/v1alpha1
+var wfGlobalArtifactNil = `apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   name: global-outputs-ttsfq
@@ -8487,7 +8487,7 @@ spec:
 `
 
 func TestWFGlobalArtifactNil(t *testing.T) {
-	wf := wfv1.MustUnmarshalWorkflow(wfGlopalArtifactNil)
+	wf := wfv1.MustUnmarshalWorkflow(wfGlobalArtifactNil)
 	cancel, controller := newController(wf)
 	defer cancel()
 

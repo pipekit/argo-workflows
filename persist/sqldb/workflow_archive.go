@@ -19,6 +19,7 @@ import (
 	sutils "github.com/argoproj/argo-workflows/v3/server/utils"
 	"github.com/argoproj/argo-workflows/v3/util/instanceid"
 	"github.com/argoproj/argo-workflows/v3/workflow/common"
+	"github.com/argoproj/argo-workflows/v3/util/sqldb"
 )
 
 const (
@@ -86,7 +87,7 @@ type workflowArchive struct {
 	clusterName       string
 	managedNamespace  string
 	instanceIDService instanceid.Service
-	dbType            dbType
+	dbType            sqldb.DBType
 }
 
 func (r *workflowArchive) IsEnabled() bool {
@@ -95,7 +96,7 @@ func (r *workflowArchive) IsEnabled() bool {
 
 // NewWorkflowArchive returns a new workflowArchive
 func NewWorkflowArchive(session db.Session, clusterName, managedNamespace string, instanceIDService instanceid.Service) WorkflowArchive {
-	return &workflowArchive{session: session, clusterName: clusterName, managedNamespace: managedNamespace, instanceIDService: instanceIDService, dbType: dbTypeFor(session)}
+	return &workflowArchive{session: session, clusterName: clusterName, managedNamespace: managedNamespace, instanceIDService: instanceIDService, dbType: sqldb.DBTypeFor(session)}
 }
 
 func (r *workflowArchive) ArchiveWorkflow(wf *wfv1.Workflow) error {
@@ -179,7 +180,7 @@ func (r *workflowArchive) ListWorkflows(options sutils.ListOptions) (wfv1.Workfl
 		return nil, err
 	}
 
-	if r.dbType == MySQL {
+	if r.dbType == sqldb.MySQL {
 		// workaround for mysql 42000 error (Unsupported subquery syntax):
 		//
 		//     Error 1235 (42000): This version of MySQL doesn't yet support 'LIMIT \u0026 IN/ALL/ANY/SOME subquery'
@@ -456,11 +457,11 @@ func (r *workflowArchive) DeleteExpiredWorkflows(ttl time.Duration) error {
 	return nil
 }
 
-func selectArchivedWorkflowQuery(t dbType) (*db.RawExpr, error) {
+func selectArchivedWorkflowQuery(t sqldb.DBType) (*db.RawExpr, error) {
 	switch t {
-	case MySQL:
+	case sqldb.MySQL:
 		return db.Raw("name, namespace, uid, phase, startedat, finishedat, coalesce(JSON_EXTRACT(workflow,'$.metadata.labels'), '{}') as labels,coalesce(JSON_EXTRACT(workflow,'$.metadata.annotations'), '{}') as annotations, coalesce(JSON_UNQUOTE(JSON_EXTRACT(workflow,'$.status.progress')), '') as progress, coalesce(JSON_UNQUOTE(JSON_EXTRACT(workflow,'$.metadata.creationTimestamp')), '') as creationtimestamp, JSON_UNQUOTE(JSON_EXTRACT(workflow,'$.spec.suspend')) as suspend, coalesce(JSON_UNQUOTE(JSON_EXTRACT(workflow,'$.status.message')), '') as message, coalesce(JSON_UNQUOTE(JSON_EXTRACT(workflow,'$.status.estimatedDuration')), '0') as estimatedduration, coalesce(JSON_EXTRACT(workflow,'$.status.resourcesDuration'), '{}') as resourcesduration"), nil
-	case Postgres:
+	case sqldb.Postgres:
 		return db.Raw("name, namespace, uid, phase, startedat, finishedat, coalesce((workflow::json)->'metadata'->>'labels', '{}') as labels, coalesce((workflow::json)->'metadata'->>'annotations', '{}') as annotations, coalesce((workflow::json)->'status'->>'progress', '') as progress, coalesce((workflow::json)->'metadata'->>'creationTimestamp', '') as creationtimestamp, (workflow::json)->'spec'->>'suspend' as suspend, coalesce((workflow::json)->'status'->>'message', '') as message, coalesce((workflow::json)->'status'->>'estimatedDuration', '0') as estimatedduration, coalesce((workflow::json)->'status'->>'resourcesDuration', '{}') as resourcesduration"), nil
 	}
 	return nil, fmt.Errorf("unsupported db type %s", t)

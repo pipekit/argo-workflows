@@ -5418,6 +5418,10 @@
     "io.argoproj.workflow.v1alpha1.Mutex": {
       "description": "Mutex holds Mutex configuration",
       "properties": {
+        "database": {
+          "description": "Database specifies this is database controlled if this is set true",
+          "type": "boolean"
+        },
         "name": {
           "description": "name of the mutex",
           "type": "string"
@@ -6351,7 +6355,11 @@
       "properties": {
         "configMapKeyRef": {
           "$ref": "#/definitions/io.k8s.api.core.v1.ConfigMapKeySelector",
-          "description": "ConfigMapKeyRef is configmap selector for Semaphore configuration"
+          "description": "ConfigMapKeyRef is a configmap selector for Semaphore configuration"
+        },
+        "database": {
+          "$ref": "#/definitions/io.argoproj.workflow.v1alpha1.SyncDatabaseRef",
+          "description": "SyncDatabaseRef is a database reference for Semaphore configuration"
         },
         "namespace": {
           "description": "Namespace is the namespace of the configmap, default: [namespace of workflow]",
@@ -6492,16 +6500,41 @@
       },
       "type": "object"
     },
+    "io.argoproj.workflow.v1alpha1.SyncDatabaseRef": {
+      "properties": {
+        "key": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "type": "object"
+    },
     "io.argoproj.workflow.v1alpha1.Synchronization": {
       "description": "Synchronization holds synchronization lock configuration",
       "properties": {
         "mutex": {
           "$ref": "#/definitions/io.argoproj.workflow.v1alpha1.Mutex",
-          "description": "Mutex holds the Mutex lock details"
+          "description": "Mutex holds the Mutex lock details - deprecated, use mutexes instead"
+        },
+        "mutexes": {
+          "description": "v3.6 and after: Mutexes holds the list of Mutex lock details",
+          "items": {
+            "$ref": "#/definitions/io.argoproj.workflow.v1alpha1.Mutex"
+          },
+          "type": "array"
         },
         "semaphore": {
           "$ref": "#/definitions/io.argoproj.workflow.v1alpha1.SemaphoreRef",
-          "description": "Semaphore holds the Semaphore configuration"
+          "description": "Semaphore holds the Semaphore configuration - deprecated, use semaphores instead"
+        },
+        "semaphores": {
+          "description": "v3.6 and after: Semaphores holds the list of Semaphores configuration",
+          "items": {
+            "$ref": "#/definitions/io.argoproj.workflow.v1alpha1.SemaphoreRef"
+          },
+          "type": "array"
         }
       },
       "type": "object"

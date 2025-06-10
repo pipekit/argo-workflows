@@ -2473,6 +2473,7 @@ than the MaxAge, it will be ignored. |  |
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| database | boolean| `bool` |  | | Database specifies this is database controlled if this is set true |  |
 | name | string| `string` |  | | name of the mutex |  |
 | namespace | string| `string` |  | `"[namespace of workflow]"`|  |  |
 
@@ -4238,6 +4239,7 @@ Note that this field cannot be set when spec.os.name is windows.
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | configMapKeyRef | [ConfigMapKeySelector](#config-map-key-selector)| `ConfigMapKeySelector` |  | |  |  |
+| database | [SyncDatabaseRef](#sync-database-ref)| `SyncDatabaseRef` |  | |  |  |
 | namespace | string| `string` |  | `"[namespace of workflow]"`|  |  |
 
 
@@ -4365,6 +4367,21 @@ Could also be a Duration, e.g.: "2m", "6h" |  |
 
 
 
+### <span id="sync-database-ref"></span> SyncDatabaseRef
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| key | string| `string` |  | |  |  |
+
+
+
 ### <span id="synchronization"></span> Synchronization
 
 
@@ -4380,7 +4397,9 @@ Could also be a Duration, e.g.: "2m", "6h" |  |
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | mutex | [Mutex](#mutex)| `Mutex` |  | |  |  |
+| mutexes | [][Mutex](#mutex)| `[]*Mutex` |  | | v3.6 and after: Mutexes holds the list of Mutex lock details |  |
 | semaphore | [SemaphoreRef](#semaphore-ref)| `SemaphoreRef` |  | |  |  |
+| semaphores | [][SemaphoreRef](#semaphore-ref)| `[]*SemaphoreRef` |  | | v3.6 and after: Semaphores holds the list of Semaphores configuration |  |
 
 
 

@@ -321,7 +321,19 @@ Workflow is the definition of a workflow resource
 
 - [`suspend-template.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/suspend-template.yaml)
 
+- [`synchronization-db-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-tmpl-level.yaml)
+
+- [`synchronization-db-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-wf-level.yaml)
+
+- [`synchronization-db-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-tmpl-level.yaml)
+
+- [`synchronization-db-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-wf-level.yaml)
+
+- [`synchronization-mutex-tmpl-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level-legacy.yaml)
+
 - [`synchronization-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level.yaml)
+
+- [`synchronization-mutex-wf-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level-legacy.yaml)
 
 - [`synchronization-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level.yaml)
 
@@ -745,7 +757,19 @@ WorkflowSpec is the specification of a Workflow.
 
 - [`suspend-template.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/suspend-template.yaml)
 
+- [`synchronization-db-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-tmpl-level.yaml)
+
+- [`synchronization-db-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-wf-level.yaml)
+
+- [`synchronization-db-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-tmpl-level.yaml)
+
+- [`synchronization-db-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-wf-level.yaml)
+
+- [`synchronization-mutex-tmpl-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level-legacy.yaml)
+
 - [`synchronization-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level.yaml)
+
+- [`synchronization-mutex-wf-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level-legacy.yaml)
 
 - [`synchronization-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level.yaml)
 
@@ -1184,7 +1208,19 @@ CronWorkflowSpec is the specification of a CronWorkflow
 
 - [`suspend-template.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/suspend-template.yaml)
 
+- [`synchronization-db-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-tmpl-level.yaml)
+
+- [`synchronization-db-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-wf-level.yaml)
+
+- [`synchronization-db-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-tmpl-level.yaml)
+
+- [`synchronization-db-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-wf-level.yaml)
+
+- [`synchronization-mutex-tmpl-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level-legacy.yaml)
+
 - [`synchronization-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level.yaml)
+
+- [`synchronization-mutex-wf-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level-legacy.yaml)
 
 - [`synchronization-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level.yaml)
 
@@ -1420,6 +1456,12 @@ Arguments to a template
 
 - [`suspend-template-outputs.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/suspend-template-outputs.yaml)
 
+- [`synchronization-db-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-tmpl-level.yaml)
+
+- [`synchronization-db-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-tmpl-level.yaml)
+
+- [`synchronization-mutex-tmpl-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level-legacy.yaml)
+
 - [`synchronization-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level.yaml)
 
 - [`work-avoidance.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/work-avoidance.yaml)
@@ -1611,7 +1653,19 @@ Synchronization holds synchronization lock configuration
 <details markdown>
 <summary>Examples with this field (click to open)</summary>
 
+- [`synchronization-db-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-tmpl-level.yaml)
+
+- [`synchronization-db-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-wf-level.yaml)
+
+- [`synchronization-db-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-tmpl-level.yaml)
+
+- [`synchronization-db-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-wf-level.yaml)
+
+- [`synchronization-mutex-tmpl-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level-legacy.yaml)
+
 - [`synchronization-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level.yaml)
+
+- [`synchronization-mutex-wf-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level-legacy.yaml)
 
 - [`synchronization-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level.yaml)
 </details>
@@ -1619,8 +1673,10 @@ Synchronization holds synchronization lock configuration
 ### Fields
 | Field Name | Field Type | Description   |
 |:----------:|:----------:|---------------|
-|`mutex`|[`Mutex`](#mutex)|Mutex holds the Mutex lock details|
-|`semaphore`|[`SemaphoreRef`](#semaphoreref)|Semaphore holds the Semaphore configuration|
+|`mutex`|[`Mutex`](#mutex)|Mutex holds the Mutex lock details - deprecated, use mutexes instead|
+|`mutexes`|`Array<`[`Mutex`](#mutex)`>`|v3.6 and after: Mutexes holds the list of Mutex lock details|
+|`semaphore`|[`SemaphoreRef`](#semaphoreref)|Semaphore holds the Semaphore configuration - deprecated, use semaphores instead|
+|`semaphores`|`Array<`[`SemaphoreRef`](#semaphoreref)`>`|v3.6 and after: Semaphores holds the list of Semaphores configuration|
 
 ## Template
 
@@ -1925,7 +1981,19 @@ SynchronizationStatus stores the status of semaphore and mutex.
 <details markdown>
 <summary>Examples with this field (click to open)</summary>
 
+- [`synchronization-db-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-tmpl-level.yaml)
+
+- [`synchronization-db-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-wf-level.yaml)
+
+- [`synchronization-db-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-tmpl-level.yaml)
+
+- [`synchronization-db-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-wf-level.yaml)
+
+- [`synchronization-mutex-tmpl-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level-legacy.yaml)
+
 - [`synchronization-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level.yaml)
+
+- [`synchronization-mutex-wf-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level-legacy.yaml)
 
 - [`synchronization-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level.yaml)
 </details>
@@ -2209,6 +2277,12 @@ Parameter indicate a passed string parameter to a service template with an optio
 
 - [`suspend-template-outputs.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/suspend-template-outputs.yaml)
 
+- [`synchronization-db-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-tmpl-level.yaml)
+
+- [`synchronization-db-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-tmpl-level.yaml)
+
+- [`synchronization-mutex-tmpl-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level-legacy.yaml)
+
 - [`synchronization-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level.yaml)
 
 - [`work-avoidance.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/work-avoidance.yaml)
@@ -2328,14 +2402,15 @@ Mutex holds Mutex configuration
 <details markdown>
 <summary>Examples with this field (click to open)</summary>
 
-- [`synchronization-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level.yaml)
+- [`synchronization-mutex-tmpl-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level-legacy.yaml)
 
-- [`synchronization-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level.yaml)
+- [`synchronization-mutex-wf-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level-legacy.yaml)
 </details>
 
 ### Fields
 | Field Name | Field Type | Description   |
 |:----------:|:----------:|---------------|
+|`database`|`boolean`|Database specifies this is database controlled if this is set true|
 |`name`|`string`|name of the mutex|
 |`namespace`|`string`|Namespace is the namespace of the mutex, default: [namespace of workflow]|
 
@@ -2346,7 +2421,8 @@ SemaphoreRef is a reference of Semaphore
 ### Fields
 | Field Name | Field Type | Description   |
 |:----------:|:----------:|---------------|
-|`configMapKeyRef`|[`ConfigMapKeySelector`](#configmapkeyselector)|ConfigMapKeyRef is configmap selector for Semaphore configuration|
+|`configMapKeyRef`|[`ConfigMapKeySelector`](#configmapkeyselector)|ConfigMapKeyRef is a configmap selector for Semaphore configuration|
+|`database`|[`SyncDatabaseRef`](#syncdatabaseref)|SyncDatabaseRef is a database reference for Semaphore configuration|
 |`namespace`|`string`|Namespace is the namespace of the configmap, default: [namespace of workflow]|
 
 ## ArtifactLocation
@@ -3075,6 +3151,12 @@ WorkflowStep is a reference to a template to execute in a series of step
 
 - [`suspend-template.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/suspend-template.yaml)
 
+- [`synchronization-db-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-tmpl-level.yaml)
+
+- [`synchronization-db-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-tmpl-level.yaml)
+
+- [`synchronization-mutex-tmpl-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level-legacy.yaml)
+
 - [`synchronization-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level.yaml)
 
 - [`template-defaults.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/template-defaults.yaml)
@@ -3208,9 +3290,9 @@ MutexStatus contains which objects hold mutex locks, and which objects this work
 <details markdown>
 <summary>Examples with this field (click to open)</summary>
 
-- [`synchronization-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level.yaml)
+- [`synchronization-mutex-tmpl-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level-legacy.yaml)
 
-- [`synchronization-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level.yaml)
+- [`synchronization-mutex-wf-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level-legacy.yaml)
 </details>
 
 ### Fields
@@ -3682,6 +3764,27 @@ MetricLabel is a single label for a prometheus metric
 ## RetryNodeAntiAffinity
 
 RetryNodeAntiAffinity is a placeholder for future expansion, only empty nodeAntiAffinity is allowed. In order to prevent running steps on the same host, it uses "kubernetes.io/hostname".
+
+## SyncDatabaseRef
+
+_No description available_
+
+<details markdown>
+<summary>Examples with this field (click to open)</summary>
+
+- [`synchronization-db-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-tmpl-level.yaml)
+
+- [`synchronization-db-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-wf-level.yaml)
+
+- [`synchronization-db-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-tmpl-level.yaml)
+
+- [`synchronization-db-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-wf-level.yaml)
+</details>
+
+### Fields
+| Field Name | Field Type | Description   |
+|:----------:|:----------:|---------------|
+|`key`|`string`|_No description available_|
 
 ## ContainerNode
 
@@ -4827,7 +4930,19 @@ ObjectMeta is metadata that all persisted resources must have, which includes al
 
 - [`suspend-template.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/suspend-template.yaml)
 
+- [`synchronization-db-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-tmpl-level.yaml)
+
+- [`synchronization-db-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-wf-level.yaml)
+
+- [`synchronization-db-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-tmpl-level.yaml)
+
+- [`synchronization-db-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-wf-level.yaml)
+
+- [`synchronization-mutex-tmpl-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level-legacy.yaml)
+
 - [`synchronization-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level.yaml)
+
+- [`synchronization-mutex-wf-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level-legacy.yaml)
 
 - [`synchronization-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level.yaml)
 
@@ -5410,7 +5525,19 @@ A single application container that you want to run within a pod.
 
 - [`suspend-template.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/suspend-template.yaml)
 
+- [`synchronization-db-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-tmpl-level.yaml)
+
+- [`synchronization-db-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-wf-level.yaml)
+
+- [`synchronization-db-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-tmpl-level.yaml)
+
+- [`synchronization-db-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-wf-level.yaml)
+
+- [`synchronization-mutex-tmpl-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level-legacy.yaml)
+
 - [`synchronization-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level.yaml)
+
+- [`synchronization-mutex-wf-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level-legacy.yaml)
 
 - [`synchronization-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level.yaml)
 
@@ -6139,7 +6266,19 @@ PersistentVolumeClaimSpec describes the common attributes of storage devices and
 
 - [`suspend-template.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/suspend-template.yaml)
 
+- [`synchronization-db-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-tmpl-level.yaml)
+
+- [`synchronization-db-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-mutex-wf-level.yaml)
+
+- [`synchronization-db-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-tmpl-level.yaml)
+
+- [`synchronization-db-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-db-wf-level.yaml)
+
+- [`synchronization-mutex-tmpl-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level-legacy.yaml)
+
 - [`synchronization-mutex-tmpl-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-tmpl-level.yaml)
+
+- [`synchronization-mutex-wf-level-legacy.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level-legacy.yaml)
 
 - [`synchronization-mutex-wf-level.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/synchronization-mutex-wf-level.yaml)
 

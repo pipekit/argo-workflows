@@ -5,10 +5,9 @@ metadata:
 spec:
   entrypoint: whalesay
   synchronization:
-    semaphore:
-      configMapKeyRef:
-        name: my-config
-        key: workflow
+    semaphores:
+      - database:
+          key: workflow
   templates:
   - name: whalesay
     container:

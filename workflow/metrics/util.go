@@ -232,7 +232,7 @@ func getWorkersBusy(name string) prometheus.Gauge {
 }
 
 func IsValidMetricName(name string) bool {
-	return model.IsValidMetricName(model.LabelValue(name))
+	return model.IsValidLegacyMetricName(string(model.LabelValue(name)))
 }
 
 func ValidateMetricValues(metric *wfv1.Prometheus) error {

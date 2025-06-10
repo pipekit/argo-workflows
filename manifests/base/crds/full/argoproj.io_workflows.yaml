@@ -1884,11 +1884,24 @@ spec:
                 properties:
                   mutex:
                     properties:
+                      database:
+                        type: boolean
                       name:
                         type: string
                       namespace:
                         type: string
                     type: object
+                  mutexes:
+                    items:
+                      properties:
+                        database:
+                          type: boolean
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                      type: object
+                    type: array
                   semaphore:
                     properties:
                       configMapKeyRef:
@@ -1902,9 +1915,41 @@ spec:
                         required:
                         - key
                         type: object
+                      database:
+                        properties:
+                          key:
+                            type: string
+                        required:
+                        - key
+                        type: object
                       namespace:
                         type: string
                     type: object
+                  semaphores:
+                    items:
+                      properties:
+                        configMapKeyRef:
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                            optional:
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                        database:
+                          properties:
+                            key:
+                              type: string
+                          required:
+                          - key
+                          type: object
+                        namespace:
+                          type: string
+                      type: object
+                    type: array
                 type: object
               templateDefaults:
                 properties:
@@ -9370,11 +9415,24 @@ spec:
                     properties:
                       mutex:
                         properties:
+                          database:
+                            type: boolean
                           name:
                             type: string
                           namespace:
                             type: string
                         type: object
+                      mutexes:
+                        items:
+                          properties:
+                            database:
+                              type: boolean
+                            name:
+                              type: string
+                            namespace:
+                              type: string
+                          type: object
+                        type: array
                       semaphore:
                         properties:
                           configMapKeyRef:
@@ -9388,9 +9446,41 @@ spec:
                             required:
                             - key
                             type: object
+                          database:
+                            properties:
+                              key:
+                                type: string
+                            required:
+                            - key
+                            type: object
                           namespace:
                             type: string
                         type: object
+                      semaphores:
+                        items:
+                          properties:
+                            configMapKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                name:
+                                  type: string
+                                optional:
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                            database:
+                              properties:
+                                key:
+                                  type: string
+                              required:
+                              - key
+                              type: object
+                            namespace:
+                              type: string
+                          type: object
+                        type: array
                     type: object
                   timeout:
                     type: string
@@ -17556,11 +17646,24 @@ spec:
                       properties:
                         mutex:
                           properties:
+                            database:
+                              type: boolean
                             name:
                               type: string
                             namespace:
                               type: string
                           type: object
+                        mutexes:
+                          items:
+                            properties:
+                              database:
+                                type: boolean
+                              name:
+                                type: string
+                              namespace:
+                                type: string
+                            type: object
+                          type: array
                         semaphore:
                           properties:
                             configMapKeyRef:
@@ -17574,9 +17677,41 @@ spec:
                               required:
                               - key
                               type: object
+                            database:
+                              properties:
+                                key:
+                                  type: string
+                              required:
+                              - key
+                              type: object
                             namespace:
                               type: string
                           type: object
+                        semaphores:
+                          items:
+                            properties:
+                              configMapKeyRef:
+                                properties:
+                                  key:
+                                    type: string
+                                  name:
+                                    type: string
+                                  optional:
+                                    type: boolean
+                                required:
+                                - key
+                                type: object
+                              database:
+                                properties:
+                                  key:
+                                    type: string
+                                required:
+                                - key
+                                type: object
+                              namespace:
+                                type: string
+                            type: object
+                          type: array
                       type: object
                     timeout:
                       type: string
@@ -29390,11 +29525,24 @@ spec:
                       properties:
                         mutex:
                           properties:
+                            database:
+                              type: boolean
                             name:
                               type: string
                             namespace:
                               type: string
                           type: object
+                        mutexes:
+                          items:
+                            properties:
+                              database:
+                                type: boolean
+                              name:
+                                type: string
+                              namespace:
+                                type: string
+                            type: object
+                          type: array
                         semaphore:
                           properties:
                             configMapKeyRef:
@@ -29408,9 +29556,41 @@ spec:
                               required:
                               - key
                               type: object
+                            database:
+                              properties:
+                                key:
+                                  type: string
+                              required:
+                              - key
+                              type: object
                             namespace:
                               type: string
                           type: object
+                        semaphores:
+                          items:
+                            properties:
+                              configMapKeyRef:
+                                properties:
+                                  key:
+                                    type: string
+                                  name:
+                                    type: string
+                                  optional:
+                                    type: boolean
+                                required:
+                                - key
+                                type: object
+                              database:
+                                properties:
+                                  key:
+                                    type: string
+                                required:
+                                - key
+                                type: object
+                              namespace:
+                                type: string
+                            type: object
+                          type: array
                       type: object
                     timeout:
                       type: string
@@ -31957,11 +32137,24 @@ spec:
                     properties:
                       mutex:
                         properties:
+                          database:
+                            type: boolean
                           name:
                             type: string
                           namespace:
                             type: string
                         type: object
+                      mutexes:
+                        items:
+                          properties:
+                            database:
+                              type: boolean
+                            name:
+                              type: string
+                            namespace:
+                              type: string
+                          type: object
+                        type: array
                       semaphore:
                         properties:
                           configMapKeyRef:
@@ -31975,9 +32168,41 @@ spec:
                             required:
                             - key
                             type: object
+                          database:
+                            properties:
+                              key:
+                                type: string
+                            required:
+                            - key
+                            type: object
                           namespace:
                             type: string
                         type: object
+                      semaphores:
+                        items:
+                          properties:
+                            configMapKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                name:
+                                  type: string
+                                optional:
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                            database:
+                              properties:
+                                key:
+                                  type: string
+                              required:
+                              - key
+                              type: object
+                            namespace:
+                              type: string
+                          type: object
+                        type: array
                     type: object
                   templateDefaults:
                     properties:
@@ -39443,11 +39668,24 @@ spec:
                         properties:
                           mutex:
                             properties:
+                              database:
+                                type: boolean
                               name:
                                 type: string
                               namespace:
                                 type: string
                             type: object
+                          mutexes:
+                            items:
+                              properties:
+                                database:
+                                  type: boolean
+                                name:
+                                  type: string
+                                namespace:
+                                  type: string
+                              type: object
+                            type: array
                           semaphore:
                             properties:
                               configMapKeyRef:
@@ -39461,9 +39699,41 @@ spec:
                                 required:
                                 - key
                                 type: object
+                              database:
+                                properties:
+                                  key:
+                                    type: string
+                                required:
+                                - key
+                                type: object
                               namespace:
                                 type: string
                             type: object
+                          semaphores:
+                            items:
+                              properties:
+                                configMapKeyRef:
+                                  properties:
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                  required:
+                                  - key
+                                  type: object
+                                database:
+                                  properties:
+                                    key:
+                                      type: string
+                                  required:
+                                  - key
+                                  type: object
+                                namespace:
+                                  type: string
+                              type: object
+                            type: array
                         type: object
                       timeout:
                         type: string
@@ -47629,11 +47899,24 @@ spec:
                           properties:
                             mutex:
                               properties:
+                                database:
+                                  type: boolean
                                 name:
                                   type: string
                                 namespace:
                                   type: string
                               type: object
+                            mutexes:
+                              items:
+                                properties:
+                                  database:
+                                    type: boolean
+                                  name:
+                                    type: string
+                                  namespace:
+                                    type: string
+                                type: object
+                              type: array
                             semaphore:
                               properties:
                                 configMapKeyRef:
@@ -47647,9 +47930,41 @@ spec:
                                   required:
                                   - key
                                   type: object
+                                database:
+                                  properties:
+                                    key:
+                                      type: string
+                                  required:
+                                  - key
+                                  type: object
                                 namespace:
                                   type: string
                               type: object
+                            semaphores:
+                              items:
+                                properties:
+                                  configMapKeyRef:
+                                    properties:
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                      optional:
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                  database:
+                                    properties:
+                                      key:
+                                        type: string
+                                    required:
+                                    - key
+                                    type: object
+                                  namespace:
+                                    type: string
+                                type: object
+                              type: array
                           type: object
                         timeout:
                           type: string

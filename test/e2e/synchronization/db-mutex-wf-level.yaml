@@ -1,12 +1,13 @@
-apiVersion: argoproj.io/v1alpha1
+dbapiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: synchronization-wf-level-mutex-1-
+  generateName: db-wf-level-mutex-
 spec:
   entrypoint: main
   synchronization:
-    mutex:
-      name:  test
+    mutexes:
+      - name: test
+        database: true
   templates:
     - name: main
       container:

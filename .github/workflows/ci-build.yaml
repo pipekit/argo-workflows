@@ -239,6 +239,14 @@ jobs:
             install_k3s_version: v1.28.11+k3s1
             profile: minimal
             useApi: false
+          - test: test-dbsemaphore
+            k8s_version: min
+            profile: mysql
+            useApi: false
+          - test: test-dbsemaphore
+            k8s_version: min
+            profile: postgres
+            useApi: false
     steps:
       - name: Install socat (needed by Kubernetes v1.25)
         run: sudo apt-get -y install socat
