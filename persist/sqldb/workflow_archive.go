@@ -18,8 +18,8 @@ import (
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	sutils "github.com/argoproj/argo-workflows/v3/server/utils"
 	"github.com/argoproj/argo-workflows/v3/util/instanceid"
-	"github.com/argoproj/argo-workflows/v3/workflow/common"
 	"github.com/argoproj/argo-workflows/v3/util/sqldb"
+	"github.com/argoproj/argo-workflows/v3/workflow/common"
 )
 
 const (
@@ -107,7 +107,7 @@ func (r *workflowArchive) ArchiveWorkflow(wf *wfv1.Workflow) error {
 	if err != nil {
 		return err
 	}
-	if r.dbType == Postgres {
+	if r.dbType == sqldb.Postgres {
 		workflow = bytes.ReplaceAll(workflow, []byte("\\u0000"), []byte(postgresNullReplacement))
 	}
 	return r.session.Tx(func(sess db.Session) error {
@@ -371,7 +371,7 @@ func (r *workflowArchive) GetWorkflow(uid string, namespace string, name string)
 		return nil, err
 	}
 	var wf *wfv1.Workflow
-	if r.dbType == Postgres {
+	if r.dbType == sqldb.Postgres {
 		archivedWf.Workflow = strings.ReplaceAll(archivedWf.Workflow, postgresNullReplacement, "\\u0000")
 	}
 	err = json.Unmarshal([]byte(archivedWf.Workflow), &wf)
