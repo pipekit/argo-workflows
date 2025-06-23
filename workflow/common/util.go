@@ -307,14 +307,14 @@ func IsDone(un *unstructured.Unstructured) bool {
 }
 
 // Check whether child hooked nodes Fulfilled
-func CheckAllHooksFullfilled(node *wfv1.NodeStatus, nodes wfv1.Nodes) bool {
+func CheckAllHooksFullfilled(node *wfv1.NodeStatus, status wfv1.WorkflowStatus) bool {
 	childs := node.Children
 	for _, id := range childs {
-		n, ok := nodes[id]
+		n, ok := status.Nodes[id]
 		if !ok {
 			continue
 		}
-		if n.NodeFlag != nil && n.NodeFlag.Hooked && !n.Fulfilled() {
+		if n.NodeFlag != nil && n.NodeFlag.Hooked && !n.Fulfilled(&status) {
 			return false
 		}
 	}

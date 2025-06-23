@@ -28,7 +28,7 @@ func (woc *wfOperationCtx) applyExecutionControl(pod *apiv1.Pod, wfNodesLock *sy
 		return
 	}
 	// node is already completed
-	if node.Fulfilled() {
+	if node.Fulfilled(&woc.wf.Status) {
 		return
 	}
 	switch pod.Status.Phase {
@@ -96,7 +96,7 @@ func (woc *wfOperationCtx) handleExecutionControlError(nodeID string, wfNodesLoc
 	// if node is a pod created from ContainerSet template
 	// then need to fail child nodes so they will not hang in Pending after pod deletion
 	for _, child := range children {
-		if !child.Fulfilled() {
+		if !child.Fulfilled(&woc.wf.Status) {
 			woc.markNodePhase(child.Name, wfv1.NodeFailed, errorMsg)
 		}
 	}

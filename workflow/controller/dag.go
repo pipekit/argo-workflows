@@ -164,12 +164,12 @@ func (d *dagContext) assessDAGPhase(targetTasks []string, nodes wfv1.Nodes, isSh
 		// We need to store the current branchPhase to remember the last completed phase in this branch so that we can apply it to omitted nodes
 		branchPhase := curr.phase
 
-		if !node.Fulfilled() {
+		if !node.Fulfilled(&d.wf.Status) {
 			return wfv1.NodeRunning, nil
 		}
 
 		// Only overwrite the branchPhase if this node completed. (If it didn't we can just inherit our parent's branchPhase).
-		if node.Completed() {
+		if node.Completed(&d.wf.Status) {
 			branchPhase = node.Phase
 		}
 
@@ -236,7 +236,7 @@ func (woc *wfOperationCtx) executeDAG(ctx context.Context, nodeName string, tmpl
 			// CRITICAL ERROR IF THIS BRANCH IS REACHED -> PANIC
 			panic(fmt.Sprintf("expected node for %s due to preceded initializeExecutableNode but couldn't find it", node.ID))
 		}
-		if node.Fulfilled() {
+		if node.Fulfilled(&woc.wf.Status) {
 			woc.killDaemonedChildren(node.ID)
 		}
 	}()
@@ -297,13 +297,13 @@ func (woc *wfOperationCtx) executeDAG(ctx context.Context, nodeName string, tmpl
 				woc.markNodeError(node.Name, err)
 				return node, err
 			}
-			if taskNode.Fulfilled() {
-				if taskNode.Completed() {
+			if taskNode.Fulfilled(&dagCtx.wf.Status) {
+				if taskNode.Completed(&dagCtx.wf.Status) {
 					hasOnExitNode, onExitNode, err := woc.runOnExitNode(ctx, dagCtx.GetTask(taskName).GetExitHook(woc.execWf.Spec.Arguments), taskNode, dagCtx.boundaryID, dagCtx.tmplCtx, "tasks."+taskName, scope)
 					if err != nil {
 						return node, err
 					}
-					if hasOnExitNode && (onExitNode == nil || !onExitNode.Fulfilled()) {
+					if hasOnExitNode && (onExitNode == nil || !onExitNode.Fulfilled(&dagCtx.wf.Status)) {
 						onExitCompleted = false
 					}
 				}
@@ -414,7 +414,7 @@ func (woc *wfOperationCtx) updateOutboundNodesForTargetTasks(dagCtx *dagContext,
 
 // executeDAGTask traverses and executes the upward chain of dependencies of a task
 func (woc *wfOperationCtx) executeDAGTask(ctx context.Context, dagCtx *dagContext, taskName string) {
-	if _, ok := dagCtx.visited[taskName]; ok {
+	if dagCtx.visited[taskName] {
 		return
 	}
 	dagCtx.visited[taskName] = true
@@ -422,7 +422,7 @@ func (woc *wfOperationCtx) executeDAGTask(ctx context.Context, dagCtx *dagContex
 	node := dagCtx.getTaskNode(taskName)
 	task := dagCtx.GetTask(taskName)
 	log := woc.log.WithField("taskName", taskName)
-	if node != nil && (node.Fulfilled() || node.Phase == wfv1.NodeRunning) {
+	if node != nil && (node.Fulfilled(&dagCtx.wf.Status) || node.Phase == wfv1.NodeRunning) {
 		scope, err := woc.buildLocalScopeFromTask(dagCtx, task)
 		if err != nil {
 			log.Error("Failed to build local scope from task")
@@ -440,7 +440,7 @@ func (woc *wfOperationCtx) executeDAGTask(ctx context.Context, dagCtx *dagContex
 		}
 	}
 
-	if node != nil && node.Phase.Fulfilled(node.TaskResultSynced) {
+	if node != nil && node.Phase.Fulfilled(dagCtx.wf.Status.IsTaskResultSynced(node.ID)) {
 		// Collect the completed task metrics
 		_, tmpl, _, tmplErr := dagCtx.tmplCtx.ResolveTemplate(task)
 		if tmplErr != nil {
@@ -452,7 +452,7 @@ func (woc *wfOperationCtx) executeDAGTask(ctx context.Context, dagCtx *dagContex
 			return
 		}
 		if tmpl != nil && tmpl.Metrics != nil {
-			if prevNodeStatus, ok := woc.preExecutionNodePhases[node.ID]; ok && !prevNodeStatus.Fulfilled() {
+			if prevNodeStatus, ok := woc.preExecutionNodePhases[node.ID]; ok && !prevNodeStatus.Fulfilled(&dagCtx.wf.Status) {
 				localScope, realTimeScope := woc.prepareMetricScope(node)
 				woc.computeMetrics(ctx, tmpl.Metrics.Prometheus, localScope, realTimeScope, false)
 			}
@@ -476,10 +476,10 @@ func (woc *wfOperationCtx) executeDAGTask(ctx context.Context, dagCtx *dagContex
 		}
 		scope.addParamToScope(fmt.Sprintf("tasks.%s.status", task.Name), string(node.Phase))
 
-		if node.Completed() {
+		if node.Completed(&dagCtx.wf.Status) {
 			// Run the node's onExit node, if any.
 			hasOnExitNode, onExitNode, err := woc.runOnExitNode(ctx, task.GetExitHook(woc.execWf.Spec.Arguments), node, dagCtx.boundaryID, dagCtx.tmplCtx, "tasks."+taskName, scope)
-			if hasOnExitNode && (onExitNode == nil || !onExitNode.Fulfilled() || err != nil) {
+			if hasOnExitNode && (onExitNode == nil || !onExitNode.Fulfilled(&dagCtx.wf.Status) || err != nil) {
 				// The onExit node is either not complete or has errored out, return.
 				return
 			}
@@ -623,7 +623,7 @@ func (woc *wfOperationCtx) executeDAGTask(ctx context.Context, dagCtx *dagContex
 		if node == nil {
 			return
 		}
-		if node.Completed() {
+		if node.Completed(&dagCtx.wf.Status) {
 			scope, err := woc.buildLocalScopeFromTask(dagCtx, task)
 			if err != nil {
 				woc.markNodeError(node.Name, err)
@@ -631,7 +631,7 @@ func (woc *wfOperationCtx) executeDAGTask(ctx context.Context, dagCtx *dagContex
 			scope.addParamToScope(fmt.Sprintf("tasks.%s.status", task.Name), string(node.Phase))
 			// if the node type is NodeTypeRetry, and its last child is completed, it will be completed after woc.executeTemplate;
 			hasOnExitNode, onExitNode, err := woc.runOnExitNode(ctx, task.GetExitHook(woc.execWf.Spec.Arguments), node, dagCtx.boundaryID, dagCtx.tmplCtx, "tasks."+taskName, scope)
-			if hasOnExitNode && (onExitNode == nil || !onExitNode.Fulfilled() || err != nil) {
+			if hasOnExitNode && (onExitNode == nil || !onExitNode.Fulfilled(&dagCtx.wf.Status) || err != nil) {
 				// The onExit node is either not complete or has errored out, return.
 				return
 			}
@@ -643,7 +643,7 @@ func (woc *wfOperationCtx) executeDAGTask(ctx context.Context, dagCtx *dagContex
 		for _, t := range expandedTasks {
 			// Add the child relationship from our dependency's outbound nodes to this node.
 			node := dagCtx.getTaskNode(t.Name)
-			if node == nil || !node.Fulfilled() {
+			if node == nil || !node.Fulfilled(&dagCtx.wf.Status) {
 				return
 			}
 			if node.FailedOrError() {
@@ -872,7 +872,7 @@ func (d *dagContext) evaluateDependsLogic(taskName string) (bool, bool, error) {
 
 		// If the task is still running, we should not proceed.
 		depNode := d.getTaskNode(taskName)
-		if depNode == nil || !depNode.Fulfilled() || !common.CheckAllHooksFullfilled(depNode, d.wf.Status.Nodes) {
+		if depNode == nil || !depNode.Fulfilled(&d.wf.Status) || !common.CheckAllHooksFullfilled(depNode, d.wf.Status) {
 			return false, false, nil
 		}
 

@@ -2009,15 +2009,6 @@ func (in *WorkflowStatus) MarkTaskResultIncomplete(name string) {
 		in.TaskResultsCompletionStatus = make(map[string]bool)
 	}
 	in.TaskResultsCompletionStatus[name] = false
-	node, err := in.Nodes.Get(name)
-	if err != nil {
-		return
-	}
-	if node.TaskResultSynced != nil {
-		tmp := false
-		node.TaskResultSynced = &tmp
-	}
-	in.Nodes.Set(name, *node)
 }
 
 func (in *WorkflowStatus) MarkTaskResultComplete(name string) {
@@ -2025,15 +2016,6 @@ func (in *WorkflowStatus) MarkTaskResultComplete(name string) {
 		in.TaskResultsCompletionStatus = make(map[string]bool)
 	}
 	in.TaskResultsCompletionStatus[name] = true
-	node, err := in.Nodes.Get(name)
-	if err != nil {
-		return
-	}
-	if node.TaskResultSynced != nil {
-		tmp := true
-		node.TaskResultSynced = &tmp
-	}
-	in.Nodes.Set(name, *node)
 }
 
 func (in *WorkflowStatus) TaskResultsInProgress() bool {
@@ -2051,6 +2033,10 @@ func (in *WorkflowStatus) IsTaskResultIncomplete(name string) bool {
 		return !value
 	}
 	return false // workflows from older versions do not have this status, so assume completed if this is missing
+}
+
+func (in *WorkflowStatus) IsTaskResultSynced(nodeID string) bool {
+	return !in.IsTaskResultIncomplete(nodeID)
 }
 
 func (in *WorkflowStatus) IsOffloadNodeStatus() bool {
@@ -2374,17 +2360,11 @@ type NodeStatus struct {
 
 	// SynchronizationStatus is the synchronization status of the node
 	SynchronizationStatus *NodeSynchronizationStatus `json:"synchronizationStatus,omitempty" protobuf:"bytes,25,opt,name=synchronizationStatus"`
-
-	// TaskResultSynced is used to determine if the node's output has been received
-	TaskResultSynced *bool `json:"taskResultSynced,omitempty" protobuf:"bytes,28,opt,name=taskResultSynced"`
 }
 
 // Completed is used to determine if this node can proceed
-func (n *NodeStatus) Completed() bool {
-	synced := true
-	if n.TaskResultSynced != nil {
-		synced = *n.TaskResultSynced
-	}
+func (n *NodeStatus) Completed(wfs *WorkflowStatus) bool {
+	synced := wfs.IsTaskResultSynced(n.ID)
 	return n.Phase.Completed() && synced
 }
 
@@ -2401,12 +2381,8 @@ func (n *NodeStatus) IsWorkflowStep() bool {
 }
 
 // Fulfilled returns whether a phase is fulfilled, i.e. it completed execution or was skipped or omitted
-func (phase NodePhase) Fulfilled(synced *bool) bool {
-	if synced == nil {
-		tmp := true
-		synced = &tmp
-	}
-	return phase.Completed() && *synced || phase == NodeSkipped || phase == NodeOmitted
+func (phase NodePhase) Fulfilled(synced bool) bool {
+	return (phase.Completed() && synced) || phase == NodeSkipped || phase == NodeOmitted
 }
 
 // Completed returns whether or not a phase completed. Notably, a skipped phase is not considered as having completed
@@ -2442,12 +2418,9 @@ func (in WorkflowStatus) FinishTime() *metav1.Time {
 }
 
 // Fulfilled returns whether a node is fulfilled, i.e. it finished execution, was skipped, or was dameoned successfully
-func (n NodeStatus) Fulfilled() bool {
-	synced := true
-	if n.TaskResultSynced != nil {
-		synced = *n.TaskResultSynced
-	}
-	return n.Phase.Fulfilled(n.TaskResultSynced) && synced || n.IsDaemoned() && n.Phase != NodePending
+func (n NodeStatus) Fulfilled(wfs *WorkflowStatus) bool {
+	synced := wfs.IsTaskResultSynced(n.ID)
+	return n.Phase.Fulfilled(synced) || n.IsDaemoned() && n.Phase != NodePending
 }
 
 func (in *WorkflowStatus) AnyActiveSuspendNode() bool {

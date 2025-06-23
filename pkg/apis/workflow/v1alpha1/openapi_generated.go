@@ -4361,13 +4361,6 @@ func schema_pkg_apis_workflow_v1alpha1_NodeStatus(ref common.ReferenceCallback) 
 							Ref:         ref("github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1.NodeSynchronizationStatus"),
 						},
 					},
-					"taskResultSynced": {
-						SchemaProps: spec.SchemaProps{
-							Description: "TaskResultSynced is used to determine if the node's output has been received",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 				},
 				Required: []string{"id", "name", "type"},
 			},

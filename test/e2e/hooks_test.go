@@ -795,7 +795,7 @@ spec:
 		WaitForWorkflow(fixtures.Condition(func(wf *v1alpha1.Workflow) (bool, string) {
 			onExitNodeName = common.GenerateOnExitNodeName(wf.ObjectMeta.Name)
 			onExitNode := wf.Status.Nodes.FindByDisplayName(onExitNodeName)
-			return onExitNode.Completed(), "exit handler completed"
+			return onExitNode.Completed(&wf.Status), "exit handler completed"
 		})).
 		Then().
 		ExpectWorkflow(func(t *testing.T, metadata *v1.ObjectMeta, status *v1alpha1.WorkflowStatus) {
@@ -844,7 +844,7 @@ spec:
 		WaitForWorkflow(fixtures.Condition(func(wf *v1alpha1.Workflow) (bool, string) {
 			onExitNodeName = common.GenerateOnExitNodeName(wf.ObjectMeta.Name)
 			onExitNode := wf.Status.Nodes.FindByDisplayName(onExitNodeName)
-			return onExitNode.Completed(), "exit handler completed"
+			return onExitNode.Completed(&wf.Status), "exit handler completed"
 		})).
 		Then().
 		ExpectWorkflow(func(t *testing.T, metadata *v1.ObjectMeta, status *v1alpha1.WorkflowStatus) {

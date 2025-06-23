@@ -9,7 +9,7 @@ func (woc *wfOperationCtx) executeHTTPTemplate(nodeName string, templateScope st
 	if err != nil {
 		node = woc.initializeExecutableNode(nodeName, wfv1.NodeTypeHTTP, templateScope, tmpl, orgTmpl, opts.boundaryID, wfv1.NodePending, opts.nodeFlag, true)
 	}
-	if !node.Fulfilled() {
+	if !node.Fulfilled(&woc.wf.Status) {
 		woc.taskSet[node.ID] = *tmpl
 	}
 	return node

@@ -13,7 +13,7 @@ func UpdateResourceDurations(wf *wfv1.Workflow) {
 		// AND they are the only node that should contribute to the total
 		if node.Type == wfv1.NodeTypePod {
 			wf.Status.ResourcesDuration = wf.Status.ResourcesDuration.Add(node.ResourcesDuration)
-		} else if node.Fulfilled() {
+		} else if node.Fulfilled(&wf.Status) {
 			// compute the sum of all children
 			node.ResourcesDuration = resourceDuration(wf, node, make(map[string]bool))
 			wf.Status.Nodes.Set(nodeID, node)

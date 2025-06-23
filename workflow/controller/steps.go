@@ -44,12 +44,12 @@ func (woc *wfOperationCtx) executeSteps(ctx context.Context, nodeName string, tm
 	}
 
 	defer func() {
-		nodePhase, err := woc.wf.Status.Nodes.GetPhase(node.ID)
+		node, err := woc.wf.Status.Nodes.Get(node.ID)
 		if err != nil {
-			woc.log.Fatalf("was unable to obtain nodePhase for %s", node.ID)
-			panic(fmt.Sprintf("unable to obtain nodePhase for %s", node.ID))
+			woc.log.Fatalf("was unable to obtain node for %s", node.ID)
+			panic(fmt.Sprintf("unable to obtain node for %s", node.ID))
 		}
-		if nodePhase.Fulfilled(node.TaskResultSynced) {
+		if node.Fulfilled(&woc.wf.Status) {
 			woc.killDaemonedChildren(node.ID)
 		}
 	}()
@@ -71,7 +71,7 @@ func (woc *wfOperationCtx) executeSteps(ctx context.Context, nodeName string, tm
 			sgNode, err := woc.wf.GetNodeByName(sgNodeName)
 			if err != nil {
 				_ = woc.initializeNode(sgNodeName, wfv1.NodeTypeStepGroup, stepTemplateScope, &wfv1.WorkflowStep{}, stepsCtx.boundaryID, wfv1.NodeRunning, &wfv1.NodeFlag{}, true)
-			} else if !sgNode.Fulfilled() {
+			} else if !sgNode.Fulfilled(&woc.wf.Status) {
 				_ = woc.markNodePhase(sgNodeName, wfv1.NodeRunning)
 			}
 		}
@@ -111,7 +111,7 @@ func (woc *wfOperationCtx) executeSteps(ctx context.Context, nodeName string, tm
 		if err != nil {
 			return woc.markNodeError(sgNodeName, err), nil
 		}
-		if !sgNode.Fulfilled() {
+		if !sgNode.Fulfilled(&woc.wf.Status) {
 			woc.log.Infof("Workflow step group node %s not yet completed", sgNode.ID)
 			return node, nil
 		}
@@ -234,7 +234,7 @@ func (woc *wfOperationCtx) executeStepGroup(ctx context.Context, stepGroup []wfv
 	if err != nil {
 		return nil, err
 	}
-	if node.Fulfilled() && woc.childrenFulfilled(node) {
+	if node.Fulfilled(&woc.wf.Status) && woc.childrenFulfilled(node) {
 		woc.log.Debugf("Step group node %v already marked completed", node)
 		return node, nil
 	}
@@ -326,22 +326,22 @@ func (woc *wfOperationCtx) executeStepGroup(ctx context.Context, stepGroup []wfv
 			return node, nil
 		}
 
-		if !childNode.Fulfilled() {
+		if !childNode.Fulfilled(&woc.wf.Status) {
 			completed = false
-		} else if childNode.Completed() {
+		} else if childNode.Completed(&woc.wf.Status) {
 			hasOnExitNode, onExitNode, err := woc.runOnExitNode(ctx, step.GetExitHook(woc.execWf.Spec.Arguments), childNode, stepsCtx.boundaryID, stepsCtx.tmplCtx, "steps."+step.Name, stepsCtx.scope)
 			// see https://github.com/argoproj/argo-workflows/issues/14031,
 			// we should return error otherwise the node will get stuck
 			if err != nil {
 				return node, err
 			}
-			if hasOnExitNode && (onExitNode == nil || !onExitNode.Fulfilled()) {
+			if hasOnExitNode && (onExitNode == nil || !onExitNode.Fulfilled(&woc.wf.Status)) {
 				completed = false
 			}
 		}
 	}
 	if !completed {
-		if node.Fulfilled() {
+		if node.Fulfilled(&woc.wf.Status) {
 			return woc.markNodePhase(sgNodeName, wfv1.NodeRunning), nil
 		}
 		return node, nil
@@ -626,7 +626,7 @@ func (woc *wfOperationCtx) prepareDefaultMetricScope() (map[string]string, map[s
 
 func (woc *wfOperationCtx) prepareMetricScope(node *wfv1.NodeStatus) (map[string]string, map[string]func() float64) {
 	localScope, realTimeScope := woc.prepareDefaultMetricScope()
-	if node.Fulfilled() {
+	if node.Fulfilled(&woc.wf.Status) {
 		localScope[common.LocalVarDuration] = fmt.Sprintf("%f", node.FinishedAt.Sub(node.StartedAt.Time).Seconds())
 		realTimeScope[common.LocalVarDuration] = func() float64 {
 			return node.FinishedAt.Sub(node.StartedAt.Time).Seconds()

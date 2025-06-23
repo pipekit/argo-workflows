@@ -435,7 +435,7 @@ func (woc *wfOperationCtx) operate(ctx context.Context) {
 		return
 	}
 
-	if !node.Fulfilled() {
+	if !node.Fulfilled(&woc.wf.Status) {
 		// node can be nil if a workflow created immediately in a parallelism == 0 state
 		return
 	}
@@ -474,7 +474,7 @@ func (woc *wfOperationCtx) operate(ctx context.Context) {
 				woc.taskSetReconciliation(ctx)
 			}
 
-			if onExitNode == nil || !onExitNode.Fulfilled() {
+			if onExitNode == nil || !onExitNode.Fulfilled(&woc.wf.Status) {
 				return
 			}
 		}
@@ -907,7 +907,7 @@ func (woc *wfOperationCtx) reapplyUpdate(ctx context.Context, wfClient v1alpha1.
 		}
 		for id, node := range woc.wf.Status.Nodes {
 			currNode, err := currWf.Status.Nodes.Get(id)
-			if (err == nil) && currNode.Fulfilled() && node.Phase != currNode.Phase {
+			if (err == nil) && currNode.Fulfilled(&currWf.Status) && node.Phase != currNode.Phase {
 				return nil, fmt.Errorf("must never update completed node %s", id)
 			}
 		}
@@ -955,7 +955,7 @@ func (woc *wfOperationCtx) requeue() {
 
 // processNodeRetries updates the retry node state based on the child node state and the retry strategy and returns the node.
 func (woc *wfOperationCtx) processNodeRetries(node *wfv1.NodeStatus, retryStrategy wfv1.RetryStrategy, opts *executeTemplateOpts) (*wfv1.NodeStatus, bool, error) {
-	if node.Phase.Fulfilled(node.TaskResultSynced) {
+	if node.Phase.Fulfilled(woc.wf.Status.IsTaskResultSynced(node.ID)) {
 		return node, true, nil
 	}
 
@@ -972,7 +972,7 @@ func (woc *wfOperationCtx) processNodeRetries(node *wfv1.NodeStatus, retryStrate
 		node.Daemoned = ptr.To(true)
 	}
 
-	if !lastChildNode.Phase.Fulfilled(lastChildNode.TaskResultSynced) {
+	if !lastChildNode.Phase.Fulfilled(woc.wf.Status.IsTaskResultSynced(lastChildNode.ID)) {
 		if !lastChildNode.IsDaemoned() {
 			return node, true, nil
 		}
@@ -1118,7 +1118,7 @@ func (woc *wfOperationCtx) processNodeRetries(node *wfv1.NodeStatus, retryStrate
 		if err != nil {
 			return nil, false, err
 		}
-		if !shouldContinue && lastChildNode.Fulfilled() {
+		if !shouldContinue && lastChildNode.Fulfilled(&woc.wf.Status) {
 			return woc.markNodePhase(node.Name, lastChildNode.Phase, "retryStrategy.expression evaluated to false"), true, nil
 		}
 	}
@@ -1163,7 +1163,7 @@ func (woc *wfOperationCtx) podReconciliation(ctx context.Context) (error, bool) 
 			if newState := woc.assessNodeStatus(ctx, pod, node); newState != nil {
 				// update if a pod deletion timestamp exists on a completed workflow, ensures this pod is always looked at
 				// in the pod cleanup process
-				if pod.DeletionTimestamp != nil && newState.Fulfilled() {
+				if pod.DeletionTimestamp != nil && newState.Fulfilled(&woc.wf.Status) {
 					woc.updated = true
 				}
 				// Check whether its taskresult is in an incompleted state.
@@ -1190,7 +1190,7 @@ func (woc *wfOperationCtx) podReconciliation(ctx context.Context) (error, bool) 
 				woc.wf.Status.Nodes.Set(nodeID, *newState)
 				woc.updated = true
 				// warning!  when the node completes, the daemoned flag will be unset, so we must check the old node
-				if !node.IsDaemoned() && !node.Completed() && newState.Completed() {
+				if !node.IsDaemoned() && !node.Completed(&woc.wf.Status) && newState.Completed(&woc.wf.Status) {
 					if woc.shouldPrintPodSpec(newState) {
 						printPodSpecLog(pod, woc.wf.Name)
 					}
@@ -1228,7 +1228,7 @@ func (woc *wfOperationCtx) podReconciliation(ctx context.Context) (error, bool) 
 	// It is now impossible to infer pod status. We can do at this point is to mark the node with Error, or
 	// we can re-submit it.
 	for nodeID, node := range woc.wf.Status.Nodes {
-		if node.Type != wfv1.NodeTypePod || node.Phase.Fulfilled(node.TaskResultSynced) || node.StartedAt.IsZero() {
+		if node.Type != wfv1.NodeTypePod || node.Phase.Fulfilled(woc.wf.Status.IsTaskResultSynced(node.ID)) || node.StartedAt.IsZero() {
 			// node is not a pod, it is already complete, or it can be re-run.
 			continue
 		}
@@ -1311,7 +1311,7 @@ func (woc *wfOperationCtx) shouldPrintPodSpec(node *wfv1.NodeStatus) bool {
 func (woc *wfOperationCtx) failNodesWithoutCreatedPodsAfterDeadlineOrShutdown() {
 	nodes := woc.wf.Status.Nodes
 	for _, node := range nodes {
-		if node.Fulfilled() {
+		if node.Fulfilled(&woc.wf.Status) {
 			continue
 		}
 		// Only fail nodes that are not part of exit handler if we are "Stopping" or all pods if we are "Terminating"
@@ -1407,7 +1407,7 @@ func (woc *wfOperationCtx) assessNodeStatus(ctx context.Context, pod *apiv1.Pod,
 		// A node transitions into "daemoned" only if it's a daemon template and it becomes running AND ready.
 		// A node will be unmarked "daemoned" when its boundary node completes, anywhere killDaemonedChildren is called.
 		if tmpl != nil && tmpl.IsDaemon() {
-			if !old.Fulfilled() {
+			if !old.Fulfilled(&woc.wf.Status) {
 				// pod is running and template is marked daemon. check if everything is ready
 				for _, ctrStatus := range pod.Status.ContainerStatuses {
 					if !ctrStatus.Ready {
@@ -1466,7 +1466,7 @@ func (woc *wfOperationCtx) assessNodeStatus(ctx context.Context, pod *apiv1.Pod,
 	}
 
 	// only update Pod IP for daemoned nodes to reduce number of updates
-	if !new.Completed() && new.IsDaemoned() {
+	if !new.Completed(&woc.wf.Status) && new.IsDaemoned() {
 		new.PodIP = pod.Status.PodIP
 	}
 
@@ -1520,7 +1520,7 @@ func (woc *wfOperationCtx) assessNodeStatus(ctx context.Context, pod *apiv1.Pod,
 		new.Message = ""
 	}
 
-	if new.Fulfilled() && new.FinishedAt.IsZero() {
+	if new.Fulfilled(&woc.wf.Status) && new.FinishedAt.IsZero() {
 		new.FinishedAt = getLatestFinishedAt(pod)
 		new.ResourcesDuration = resource.DurationForPod(pod)
 	}
@@ -1925,9 +1925,8 @@ func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string,
 	// if this function returns an error, a pod is never created
 	// we should never expect task results to sync
 	defer func() {
-		if err != nil && node != nil && node.TaskResultSynced != nil {
-			tmp := true
-			node.TaskResultSynced = &tmp
+		if err != nil && node != nil && !woc.wf.Status.IsTaskResultSynced(node.ID) {
+			woc.orig.Status.MarkTaskResultComplete(node.ID)
 		}
 	}()
 
@@ -2167,7 +2166,7 @@ func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string,
 		childNodeIDs, lastChildNode := getChildNodeIdsAndLastRetriedNode(retryParentNode, woc.wf.Status.Nodes)
 
 		// The retry node might have completed by now.
-		if retryParentNode.Fulfilled() && woc.childrenFulfilled(retryParentNode) { // if retry node is daemoned we want to check those explicitly
+		if retryParentNode.Fulfilled(&woc.wf.Status) && woc.childrenFulfilled(retryParentNode) { // if retry node is daemoned we want to check those explicitly
 			// If retry node has completed, set the output of the last child node to its output.
 			// Runtime parameters (e.g., `status`, `resourceDuration`) in the output will be used to emit metrics.
 			if lastChildNode != nil {
@@ -2179,7 +2178,7 @@ func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string,
 				// completed before this execution. If it did not exist prior, then we can infer that it was completed during this execution.
 				// The statement "(!ok || !prevNodeStatus.Fulfilled())" checks for this behavior and represents the material conditional
 				// "ok -> !prevNodeStatus.Fulfilled()" (https://en.wikipedia.org/wiki/Material_conditional)
-				if prevNodeStatus, ok := woc.preExecutionNodePhases[retryParentNode.ID]; (!ok || !prevNodeStatus.Fulfilled()) && retryParentNode.Fulfilled() {
+				if prevNodeStatus, ok := woc.preExecutionNodePhases[retryParentNode.ID]; (!ok || !prevNodeStatus.Fulfilled(&woc.wf.Status)) && retryParentNode.Fulfilled(&woc.wf.Status) {
 					localScope, realTimeScope := woc.prepareMetricScope(processedRetryParentNode)
 					woc.computeMetrics(ctx, processedTmpl.Metrics.Prometheus, localScope, realTimeScope, false)
 				}
@@ -2193,14 +2192,14 @@ func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string,
 				woc.wf.Status.Nodes.Set(node.ID, *retryParentNode)
 			}
 			return retryParentNode, nil
-		} else if lastChildNode != nil && lastChildNode.Fulfilled() && processedTmpl.Metrics != nil {
+		} else if lastChildNode != nil && lastChildNode.Fulfilled(&woc.wf.Status) && processedTmpl.Metrics != nil {
 			// If retry node has not completed and last child node has completed, emit metrics for the last child node.
 			localScope, realTimeScope := woc.prepareMetricScope(lastChildNode)
 			woc.computeMetrics(ctx, processedTmpl.Metrics.Prometheus, localScope, realTimeScope, false)
 		}
 
 		var retryNum int
-		if lastChildNode != nil && !lastChildNode.Phase.Fulfilled(lastChildNode.TaskResultSynced) {
+		if lastChildNode != nil && !lastChildNode.Phase.Fulfilled(woc.wf.Status.IsTaskResultSynced(lastChildNode.ID)) {
 			// Last child node is either still running, or in some cases the corresponding Pod hasn't even been
 			// created yet, for example if it exceeded the ResourceQuota
 			nodeName = lastChildNode.Name
@@ -2297,7 +2296,7 @@ func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string,
 		}
 	}
 
-	if node.Fulfilled() {
+	if node.Fulfilled(&woc.wf.Status) {
 		woc.controller.syncManager.Release(ctx, woc.wf, node.ID, processedTmpl.Synchronization)
 	}
 
@@ -2320,14 +2319,14 @@ func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string,
 			return node, err
 		}
 
-		if !retryNode.Phase.Fulfilled(retryNode.TaskResultSynced) && node.Phase.Fulfilled(node.TaskResultSynced) { // if the retry child has completed we need to update the parent's status
+		if !retryNode.Phase.Fulfilled(woc.wf.Status.IsTaskResultSynced(retryNode.ID)) && node.Phase.Fulfilled(woc.wf.Status.IsTaskResultSynced(node.ID)) { // if the retry child has completed we need to update the parent's status
 			retryNode, err = woc.executeTemplate(ctx, retryNodeName, orgTmpl, tmplCtx, args, opts)
 			if err != nil {
 				return woc.markNodeError(node.Name, err), err
 			}
 		}
 
-		if !node.Phase.Fulfilled(node.TaskResultSynced) && node.IsDaemoned() {
+		if !node.Phase.Fulfilled(woc.wf.Status.IsTaskResultSynced(node.ID)) && node.IsDaemoned() {
 			retryNode = woc.markNodePhase(retryNodeName, node.Phase)
 			if node.IsDaemoned() { // markNodePhase doesn't pass the Daemoned field
 				retryNode.Daemoned = ptr.To(true)
@@ -2353,7 +2352,7 @@ func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string,
 		// completed before this execution. If it did not exist prior, then we can infer that it was completed during this execution.
 		// The statement "(!ok || !prevNodeStatus.Fulfilled())" checks for this behavior and represents the material conditional
 		// "ok -> !prevNodeStatus.Fulfilled()" (https://en.wikipedia.org/wiki/Material_conditional)
-		if prevNodeStatus, ok := woc.preExecutionNodePhases[node.ID]; (!ok || !prevNodeStatus.Fulfilled()) && node.Fulfilled() {
+		if prevNodeStatus, ok := woc.preExecutionNodePhases[node.ID]; (!ok || !prevNodeStatus.Fulfilled(&woc.wf.Status)) && node.Fulfilled(&woc.wf.Status) {
 			localScope, realTimeScope := woc.prepareMetricScope(node)
 			woc.computeMetrics(ctx, processedTmpl.Metrics.Prometheus, localScope, realTimeScope, false)
 		}
@@ -2362,7 +2361,7 @@ func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string,
 }
 
 func (woc *wfOperationCtx) handleNodeFulfilled(ctx context.Context, nodeName string, node *wfv1.NodeStatus, processedTmpl *wfv1.Template) *wfv1.NodeStatus {
-	if node == nil || !node.Phase.Fulfilled(node.TaskResultSynced) {
+	if node == nil || !node.Phase.Fulfilled(woc.wf.Status.IsTaskResultSynced(node.ID)) {
 		return nil
 	}
 
@@ -2371,7 +2370,7 @@ func (woc *wfOperationCtx) handleNodeFulfilled(ctx context.Context, nodeName str
 	if processedTmpl.Metrics != nil {
 		// Check if this node completed between executions. If it did, emit metrics.
 		// We can infer that this node completed during the current operation, emit metrics
-		if prevNodeStatus, ok := woc.preExecutionNodePhases[node.ID]; ok && !prevNodeStatus.Fulfilled() {
+		if prevNodeStatus, ok := woc.preExecutionNodePhases[node.ID]; ok && !prevNodeStatus.Fulfilled(&woc.wf.Status) {
 			localScope, realTimeScope := woc.prepareMetricScope(node)
 			woc.computeMetrics(ctx, processedTmpl.Metrics.Prometheus, localScope, realTimeScope, false)
 		}
@@ -2539,7 +2538,7 @@ func (woc *wfOperationCtx) hasDaemonNodes() bool {
 // check if all of the nodes children are fulffilled
 func (woc *wfOperationCtx) childrenFulfilled(node *wfv1.NodeStatus) bool {
 	if len(node.Children) == 0 {
-		return node.Fulfilled()
+		return node.Fulfilled(&woc.wf.Status)
 	}
 	for _, childID := range node.Children {
 		childNode, err := woc.wf.Status.Nodes.Get(childID)
@@ -2694,8 +2693,7 @@ func (woc *wfOperationCtx) initializeNode(nodeName string, nodeType wfv1.NodeTyp
 	}
 
 	if executable(nodeType) && !omitTaskResultSynced {
-		tmp := true
-		node.TaskResultSynced = &tmp
+		woc.orig.Status.MarkTaskResultComplete(nodeID)
 	}
 
 	if boundaryNode, err := woc.wf.Status.Nodes.Get(boundaryID); err == nil {
@@ -2708,7 +2706,7 @@ func (woc *wfOperationCtx) initializeNode(nodeName string, nodeType wfv1.NodeTyp
 		node.DisplayName = nodeName
 	}
 
-	if node.Fulfilled() && node.FinishedAt.IsZero() {
+	if node.Fulfilled(&woc.wf.Status) && node.FinishedAt.IsZero() {
 		node.FinishedAt = node.StartedAt
 	}
 	var message string
@@ -2749,12 +2747,11 @@ func (woc *wfOperationCtx) markNodePhase(nodeName string, phase wfv1.NodePhase, 
 	}
 	// if we not in a running state (not expecting task results)
 	// and transition into a state that ensures we will never run mark the task results synced
-	if node.Phase != wfv1.NodeRunning && phase.FailedOrError() && node.TaskResultSynced != nil {
-		tmp := true
-		node.TaskResultSynced = &tmp
+	if node.Phase != wfv1.NodeRunning && phase.FailedOrError() && woc.wf.Status.IsTaskResultSynced(node.ID) {
+		woc.orig.Status.MarkTaskResultComplete(node.ID)
 	}
 	if node.Phase != phase {
-		if node.Phase.Fulfilled(node.TaskResultSynced) {
+		if node.Phase.Fulfilled(woc.wf.Status.IsTaskResultSynced(node.ID)) {
 			woc.log.WithFields(log.Fields{"nodeName": node.Name, "fromPhase": node.Phase, "toPhase": phase}).
 				Error("node is already fulfilled")
 		}
@@ -2769,7 +2766,7 @@ func (woc *wfOperationCtx) markNodePhase(nodeName string, phase wfv1.NodePhase, 
 			woc.updated = true
 		}
 	}
-	if node.Fulfilled() && node.FinishedAt.IsZero() {
+	if node.Fulfilled(&woc.wf.Status) && node.FinishedAt.IsZero() {
 		node.FinishedAt = metav1.Time{Time: time.Now().UTC()}
 		woc.log.Infof("node %s finished: %s", node.ID, node.FinishedAt)
 		woc.updated = true
@@ -2841,7 +2838,7 @@ func (woc *wfOperationCtx) recordNodePhaseChangeEvents(old wfv1.Nodes, new wfv1.
 			if oldNode.Phase == newNode.Phase {
 				continue
 			}
-			if oldNode.Phase == wfv1.NodePending && newNode.Completed() {
+			if oldNode.Phase == wfv1.NodePending && newNode.Completed(&woc.wf.Status) {
 				ephemeralNode := newNode.DeepCopy()
 				ephemeralNode.Phase = wfv1.NodeRunning
 				woc.recordNodePhaseEvent(ephemeralNode)
@@ -2850,7 +2847,7 @@ func (woc *wfOperationCtx) recordNodePhaseChangeEvents(old wfv1.Nodes, new wfv1.
 		} else {
 			if newNode.Phase == wfv1.NodeRunning {
 				woc.recordNodePhaseEvent(&newNode)
-			} else if newNode.Completed() {
+			} else if newNode.Completed(&woc.wf.Status) {
 				ephemeralNode := newNode.DeepCopy()
 				ephemeralNode.Phase = wfv1.NodeRunning
 				woc.recordNodePhaseEvent(ephemeralNode)

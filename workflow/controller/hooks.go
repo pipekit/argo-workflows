@@ -47,7 +47,7 @@ func (woc *wfOperationCtx) executeWfLifeCycleHook(ctx context.Context, tmplCtx *
 		}
 	}
 	for _, hookNode := range hookNodes {
-		if !hookNode.Fulfilled() {
+		if !hookNode.Fulfilled(&woc.wf.Status) {
 			return false, nil
 		}
 	}
@@ -101,7 +101,7 @@ func (woc *wfOperationCtx) executeTmplLifeCycleHook(ctx context.Context, scope *
 
 	// Check if all hook nodes are completed
 	for _, hookNode := range hookNodes {
-		if !hookNode.Fulfilled() {
+		if !hookNode.Fulfilled(&woc.wf.Status) {
 			return false, nil
 		}
 	}

@@ -34,7 +34,7 @@ func (woc *wfOperationCtx) mergePatchTaskSet(ctx context.Context, patch interfac
 func (woc *wfOperationCtx) getDeleteTaskAndNodePatch() (tasksPatch map[string]interface{}, nodesPatch map[string]interface{}) {
 	deletedNode := make(map[string]interface{})
 	for _, node := range woc.wf.Status.Nodes {
-		if node.IsTaskSetNode() && node.Fulfilled() {
+		if node.IsTaskSetNode() && node.Fulfilled(&woc.wf.Status) {
 			deletedNode[node.ID] = nil
 		}
 	}
@@ -55,7 +55,7 @@ func (woc *wfOperationCtx) getDeleteTaskAndNodePatch() (tasksPatch map[string]in
 
 func (woc *wfOperationCtx) markTaskSetNodesError(err error) {
 	for _, node := range woc.wf.Status.Nodes {
-		if node.IsTaskSetNode() && !node.Fulfilled() {
+		if node.IsTaskSetNode() && !node.Fulfilled(&woc.wf.Status) {
 			woc.markNodeError(node.Name, err)
 		}
 	}
