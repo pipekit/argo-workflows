@@ -539,6 +539,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 use_sdk_creds=True,
                             ),
                             path="path_example",
+                            plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                configuration="configuration_example",
+                                key="key_example",
+                                name="name_example",
+                            ),
                             raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                 data="data_example",
                             ),
@@ -858,6 +863,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         use_sdk_creds=True,
                                     ),
                                     path="path_example",
+                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                        configuration="configuration_example",
+                                        key="key_example",
+                                        name="name_example",
+                                    ),
                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                         data="data_example",
                                     ),
@@ -1542,6 +1552,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             ),
                             security_token="security_token_example",
                             use_sdk_creds=True,
+                        ),
+                        plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                            configuration="configuration_example",
+                            key="key_example",
+                            name="name_example",
                         ),
                         raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                             data="data_example",
@@ -2410,6 +2425,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 use_sdk_creds=True,
                                             ),
                                             path="path_example",
+                                            plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                configuration="configuration_example",
+                                                key="key_example",
+                                                name="name_example",
+                                            ),
                                             raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                 data="data_example",
                                             ),
@@ -2699,6 +2719,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         use_sdk_creds=True,
                                                     ),
                                                     path="path_example",
+                                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                        configuration="configuration_example",
+                                                        key="key_example",
+                                                        name="name_example",
+                                                    ),
                                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                         data="data_example",
                                                     ),
@@ -3010,6 +3035,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     use_sdk_creds=True,
                                 ),
                                 path="path_example",
+                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                    configuration="configuration_example",
+                                    key="key_example",
+                                    name="name_example",
+                                ),
                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                     data="data_example",
                                 ),
@@ -3601,6 +3631,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     use_sdk_creds=True,
                                 ),
                                 path="path_example",
+                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                    configuration="configuration_example",
+                                    key="key_example",
+                                    name="name_example",
+                                ),
                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                     data="data_example",
                                 ),
@@ -3932,6 +3967,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     use_sdk_creds=True,
                                 ),
                                 path="path_example",
+                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                    configuration="configuration_example",
+                                    key="key_example",
+                                    name="name_example",
+                                ),
                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                     data="data_example",
                                 ),
@@ -4223,6 +4263,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     use_sdk_creds=True,
                                 ),
                                 path="path_example",
+                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                    configuration="configuration_example",
+                                    key="key_example",
+                                    name="name_example",
+                                ),
                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                     data="data_example",
                                 ),
@@ -5129,6 +5174,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 use_sdk_creds=True,
                                             ),
                                             path="path_example",
+                                            plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                configuration="configuration_example",
+                                                key="key_example",
+                                                name="name_example",
+                                            ),
                                             raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                 data="data_example",
                                             ),
@@ -5414,6 +5464,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         use_sdk_creds=True,
                                                     ),
                                                     path="path_example",
+                                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                        configuration="configuration_example",
+                                                        key="key_example",
+                                                        name="name_example",
+                                                    ),
                                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                         data="data_example",
                                                     ),
@@ -6381,6 +6436,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 security_token="security_token_example",
                                 use_sdk_creds=True,
                             ),
+                            plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                configuration="configuration_example",
+                                key="key_example",
+                                name="name_example",
+                            ),
                             raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                 data="data_example",
                             ),
@@ -7248,6 +7308,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                     use_sdk_creds=True,
                                                 ),
                                                 path="path_example",
+                                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                    configuration="configuration_example",
+                                                    key="key_example",
+                                                    name="name_example",
+                                                ),
                                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                     data="data_example",
                                                 ),
@@ -7537,6 +7602,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                             use_sdk_creds=True,
                                                         ),
                                                         path="path_example",
+                                                        plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                            configuration="configuration_example",
+                                                            key="key_example",
+                                                            name="name_example",
+                                                        ),
                                                         raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                             data="data_example",
                                                         ),
@@ -7848,6 +7918,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         use_sdk_creds=True,
                                     ),
                                     path="path_example",
+                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                        configuration="configuration_example",
+                                        key="key_example",
+                                        name="name_example",
+                                    ),
                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                         data="data_example",
                                     ),
@@ -8439,6 +8514,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         use_sdk_creds=True,
                                     ),
                                     path="path_example",
+                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                        configuration="configuration_example",
+                                        key="key_example",
+                                        name="name_example",
+                                    ),
                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                         data="data_example",
                                     ),
@@ -8770,6 +8850,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         use_sdk_creds=True,
                                     ),
                                     path="path_example",
+                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                        configuration="configuration_example",
+                                        key="key_example",
+                                        name="name_example",
+                                    ),
                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                         data="data_example",
                                     ),
@@ -9061,6 +9146,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         use_sdk_creds=True,
                                     ),
                                     path="path_example",
+                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                        configuration="configuration_example",
+                                        key="key_example",
+                                        name="name_example",
+                                    ),
                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                         data="data_example",
                                     ),
@@ -9967,6 +10057,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                     use_sdk_creds=True,
                                                 ),
                                                 path="path_example",
+                                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                    configuration="configuration_example",
+                                                    key="key_example",
+                                                    name="name_example",
+                                                ),
                                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                     data="data_example",
                                                 ),
@@ -10252,6 +10347,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                             use_sdk_creds=True,
                                                         ),
                                                         path="path_example",
+                                                        plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                            configuration="configuration_example",
+                                                            key="key_example",
+                                                            name="name_example",
+                                                        ),
                                                         raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                             data="data_example",
                                                         ),
@@ -12116,6 +12216,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 use_sdk_creds=True,
                             ),
                             path="path_example",
+                            plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                configuration="configuration_example",
+                                key="key_example",
+                                name="name_example",
+                            ),
                             raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                 data="data_example",
                             ),
@@ -12435,6 +12540,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         use_sdk_creds=True,
                                     ),
                                     path="path_example",
+                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                        configuration="configuration_example",
+                                        key="key_example",
+                                        name="name_example",
+                                    ),
                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                         data="data_example",
                                     ),
@@ -13119,6 +13229,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             ),
                             security_token="security_token_example",
                             use_sdk_creds=True,
+                        ),
+                        plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                            configuration="configuration_example",
+                            key="key_example",
+                            name="name_example",
                         ),
                         raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                             data="data_example",
@@ -13987,6 +14102,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 use_sdk_creds=True,
                                             ),
                                             path="path_example",
+                                            plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                configuration="configuration_example",
+                                                key="key_example",
+                                                name="name_example",
+                                            ),
                                             raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                 data="data_example",
                                             ),
@@ -14276,6 +14396,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         use_sdk_creds=True,
                                                     ),
                                                     path="path_example",
+                                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                        configuration="configuration_example",
+                                                        key="key_example",
+                                                        name="name_example",
+                                                    ),
                                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                         data="data_example",
                                                     ),
@@ -14587,6 +14712,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     use_sdk_creds=True,
                                 ),
                                 path="path_example",
+                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                    configuration="configuration_example",
+                                    key="key_example",
+                                    name="name_example",
+                                ),
                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                     data="data_example",
                                 ),
@@ -15178,6 +15308,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     use_sdk_creds=True,
                                 ),
                                 path="path_example",
+                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                    configuration="configuration_example",
+                                    key="key_example",
+                                    name="name_example",
+                                ),
                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                     data="data_example",
                                 ),
@@ -15509,6 +15644,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     use_sdk_creds=True,
                                 ),
                                 path="path_example",
+                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                    configuration="configuration_example",
+                                    key="key_example",
+                                    name="name_example",
+                                ),
                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                     data="data_example",
                                 ),
@@ -15800,6 +15940,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     use_sdk_creds=True,
                                 ),
                                 path="path_example",
+                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                    configuration="configuration_example",
+                                    key="key_example",
+                                    name="name_example",
+                                ),
                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                     data="data_example",
                                 ),
@@ -16706,6 +16851,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 use_sdk_creds=True,
                                             ),
                                             path="path_example",
+                                            plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                configuration="configuration_example",
+                                                key="key_example",
+                                                name="name_example",
+                                            ),
                                             raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                 data="data_example",
                                             ),
@@ -16991,6 +17141,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         use_sdk_creds=True,
                                                     ),
                                                     path="path_example",
+                                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                        configuration="configuration_example",
+                                                        key="key_example",
+                                                        name="name_example",
+                                                    ),
                                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                         data="data_example",
                                                     ),
@@ -17958,6 +18113,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 security_token="security_token_example",
                                 use_sdk_creds=True,
                             ),
+                            plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                configuration="configuration_example",
+                                key="key_example",
+                                name="name_example",
+                            ),
                             raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                 data="data_example",
                             ),
@@ -18825,6 +18985,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                     use_sdk_creds=True,
                                                 ),
                                                 path="path_example",
+                                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                    configuration="configuration_example",
+                                                    key="key_example",
+                                                    name="name_example",
+                                                ),
                                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                     data="data_example",
                                                 ),
@@ -19114,6 +19279,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                             use_sdk_creds=True,
                                                         ),
                                                         path="path_example",
+                                                        plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                            configuration="configuration_example",
+                                                            key="key_example",
+                                                            name="name_example",
+                                                        ),
                                                         raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                             data="data_example",
                                                         ),
@@ -19425,6 +19595,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         use_sdk_creds=True,
                                     ),
                                     path="path_example",
+                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                        configuration="configuration_example",
+                                        key="key_example",
+                                        name="name_example",
+                                    ),
                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                         data="data_example",
                                     ),
@@ -20016,6 +20191,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         use_sdk_creds=True,
                                     ),
                                     path="path_example",
+                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                        configuration="configuration_example",
+                                        key="key_example",
+                                        name="name_example",
+                                    ),
                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                         data="data_example",
                                     ),
@@ -20347,6 +20527,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         use_sdk_creds=True,
                                     ),
                                     path="path_example",
+                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                        configuration="configuration_example",
+                                        key="key_example",
+                                        name="name_example",
+                                    ),
                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                         data="data_example",
                                     ),
@@ -20638,6 +20823,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         use_sdk_creds=True,
                                     ),
                                     path="path_example",
+                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                        configuration="configuration_example",
+                                        key="key_example",
+                                        name="name_example",
+                                    ),
                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                         data="data_example",
                                     ),
@@ -21544,6 +21734,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                     use_sdk_creds=True,
                                                 ),
                                                 path="path_example",
+                                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                    configuration="configuration_example",
+                                                    key="key_example",
+                                                    name="name_example",
+                                                ),
                                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                     data="data_example",
                                                 ),
@@ -21829,6 +22024,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                             use_sdk_creds=True,
                                                         ),
                                                         path="path_example",
+                                                        plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                            configuration="configuration_example",
+                                                            key="key_example",
+                                                            name="name_example",
+                                                        ),
                                                         raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                             data="data_example",
                                                         ),
@@ -23597,6 +23797,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 use_sdk_creds=True,
                             ),
                             path="path_example",
+                            plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                configuration="configuration_example",
+                                key="key_example",
+                                name="name_example",
+                            ),
                             raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                 data="data_example",
                             ),
@@ -23916,6 +24121,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         use_sdk_creds=True,
                                     ),
                                     path="path_example",
+                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                        configuration="configuration_example",
+                                        key="key_example",
+                                        name="name_example",
+                                    ),
                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                         data="data_example",
                                     ),
@@ -24600,6 +24810,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             ),
                             security_token="security_token_example",
                             use_sdk_creds=True,
+                        ),
+                        plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                            configuration="configuration_example",
+                            key="key_example",
+                            name="name_example",
                         ),
                         raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                             data="data_example",
@@ -25468,6 +25683,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 use_sdk_creds=True,
                                             ),
                                             path="path_example",
+                                            plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                configuration="configuration_example",
+                                                key="key_example",
+                                                name="name_example",
+                                            ),
                                             raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                 data="data_example",
                                             ),
@@ -25757,6 +25977,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         use_sdk_creds=True,
                                                     ),
                                                     path="path_example",
+                                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                        configuration="configuration_example",
+                                                        key="key_example",
+                                                        name="name_example",
+                                                    ),
                                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                         data="data_example",
                                                     ),
@@ -26068,6 +26293,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     use_sdk_creds=True,
                                 ),
                                 path="path_example",
+                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                    configuration="configuration_example",
+                                    key="key_example",
+                                    name="name_example",
+                                ),
                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                     data="data_example",
                                 ),
@@ -26659,6 +26889,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     use_sdk_creds=True,
                                 ),
                                 path="path_example",
+                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                    configuration="configuration_example",
+                                    key="key_example",
+                                    name="name_example",
+                                ),
                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                     data="data_example",
                                 ),
@@ -26990,6 +27225,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     use_sdk_creds=True,
                                 ),
                                 path="path_example",
+                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                    configuration="configuration_example",
+                                    key="key_example",
+                                    name="name_example",
+                                ),
                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                     data="data_example",
                                 ),
@@ -27281,6 +27521,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     use_sdk_creds=True,
                                 ),
                                 path="path_example",
+                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                    configuration="configuration_example",
+                                    key="key_example",
+                                    name="name_example",
+                                ),
                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                     data="data_example",
                                 ),
@@ -28187,6 +28432,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 use_sdk_creds=True,
                                             ),
                                             path="path_example",
+                                            plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                configuration="configuration_example",
+                                                key="key_example",
+                                                name="name_example",
+                                            ),
                                             raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                 data="data_example",
                                             ),
@@ -28472,6 +28722,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         use_sdk_creds=True,
                                                     ),
                                                     path="path_example",
+                                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                        configuration="configuration_example",
+                                                        key="key_example",
+                                                        name="name_example",
+                                                    ),
                                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                         data="data_example",
                                                     ),
@@ -29439,6 +29694,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 security_token="security_token_example",
                                 use_sdk_creds=True,
                             ),
+                            plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                configuration="configuration_example",
+                                key="key_example",
+                                name="name_example",
+                            ),
                             raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                 data="data_example",
                             ),
@@ -30306,6 +30566,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                     use_sdk_creds=True,
                                                 ),
                                                 path="path_example",
+                                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                    configuration="configuration_example",
+                                                    key="key_example",
+                                                    name="name_example",
+                                                ),
                                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                     data="data_example",
                                                 ),
@@ -30595,6 +30860,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                             use_sdk_creds=True,
                                                         ),
                                                         path="path_example",
+                                                        plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                            configuration="configuration_example",
+                                                            key="key_example",
+                                                            name="name_example",
+                                                        ),
                                                         raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                             data="data_example",
                                                         ),
@@ -30906,6 +31176,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         use_sdk_creds=True,
                                     ),
                                     path="path_example",
+                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                        configuration="configuration_example",
+                                        key="key_example",
+                                        name="name_example",
+                                    ),
                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                         data="data_example",
                                     ),
@@ -31497,6 +31772,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         use_sdk_creds=True,
                                     ),
                                     path="path_example",
+                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                        configuration="configuration_example",
+                                        key="key_example",
+                                        name="name_example",
+                                    ),
                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                         data="data_example",
                                     ),
@@ -31828,6 +32108,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         use_sdk_creds=True,
                                     ),
                                     path="path_example",
+                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                        configuration="configuration_example",
+                                        key="key_example",
+                                        name="name_example",
+                                    ),
                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                         data="data_example",
                                     ),
@@ -32119,6 +32404,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         use_sdk_creds=True,
                                     ),
                                     path="path_example",
+                                    plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                        configuration="configuration_example",
+                                        key="key_example",
+                                        name="name_example",
+                                    ),
                                     raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                         data="data_example",
                                     ),
@@ -33025,6 +33315,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                     use_sdk_creds=True,
                                                 ),
                                                 path="path_example",
+                                                plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                    configuration="configuration_example",
+                                                    key="key_example",
+                                                    name="name_example",
+                                                ),
                                                 raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                     data="data_example",
                                                 ),
@@ -33310,6 +33605,11 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                             use_sdk_creds=True,
                                                         ),
                                                         path="path_example",
+                                                        plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
+                                                            configuration="configuration_example",
+                                                            key="key_example",
+                                                            name="name_example",
+                                                        ),
                                                         raw=IoArgoprojWorkflowV1alpha1RawArtifact(
                                                             data="data_example",
                                                         ),

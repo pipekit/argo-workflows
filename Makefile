@@ -444,6 +444,8 @@ pkg/apis/workflow/v1alpha1/generated.proto: $(TOOL_GO_TO_PROTOBUF) $(PROTO_BINAR
 	[ -e ./v3 ] || ln -s . v3
 	# Format proto files. Formatting changes generated code, so we do it here, rather that at lint time.
 	# Why clang-format? Google uses it.
+	@echo "*** This will fail if your code has compilation errors, without reporting those as the cause."
+	@echo "*** So fix them first."
 	find pkg/apiclient -name '*.proto'|xargs clang-format -i
 	$(TOOL_GO_TO_PROTOBUF) \
 		--go-header-file=./hack/custom-boilerplate.go.txt \
@@ -932,3 +934,17 @@ devcontainer-build: $(TOOL_DEVCONTAINER)
 .PHONY: devcontainer-up
 devcontainer-up: $(TOOL_DEVCONTAINER)
 	devcontainer up --workspace-folder .
+
+# gRPC/protobuf generation for artifact.proto
+pkg/apiclient/artifact/artifact.pb.go: $(PROTO_BINARIES) pkg/apiclient/artifact/artifact.proto
+	$(call protoc,pkg/apiclient/artifact/artifact.proto)
+
+pkg/apiclient/artifact/artifact.pb.gw.go: $(PROTO_BINARIES) pkg/apiclient/artifact/artifact.proto
+	$(call protoc,pkg/apiclient/artifact/artifact.proto)
+
+# Add these to the types/codegen targets
+.PHONY: artifact-proto
+artifact-proto: pkg/apiclient/artifact/artifact.pb.go pkg/apiclient/artifact/artifact.pb.gw.go
+
+# Add artifact-proto to codegen dependencies
+codegen: artifact-proto

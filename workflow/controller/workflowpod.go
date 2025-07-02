@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
+	"github.com/argoproj/argo-workflows/v3/config"
 	"github.com/argoproj/argo-workflows/v3/errors"
 	"github.com/argoproj/argo-workflows/v3/pkg/apis/workflow"
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
@@ -288,7 +289,7 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 		}
 	}
 
-	err = addVolumeReferences(pod, woc.volumes, tmpl, woc.wf.Status.PersistentVolumeClaims)
+	err = woc.addVolumeReferences(pod, woc.volumes, tmpl, woc.wf.Status.PersistentVolumeClaims)
 	if err != nil {
 		return nil, err
 	}
@@ -305,7 +306,10 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 	// addInitContainers, addSidecars and addOutputArtifactsVolumes should be called after all
 	// volumes have been manipulated in the main container since volumeMounts are mirrored
 	addInitContainers(ctx, pod, tmpl)
-	addSidecars(ctx, pod, tmpl)
+	err = addSidecars(ctx, pod, tmpl, &woc.controller.Config)
+	if err != nil {
+		return nil, err
+	}
 	addOutputArtifactsVolumes(ctx, pod, tmpl)
 
 	for i, c := range pod.Spec.InitContainers {
@@ -870,7 +874,7 @@ func (woc *wfOperationCtx) GetTemplateByBoundaryID(ctx context.Context, boundary
 
 // addVolumeReferences adds any volume mounts that a container/sidecar is referencing, to the pod.spec.volumes
 // These are either specified in the workflow.spec.volumes or the workflow.spec.volumeClaimTemplate section
-func addVolumeReferences(pod *apiv1.Pod, vols []apiv1.Volume, tmpl *wfv1.Template, pvcs []apiv1.Volume) error {
+func (woc *wfOperationCtx) addVolumeReferences(pod *apiv1.Pod, vols []apiv1.Volume, tmpl *wfv1.Template, pvcs []apiv1.Volume) error {
 	switch tmpl.GetType() {
 	case wfv1.TemplateTypeContainer, wfv1.TemplateTypeContainerSet, wfv1.TemplateTypeScript, wfv1.TemplateTypeResource, wfv1.TemplateTypeData:
 	default:
@@ -965,6 +969,8 @@ func addVolumeReferences(pod *apiv1.Pod, vols []apiv1.Volume, tmpl *wfv1.Templat
 			}
 		}
 	}
+	artifactVolumeMounts := woc.createArtifactVolumeMounts(tmpl)
+	pod.Spec.Volumes = append(pod.Spec.Volumes, artifactVolumeMounts...)
 
 	return nil
 }
@@ -1051,6 +1057,15 @@ func (woc *wfOperationCtx) addInputArtifactsVolumes(ctx context.Context, pod *ap
 		pod.Spec.Containers[i] = c
 	}
 	return nil
+}
+
+func (woc *wfOperationCtx) createArtifactVolumeMounts(tmpl *wfv1.Template) []apiv1.Volume {
+	artifactVolumeMounts := []apiv1.Volume{}
+	plugins := tmpl.Outputs.Artifacts.GetPlugins()
+	for _, plugin := range plugins {
+		artifactVolumeMounts = append(artifactVolumeMounts, plugin.Name.Volume())
+	}
+	return artifactVolumeMounts
 }
 
 // addOutputArtifactsVolumes mirrors any volume mounts in the main container to the wait sidecar.
@@ -1225,7 +1240,7 @@ func addInitContainers(ctx context.Context, pod *apiv1.Pod, tmpl *wfv1.Template)
 
 // addSidecars adds all sidecars to the pod spec of the step.
 // Optionally volume mounts from the main container to the sidecar
-func addSidecars(ctx context.Context, pod *apiv1.Pod, tmpl *wfv1.Template) {
+func addSidecars(ctx context.Context, pod *apiv1.Pod, tmpl *wfv1.Template, config *config.Config) error {
 	mainCtr := findMainContainer(pod)
 	for _, sidecar := range tmpl.Sidecars {
 		logging.RequireLoggerFromContext(ctx).WithField("name", sidecar.Name).Debug(ctx, "Adding sidecar container")
@@ -1234,6 +1249,26 @@ func addSidecars(ctx context.Context, pod *apiv1.Pod, tmpl *wfv1.Template) {
 		}
 		pod.Spec.Containers = append(pod.Spec.Containers, sidecar.Container)
 	}
+	return addArtifactPlugins(ctx, pod, tmpl, config)
+}
+
+func addArtifactPlugins(ctx context.Context, pod *apiv1.Pod, tmpl *wfv1.Template, config *config.Config) error {
+	plugins := tmpl.Outputs.Artifacts.GetPlugins()
+	drivers, err := config.GetArtifactDrivers(plugins)
+	if err != nil {
+		return err
+	}
+	for _, driver := range drivers {
+		logging.RequireLoggerFromContext(ctx).WithField("name", driver.Name).Debug(ctx, "Adding artifact plugin")
+
+		pod.Spec.Containers = append(pod.Spec.Containers, apiv1.Container{
+			Name:         "artifact-plugin-" + string(driver.Name),
+			Image:        driver.Image,
+			Args:         []string{driver.Name.SocketPath()},
+			VolumeMounts: []apiv1.VolumeMount{driver.Name.VolumeMount()},
+		})
+	}
+	return nil
 }
 
 // createSecretVolumesAndMounts will retrieve and create Volumes and Volumemount object for Pod

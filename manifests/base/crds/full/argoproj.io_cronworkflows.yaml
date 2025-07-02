@@ -983,6 +983,22 @@ spec:
                               type: object
                             path:
                               type: string
+                            plugin:
+                              properties:
+                                configuration:
+                                  type: string
+                                connectionTimeoutSeconds:
+                                  format: int32
+                                  type: integer
+                                key:
+                                  type: string
+                                name:
+                                  type: string
+                              required:
+                              - configuration
+                              - key
+                              - name
+                              type: object
                             raw:
                               properties:
                                 data:
@@ -1678,6 +1694,22 @@ spec:
                                     type: object
                                   path:
                                     type: string
+                                  plugin:
+                                    properties:
+                                      configuration:
+                                        type: string
+                                      connectionTimeoutSeconds:
+                                        format: int32
+                                        type: integer
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                    required:
+                                    - configuration
+                                    - key
+                                    - name
+                                    type: object
                                   raw:
                                     properties:
                                       data:
@@ -3091,6 +3123,22 @@ spec:
                                 type: boolean
                             required:
                             - key
+                            type: object
+                          plugin:
+                            properties:
+                              configuration:
+                                type: string
+                              connectionTimeoutSeconds:
+                                format: int32
+                                type: integer
+                              key:
+                                type: string
+                              name:
+                                type: string
+                            required:
+                            - configuration
+                            - key
+                            - name
                             type: object
                           raw:
                             properties:
@@ -5071,6 +5119,22 @@ spec:
                                             type: object
                                           path:
                                             type: string
+                                          plugin:
+                                            properties:
+                                              configuration:
+                                                type: string
+                                              connectionTimeoutSeconds:
+                                                format: int32
+                                                type: integer
+                                              key:
+                                                type: string
+                                              name:
+                                                type: string
+                                            required:
+                                            - configuration
+                                            - key
+                                            - name
+                                            type: object
                                           raw:
                                             properties:
                                               data:
@@ -5711,6 +5775,22 @@ spec:
                                                   type: object
                                                 path:
                                                   type: string
+                                                plugin:
+                                                  properties:
+                                                    configuration:
+                                                      type: string
+                                                    connectionTimeoutSeconds:
+                                                      format: int32
+                                                      type: integer
+                                                    key:
+                                                      type: string
+                                                    name:
+                                                      type: string
+                                                  required:
+                                                  - configuration
+                                                  - key
+                                                  - name
+                                                  type: object
                                                 raw:
                                                   properties:
                                                     data:
@@ -6401,6 +6481,22 @@ spec:
                                     type: object
                                   path:
                                     type: string
+                                  plugin:
+                                    properties:
+                                      configuration:
+                                        type: string
+                                      connectionTimeoutSeconds:
+                                        format: int32
+                                        type: integer
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                    required:
+                                    - configuration
+                                    - key
+                                    - name
+                                    type: object
                                   raw:
                                     properties:
                                       data:
@@ -7740,6 +7836,22 @@ spec:
                                   type: object
                                 path:
                                   type: string
+                                plugin:
+                                  properties:
+                                    configuration:
+                                      type: string
+                                    connectionTimeoutSeconds:
+                                      format: int32
+                                      type: integer
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                  required:
+                                  - configuration
+                                  - key
+                                  - name
+                                  type: object
                                 raw:
                                   properties:
                                     data:
@@ -8472,6 +8584,22 @@ spec:
                                   type: object
                                 path:
                                   type: string
+                                plugin:
+                                  properties:
+                                    configuration:
+                                      type: string
+                                    connectionTimeoutSeconds:
+                                      format: int32
+                                      type: integer
+                                    key:
+                                      type: string
+                                    name:
+                                      type: string
+                                  required:
+                                  - configuration
+                                  - key
+                                  - name
+                                  type: object
                                 raw:
                                   properties:
                                     data:
@@ -9121,6 +9249,22 @@ spec:
                                     type: object
                                   path:
                                     type: string
+                                  plugin:
+                                    properties:
+                                      configuration:
+                                        type: string
+                                      connectionTimeoutSeconds:
+                                        format: int32
+                                        type: integer
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                    required:
+                                    - configuration
+                                    - key
+                                    - name
+                                    type: object
                                   raw:
                                     properties:
                                       data:
@@ -11184,6 +11328,22 @@ spec:
                                           type: object
                                         path:
                                           type: string
+                                        plugin:
+                                          properties:
+                                            configuration:
+                                              type: string
+                                            connectionTimeoutSeconds:
+                                              format: int32
+                                              type: integer
+                                            key:
+                                              type: string
+                                            name:
+                                              type: string
+                                          required:
+                                          - configuration
+                                          - key
+                                          - name
+                                          type: object
                                         raw:
                                           properties:
                                             data:
@@ -11818,6 +11978,22 @@ spec:
                                                 type: object
                                               path:
                                                 type: string
+                                              plugin:
+                                                properties:
+                                                  configuration:
+                                                    type: string
+                                                  connectionTimeoutSeconds:
+                                                    format: int32
+                                                    type: integer
+                                                  key:
+                                                    type: string
+                                                  name:
+                                                    type: string
+                                                required:
+                                                - configuration
+                                                - key
+                                                - name
+                                                type: object
                                               raw:
                                                 properties:
                                                   data:
@@ -13796,6 +13972,22 @@ spec:
                                   type: boolean
                               required:
                               - key
+                              type: object
+                            plugin:
+                              properties:
+                                configuration:
+                                  type: string
+                                connectionTimeoutSeconds:
+                                  format: int32
+                                  type: integer
+                                key:
+                                  type: string
+                                name:
+                                  type: string
+                              required:
+                              - configuration
+                              - key
+                              - name
                               type: object
                             raw:
                               properties:
@@ -15776,6 +15968,22 @@ spec:
                                               type: object
                                             path:
                                               type: string
+                                            plugin:
+                                              properties:
+                                                configuration:
+                                                  type: string
+                                                connectionTimeoutSeconds:
+                                                  format: int32
+                                                  type: integer
+                                                key:
+                                                  type: string
+                                                name:
+                                                  type: string
+                                              required:
+                                              - configuration
+                                              - key
+                                              - name
+                                              type: object
                                             raw:
                                               properties:
                                                 data:
@@ -16416,6 +16624,22 @@ spec:
                                                     type: object
                                                   path:
                                                     type: string
+                                                  plugin:
+                                                    properties:
+                                                      configuration:
+                                                        type: string
+                                                      connectionTimeoutSeconds:
+                                                        format: int32
+                                                        type: integer
+                                                      key:
+                                                        type: string
+                                                      name:
+                                                        type: string
+                                                    required:
+                                                    - configuration
+                                                    - key
+                                                    - name
+                                                    type: object
                                                   raw:
                                                     properties:
                                                       data:
@@ -17106,6 +17330,22 @@ spec:
                                       type: object
                                     path:
                                       type: string
+                                    plugin:
+                                      properties:
+                                        configuration:
+                                          type: string
+                                        connectionTimeoutSeconds:
+                                          format: int32
+                                          type: integer
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - configuration
+                                      - key
+                                      - name
+                                      type: object
                                     raw:
                                       properties:
                                         data:
@@ -18445,6 +18685,22 @@ spec:
                                     type: object
                                   path:
                                     type: string
+                                  plugin:
+                                    properties:
+                                      configuration:
+                                        type: string
+                                      connectionTimeoutSeconds:
+                                        format: int32
+                                        type: integer
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                    required:
+                                    - configuration
+                                    - key
+                                    - name
+                                    type: object
                                   raw:
                                     properties:
                                       data:
@@ -19177,6 +19433,22 @@ spec:
                                     type: object
                                   path:
                                     type: string
+                                  plugin:
+                                    properties:
+                                      configuration:
+                                        type: string
+                                      connectionTimeoutSeconds:
+                                        format: int32
+                                        type: integer
+                                      key:
+                                        type: string
+                                      name:
+                                        type: string
+                                    required:
+                                    - configuration
+                                    - key
+                                    - name
+                                    type: object
                                   raw:
                                     properties:
                                       data:
@@ -19826,6 +20098,22 @@ spec:
                                       type: object
                                     path:
                                       type: string
+                                    plugin:
+                                      properties:
+                                        configuration:
+                                          type: string
+                                        connectionTimeoutSeconds:
+                                          format: int32
+                                          type: integer
+                                        key:
+                                          type: string
+                                        name:
+                                          type: string
+                                      required:
+                                      - configuration
+                                      - key
+                                      - name
+                                      type: object
                                     raw:
                                       properties:
                                         data:
@@ -21889,6 +22177,22 @@ spec:
                                             type: object
                                           path:
                                             type: string
+                                          plugin:
+                                            properties:
+                                              configuration:
+                                                type: string
+                                              connectionTimeoutSeconds:
+                                                format: int32
+                                                type: integer
+                                              key:
+                                                type: string
+                                              name:
+                                                type: string
+                                            required:
+                                            - configuration
+                                            - key
+                                            - name
+                                            type: object
                                           raw:
                                             properties:
                                               data:
@@ -22523,6 +22827,22 @@ spec:
                                                   type: object
                                                 path:
                                                   type: string
+                                                plugin:
+                                                  properties:
+                                                    configuration:
+                                                      type: string
+                                                    connectionTimeoutSeconds:
+                                                      format: int32
+                                                      type: integer
+                                                    key:
+                                                      type: string
+                                                    name:
+                                                      type: string
+                                                  required:
+                                                  - configuration
+                                                  - key
+                                                  - name
+                                                  type: object
                                                 raw:
                                                   properties:
                                                     data:

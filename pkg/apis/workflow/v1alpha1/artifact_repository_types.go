@@ -27,6 +27,8 @@ type ArtifactRepository struct {
 	GCS *GCSArtifactRepository `json:"gcs,omitempty" protobuf:"bytes,6,opt,name=gcs"`
 	// Azure stores artifact in an Azure Storage account
 	Azure *AzureArtifactRepository `json:"azure,omitempty" protobuf:"bytes,7,opt,name=azure"`
+	// Plugin stores artifact in a plugin-specific artifact repository
+	Plugin *PluginArtifactRepository `json:"plugin,omitempty" protobuf:"bytes,8,opt,name=plugin"`
 }
 
 func (a *ArtifactRepository) IsArchiveLogs() bool {
@@ -178,4 +180,12 @@ func (r *HDFSArtifactRepository) IntoArtifactLocation(l *ArtifactLocation) {
 	l.HDFS = &HDFSArtifact{HDFSConfig: r.HDFSConfig, Path: p, Force: r.Force}
 }
 
-// MetricsConfig defines a config for a metrics server
+// PluginArtifactRepository defines the controller configuration for a plugin artifact repository
+type PluginArtifactRepository struct {
+	Name          ArtifactPluginName `json:"name" protobuf:"bytes,1,opt,name=name"`
+	Configuration string             `json:"configuration" protobuf:"bytes,2,opt,name=configuration"`
+}
+
+func (r *PluginArtifactRepository) IntoArtifactLocation(l *ArtifactLocation) {
+	l.Plugin = &PluginArtifact{Name: r.Name, Configuration: r.Configuration}
+}

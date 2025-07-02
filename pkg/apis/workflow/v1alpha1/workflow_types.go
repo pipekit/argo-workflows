@@ -860,6 +860,16 @@ func (a Artifacts) GetArtifactByName(name string) *Artifact {
 	return nil
 }
 
+func (a Artifacts) GetPlugins() []PluginArtifact {
+	plugins := []PluginArtifact{}
+	for _, art := range a {
+		if art.Plugin != nil {
+			plugins = append(plugins, *art.Plugin)
+		}
+	}
+	return plugins
+}
+
 // Inputs are the mechanism for passing parameters, artifacts, volumes from one template to another
 type Inputs struct {
 	// Parameters are a list of parameters passed as inputs
@@ -1195,6 +1205,9 @@ type ArtifactLocation struct {
 
 	// Azure contains Azure Storage artifact location details
 	Azure *AzureArtifact `json:"azure,omitempty" protobuf:"bytes,10,opt,name=azure"`
+
+	// Plugin contains plugin artifact location details
+	Plugin *PluginArtifact `json:"plugin,omitempty" protobuf:"bytes,11,opt,name=plugin"`
 }
 
 func (a *ArtifactLocation) Get() (ArtifactLocationType, error) {
@@ -1218,6 +1231,8 @@ func (a *ArtifactLocation) Get() (ArtifactLocationType, error) {
 		return a.Raw, nil
 	} else if a.S3 != nil {
 		return a.S3, nil
+	} else if a.Plugin != nil {
+		return a.Plugin, nil
 	}
 	return nil, fmt.Errorf("artifact storage is not configured; see the docs for setup instructions: https://argo-workflows.readthedocs.io/en/latest/configure-artifact-repository/")
 }
@@ -1242,6 +1257,8 @@ func (a *ArtifactLocation) SetType(x ArtifactLocationType) error {
 		a.Raw = &RawArtifact{}
 	case *S3Artifact:
 		a.S3 = &S3Artifact{}
+	case *PluginArtifact:
+		a.Plugin = &PluginArtifact{}
 	default:
 		return fmt.Errorf("set type not supported for type: %v", reflect.TypeOf(v))
 	}
@@ -3083,6 +3100,63 @@ func (o *OSSArtifact) SetKey(key string) error {
 
 func (o *OSSArtifact) HasLocation() bool {
 	return o != nil && o.Bucket != "" && o.Endpoint != "" && o.Key != ""
+}
+
+// ArtifactPluginName is the name of an artifact plugin
+type ArtifactPluginName string
+
+func (a ArtifactPluginName) SocketDir() string {
+	return "/artifact-plugins/" + string(a)
+}
+
+func (a ArtifactPluginName) SocketPath() string {
+	return a.SocketDir() + "/socket"
+}
+
+func (a ArtifactPluginName) volumeName() string {
+	return "artifact-plugin-" + string(a)
+}
+
+func (a ArtifactPluginName) VolumeMount() apiv1.VolumeMount {
+	return apiv1.VolumeMount{
+		Name:      a.volumeName(),
+		MountPath: a.SocketDir(),
+	}
+}
+
+func (a ArtifactPluginName) Volume() apiv1.Volume {
+	return apiv1.Volume{
+		Name: a.volumeName(),
+		VolumeSource: apiv1.VolumeSource{
+			EmptyDir: &apiv1.EmptyDirVolumeSource{},
+		},
+	}
+}
+
+// PluginArtifact is the location of a plugin artifact
+type PluginArtifact struct {
+	// Name is the name of the artifact driver plugin
+	Name ArtifactPluginName `json:"name" protobuf:"bytes,1,opt,name=name"`
+	// Configuration is the plugin defined configuration for the artifact driver plugin
+	Configuration string `json:"configuration" protobuf:"bytes,2,opt,name=configuration"`
+	// ConnectionTimeoutSeconds is the timeout for the artifact driver connection, 5 seconds if not set
+	ConnectionTimeoutSeconds int32 `json:"connectionTimeoutSeconds,omitempty" protobuf:"varint,3,opt,name=connectionTimeoutSeconds"`
+
+	// Key is the path in the artifact repository where the artifact resides
+	Key string `json:"key" protobuf:"bytes,4,opt,name=key"`
+}
+
+func (p *PluginArtifact) GetKey() (string, error) {
+	return p.Key, nil
+}
+func (p *PluginArtifact) SetKey(key string) error {
+	p.Key = key
+	return nil
+}
+
+// HasLocation returns true if the plugin artifact has a name, configuration and key
+func (p *PluginArtifact) HasLocation() bool {
+	return p != nil && p.Name != "" && p.Configuration != "" && p.Key != ""
 }
 
 // ExecutorConfig holds configurations of an executor container.
