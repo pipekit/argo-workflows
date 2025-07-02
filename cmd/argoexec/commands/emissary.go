@@ -161,14 +161,20 @@ func NewEmissaryCommand() *cobra.Command {
 				ctx, cancel := context.WithCancel(ctx)
 				defer cancel()
 				go func() {
+					signalPath := filepath.Clean(filepath.Join(varRunArgo, "ctr", containerName, "signal"))
+					logger.WithField("signalPath", signalPath).Info(ctx, "waiting for signals")
 					for {
 						select {
 						case <-ctx.Done():
 							return
 						default:
-							data, _ := os.ReadFile(filepath.Clean(varRunArgo + "/ctr/" + containerName + "/signal"))
-							_ = os.Remove(varRunArgo + "/ctr/" + containerName + "/signal")
+							data, _ := os.ReadFile(signalPath)
+							_ = os.Remove(signalPath)
 							s, _ := strconv.Atoi(string(data))
+							logger.WithFields(logging.Fields{
+								"signal":     s,
+								"signalPath": signalPath,
+							}).Info(ctx, "received signal")
 							if s > 0 {
 								_ = osspecific.Kill(pid, syscall.Signal(s))
 							}

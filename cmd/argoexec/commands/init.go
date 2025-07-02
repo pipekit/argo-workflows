@@ -38,7 +38,7 @@ func loadArtifacts(ctx context.Context) error {
 		wfExecutor.AddError(ctx, err)
 		return err
 	}
-	err = wfExecutor.LoadArtifacts(ctx)
+	err = wfExecutor.LoadArtifactsWithoutPlugins(ctx)
 	if err != nil {
 		wfExecutor.AddError(ctx, err)
 		return err

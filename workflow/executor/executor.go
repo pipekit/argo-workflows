@@ -16,6 +16,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime/debug"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -41,7 +42,7 @@ import (
 	errorsutil "github.com/argoproj/argo-workflows/v3/util/errors"
 	"github.com/argoproj/argo-workflows/v3/util/retry"
 	waitutil "github.com/argoproj/argo-workflows/v3/util/wait"
-	artifact "github.com/argoproj/argo-workflows/v3/workflow/artifacts"
+	"github.com/argoproj/argo-workflows/v3/workflow/artifacts"
 	artifactcommon "github.com/argoproj/argo-workflows/v3/workflow/artifacts/common"
 	"github.com/argoproj/argo-workflows/v3/workflow/common"
 	executorretry "github.com/argoproj/argo-workflows/v3/workflow/executor/retry"
@@ -170,12 +171,20 @@ func (we *WorkflowExecutor) HandleError(ctx context.Context) {
 	}
 }
 
-// LoadArtifacts loads artifacts from location to a container path
-func (we *WorkflowExecutor) LoadArtifacts(ctx context.Context) error {
-	logger := logging.RequireLoggerFromContext(ctx)
-	logger.Info(ctx, "Start loading input artifacts...")
-	for _, art := range we.Template.Inputs.Artifacts {
+func (we *WorkflowExecutor) LoadArtifactsWithoutPlugins(ctx context.Context) error {
+	return we.loadArtifacts(ctx, "")
+}
 
+func (we *WorkflowExecutor) LoadArtifactsFromPlugin(ctx context.Context, pluginName wfv1.ArtifactPluginName) error {
+	return we.loadArtifacts(ctx, pluginName)
+}
+
+// loadArtifacts loads artifacts from location to a container path
+// pluginName is the name of the plugin to load artifacts from, only one plugin can be used at a time
+func (we *WorkflowExecutor) loadArtifacts(ctx context.Context, pluginName wfv1.ArtifactPluginName) error {
+	logger := logging.RequireLoggerFromContext(ctx)
+	logger.WithFields(logging.Fields{"pluginName": pluginName}).Info(ctx, "Start loading input artifacts...")
+	for _, art := range we.Template.Inputs.Artifacts {
 		logger.WithField("name", art.Name).Info(ctx, "Downloading artifact")
 
 		if !art.HasLocationOrKey() {
@@ -194,6 +203,21 @@ func (we *WorkflowExecutor) LoadArtifacts(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("failed to load artifact '%s': %w", art.Name, err)
 		}
+		switch pluginName {
+		// If no plugin is specified only load non-plugin artifacts
+		case "":
+			if driverArt.Plugin != nil {
+				logger.Info(ctx, "Skipping artifact that is from a plugin")
+				continue
+			}
+			// If a plugin is specified only load artifacts from that plugin
+		default:
+			if driverArt.Plugin == nil || driverArt.Plugin.Name != pluginName {
+				logger.WithFields(logging.Fields{"name": driverArt.Name, "plugin": driverArt.Plugin}).Info(ctx, "Skipping artifact that is not from the specified plugin")
+				continue
+			}
+		}
+
 		artDriver, err := we.InitDriver(ctx, driverArt)
 		if err != nil {
 			return err
@@ -707,8 +731,8 @@ func (we *WorkflowExecutor) newDriverArt(art *wfv1.Artifact) (*wfv1.Artifact, er
 
 // InitDriver initializes an instance of an artifact driver
 func (we *WorkflowExecutor) InitDriver(ctx context.Context, art *wfv1.Artifact) (artifactcommon.ArtifactDriver, error) {
-	driver, err := artifact.NewDriver(ctx, art, we)
-	if err == artifact.ErrUnsupportedDriver {
+	driver, err := artifacts.NewDriver(ctx, art, we)
+	if err == artifacts.ErrUnsupportedDriver {
 		return nil, argoerrs.Errorf(argoerrs.CodeBadRequest, "Unsupported artifact driver for %s", art.Name)
 	}
 	return driver, err
@@ -1255,7 +1279,7 @@ func (we *WorkflowExecutor) monitorDeadline(ctx context.Context, containerNames 
 
 	var message string
 	logger := logging.RequireLoggerFromContext(ctx)
-	logger.Info(ctx, "Starting deadline monitor")
+	logger.WithField("containers", containerNames).Info(ctx, "Starting deadline monitor")
 	select {
 	case <-ctx.Done():
 		logger.Info(ctx, "Deadline monitor stopped")
@@ -1263,14 +1287,19 @@ func (we *WorkflowExecutor) monitorDeadline(ctx context.Context, containerNames 
 	case <-deadlineExceeded:
 		message = "Step exceeded its deadline"
 	}
+	// TODO: Handle not killing the artifact sidecars
 	logger.Info(ctx, message)
 	util.WriteTerminateMessage(message)
+
+	containerNames = slices.DeleteFunc(containerNames, func(containerName string) bool {
+		return common.IsArtifactPluginSidecar(containerName)
+	})
 	we.killContainers(ctx, containerNames)
 }
 
 func (we *WorkflowExecutor) killContainers(ctx context.Context, containerNames []string) {
 	logger := logging.RequireLoggerFromContext(ctx)
-	logger.Info(ctx, "Killing containers")
+	logger.WithField("containerNames", containerNames).Info(ctx, "Killing containers")
 	terminationGracePeriodDuration := GetTerminationGracePeriodDuration()
 	if err := we.RuntimeExecutor.Kill(ctx, containerNames, terminationGracePeriodDuration); err != nil {
 		logger.WithField("containerNames", containerNames).WithError(err).Warn(ctx, "Failed to kill")

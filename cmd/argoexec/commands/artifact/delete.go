@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -16,10 +17,13 @@ import (
 	"github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	workflow "github.com/argoproj/argo-workflows/v3/pkg/client/clientset/versioned"
 	wfv1alpha1 "github.com/argoproj/argo-workflows/v3/pkg/client/clientset/versioned/typed/workflow/v1alpha1"
+	"github.com/argoproj/argo-workflows/v3/util/logging"
 	"github.com/argoproj/argo-workflows/v3/util/retry"
 	waitutil "github.com/argoproj/argo-workflows/v3/util/wait"
-	executor "github.com/argoproj/argo-workflows/v3/workflow/artifacts"
+	"github.com/argoproj/argo-workflows/v3/workflow/artifacts"
 	"github.com/argoproj/argo-workflows/v3/workflow/common"
+	"github.com/argoproj/argo-workflows/v3/workflow/executor"
+	"github.com/argoproj/argo-workflows/v3/workflow/executor/emissary"
 )
 
 func NewArtifactDeleteCommand() *cobra.Command {
@@ -28,6 +32,7 @@ func NewArtifactDeleteCommand() *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
+			logger := logging.RequireLoggerFromContext(ctx)
 			namespace := client.Namespace(ctx)
 			clientConfig := client.GetConfig()
 
@@ -46,7 +51,25 @@ func NewArtifactDeleteCommand() *cobra.Command {
 				if err != nil {
 					return err
 				}
+				logger.Info(ctx, "artifacts deleted")
 			}
+			em, err := emissary.New()
+			if err != nil {
+				return err
+			}
+			pluginNamesEnv := os.Getenv(common.EnvVarArtifactPluginNames)
+			if pluginNamesEnv == "" {
+				logger.Info(ctx, "no artifact sidecars to kill")
+				return nil
+			}
+			artifactSidecars := strings.Split(pluginNamesEnv, ",")
+			logger.WithFields(logging.Fields{"artifactSidecars": artifactSidecars}).Info(ctx, "killing artifact sidecars")
+			err = em.Kill(ctx, artifactSidecars, executor.GetTerminationGracePeriodDuration())
+			if err != nil {
+				logger.WithError(err).WithFields(logging.Fields{"artifactSidecars": artifactSidecars}).Error(ctx, "failed to kill artifact sidecars")
+				return err
+			}
+			logger.WithFields(logging.Fields{"artifactSidecars": artifactSidecars}).Info(ctx, "artifact sidecars killed")
 			return nil
 		},
 	}
@@ -79,7 +102,7 @@ func deleteArtifacts(labelSelector string, ctx context.Context, artifactGCTaskIn
 					}
 				}
 
-				drv, err := executor.NewDriver(ctx, &artifact, resources)
+				drv, err := artifacts.NewDriver(ctx, &artifact, resources)
 				if err != nil {
 					return err
 				}

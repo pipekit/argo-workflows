@@ -3,12 +3,17 @@ package commands
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/argoproj/pkg/stats"
 	"github.com/spf13/cobra"
 
 	"github.com/argoproj/argo-workflows/v3/util/logging"
+	"github.com/argoproj/argo-workflows/v3/workflow/common"
+	"github.com/argoproj/argo-workflows/v3/workflow/executor"
+	"github.com/argoproj/argo-workflows/v3/workflow/executor/emissary"
 )
 
 func NewWaitCommand() *cobra.Command {
@@ -79,11 +84,37 @@ func waitContainer(ctx context.Context) error {
 	logArtifacts := wfExecutor.SaveLogs(bgCtx)
 	artifacts = append(artifacts, logArtifacts...)
 
-	// Try to upsert TaskResult. If it fails, we will try to update the Pod's Annotations
 	err = wfExecutor.ReportOutputs(bgCtx, artifacts)
 	if err != nil {
 		wfExecutor.AddError(ctx, err)
 	}
 
+	err = killArtifactSidecars(bgCtx)
+	if err != nil {
+		wfExecutor.AddError(ctx, err)
+	}
+
 	return wfExecutor.HasError()
+}
+
+func killArtifactSidecars(ctx context.Context) error {
+	logger := logging.RequireLoggerFromContext(ctx)
+	em, err := emissary.New()
+	if err != nil {
+		return err
+	}
+	pluginNamesEnv := os.Getenv(common.EnvVarArtifactPluginNames)
+	if pluginNamesEnv == "" {
+		logger.Info(ctx, "no artifact sidecars to kill")
+		return nil
+	}
+	artifactSidecars := strings.Split(pluginNamesEnv, ",")
+	logger.WithFields(logging.Fields{"numSidecars": len(artifactSidecars), "artifactSidecars": artifactSidecars}).Info(ctx, "killing artifact sidecars")
+	err = em.Kill(ctx, artifactSidecars, executor.GetTerminationGracePeriodDuration())
+	if err != nil {
+		logger.WithError(err).WithFields(logging.Fields{"artifactSidecars": artifactSidecars}).Error(ctx, "failed to kill artifact sidecars")
+		return err
+	}
+	logger.WithFields(logging.Fields{"artifactSidecars": artifactSidecars}).Info(ctx, "artifact sidecars killed")
+	return nil
 }
