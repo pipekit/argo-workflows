@@ -22,7 +22,8 @@ create table if not exists sync_state (
     held boolean,
     priority int,
     time timestamp,
-    primary key(name, workflowkey, controller);
+    primary key(name, workflowkey, controller)
+);
 
 create index istate_name on sync_state (name);
 create index istate_workflowkey on sync_state (workflowkey);
