@@ -231,6 +231,10 @@ func convertLevel(level Level) slog.Level {
 	}
 }
 
+func (l *slogLogger) InContext(ctx context.Context) (context.Context, Logger) {
+	return WithLogger(ctx, l), l
+}
+
 // NewBackgroundContext returns a new context with this logger in it
 func (s *slogLogger) NewBackgroundContext() context.Context {
 	return WithLogger(context.Background(), s)
