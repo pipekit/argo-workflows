@@ -8,12 +8,142 @@ import "google/api/annotations.proto";
 // Artifact Service API provides GRPC access to artifact operations
 package artifact;
 
-// Simple Artifact representation for gRPC
+// Plugin Artifact configuration
+message PluginArtifact {
+  string name = 1;
+  string configuration = 2;
+  int32 connection_timeout_seconds = 3;
+  string key = 4;
+}
+
+// S3 Artifact location
+message S3Artifact {
+  string endpoint = 1;
+  string bucket = 2;
+  string region = 3;
+  bool insecure = 4;
+  string access_key_secret_name = 5;
+  string access_key_secret_key = 6;
+  string secret_key_secret_name = 7;
+  string secret_key_secret_key = 8;
+  string session_token_secret_name = 9;
+  string session_token_secret_key = 10;
+  string role_arn = 11;
+  bool use_sdk_creds = 12;
+  string key = 13;
+}
+
+// Git Artifact location
+message GitArtifact {
+  string repo = 1;
+  string revision = 2;
+  uint64 depth = 3;
+  repeated string fetch = 4;
+  string username_secret_name = 5;
+  string username_secret_key = 6;
+  string password_secret_name = 7;
+  string password_secret_key = 8;
+  string ssh_private_key_secret_name = 9;
+  string ssh_private_key_secret_key = 10;
+  bool insecure_ignore_host_key = 11;
+  bool disable_submodules = 12;
+  bool single_branch = 13;
+  string branch = 14;
+  bool insecure_skip_tls = 15;
+}
+
+// HTTP Artifact location
+message HTTPArtifact {
+  string url = 1;
+  map<string, string> headers = 2;
+  string username_secret_name = 3;
+  string username_secret_key = 4;
+  string password_secret_name = 5;
+  string password_secret_key = 6;
+}
+
+// Artifactory Artifact location
+message ArtifactoryArtifact {
+  string url = 1;
+  string username_secret_name = 2;
+  string username_secret_key = 3;
+  string password_secret_name = 4;
+  string password_secret_key = 5;
+}
+
+// HDFS Artifact location
+message HDFSArtifact {
+  repeated string addresses = 1;
+  string hdfs_user = 2;
+  string data_transfer_protection = 3;
+  string path = 4;
+  bool force = 5;
+}
+
+// Raw Artifact
+message RawArtifact {
+  string data = 1;
+}
+
+// OSS Artifact location
+message OSSArtifact {
+  string endpoint = 1;
+  string bucket = 2;
+  string access_key_secret_name = 3;
+  string access_key_secret_key = 4;
+  string secret_key_secret_name = 5;
+  string secret_key_secret_key = 6;
+  bool create_bucket_if_not_present = 7;
+  string security_token = 8;
+  bool use_sdk_creds = 9;
+  string key = 10;
+}
+
+// GCS Artifact location
+message GCSArtifact {
+  string bucket = 1;
+  string service_account_key_secret_name = 2;
+  string service_account_key_secret_key = 3;
+  string key = 4;
+}
+
+// Azure Artifact location
+message AzureArtifact {
+  string endpoint = 1;
+  string container = 2;
+  string account_key_secret_name = 3;
+  string account_key_secret_key = 4;
+  bool use_sdk_creds = 5;
+  string blob = 6;
+}
+
+// Artifact Location containing all possible artifact storage types
+message ArtifactLocation {
+  bool archive_logs = 1;
+  S3Artifact s3 = 2;
+  GitArtifact git = 3;
+  HTTPArtifact http = 4;
+  ArtifactoryArtifact artifactory = 5;
+  HDFSArtifact hdfs = 6;
+  RawArtifact raw = 7;
+  OSSArtifact oss = 8;
+  GCSArtifact gcs = 9;
+  AzureArtifact azure = 10;
+  PluginArtifact plugin = 11;
+}
+
+// Comprehensive Artifact representation for gRPC
 message Artifact {
   string name = 1;
   string path = 2;
-  string url = 3;
-  map<string, string> options = 4;
+  int32 mode = 3;
+  string from = 4;
+  ArtifactLocation artifact_location = 5;
+  bool optional = 6;
+  string sub_path = 7;
+  bool recurse_mode = 8;
+  string from_expression = 9;
+  bool deleted = 10;
 }
 
 message LoadArtifactRequest {

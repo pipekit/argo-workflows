@@ -224,17 +224,117 @@
         "path": {
           "type": "string"
         },
+        "mode": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "from": {
+          "type": "string"
+        },
+        "artifact_location": {
+          "$ref": "#/definitions/artifact.ArtifactLocation"
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "sub_path": {
+          "type": "string"
+        },
+        "recurse_mode": {
+          "type": "boolean"
+        },
+        "from_expression": {
+          "type": "string"
+        },
+        "deleted": {
+          "type": "boolean"
+        }
+      },
+      "title": "Comprehensive Artifact representation for gRPC"
+    },
+    "artifact.ArtifactLocation": {
+      "type": "object",
+      "properties": {
+        "archive_logs": {
+          "type": "boolean"
+        },
+        "s3": {
+          "$ref": "#/definitions/artifact.S3Artifact"
+        },
+        "git": {
+          "$ref": "#/definitions/artifact.GitArtifact"
+        },
+        "http": {
+          "$ref": "#/definitions/artifact.HTTPArtifact"
+        },
+        "artifactory": {
+          "$ref": "#/definitions/artifact.ArtifactoryArtifact"
+        },
+        "hdfs": {
+          "$ref": "#/definitions/artifact.HDFSArtifact"
+        },
+        "raw": {
+          "$ref": "#/definitions/artifact.RawArtifact"
+        },
+        "oss": {
+          "$ref": "#/definitions/artifact.OSSArtifact"
+        },
+        "gcs": {
+          "$ref": "#/definitions/artifact.GCSArtifact"
+        },
+        "azure": {
+          "$ref": "#/definitions/artifact.AzureArtifact"
+        },
+        "plugin": {
+          "$ref": "#/definitions/artifact.PluginArtifact"
+        }
+      },
+      "title": "Artifact Location containing all possible artifact storage types"
+    },
+    "artifact.ArtifactoryArtifact": {
+      "type": "object",
+      "properties": {
         "url": {
           "type": "string"
         },
-        "options": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
+        "username_secret_name": {
+          "type": "string"
+        },
+        "username_secret_key": {
+          "type": "string"
+        },
+        "password_secret_name": {
+          "type": "string"
+        },
+        "password_secret_key": {
+          "type": "string"
         }
       },
-      "title": "Simple Artifact representation for gRPC"
+      "title": "Artifactory Artifact location"
+    },
+    "artifact.AzureArtifact": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "type": "string"
+        },
+        "container": {
+          "type": "string"
+        },
+        "account_key_secret_name": {
+          "type": "string"
+        },
+        "account_key_secret_key": {
+          "type": "string"
+        },
+        "use_sdk_creds": {
+          "type": "boolean"
+        },
+        "blob": {
+          "type": "string"
+        }
+      },
+      "title": "Azure Artifact location"
     },
     "artifact.DeleteArtifactRequest": {
       "type": "object",
@@ -254,6 +354,130 @@
           "type": "string"
         }
       }
+    },
+    "artifact.GCSArtifact": {
+      "type": "object",
+      "properties": {
+        "bucket": {
+          "type": "string"
+        },
+        "service_account_key_secret_name": {
+          "type": "string"
+        },
+        "service_account_key_secret_key": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        }
+      },
+      "title": "GCS Artifact location"
+    },
+    "artifact.GitArtifact": {
+      "type": "object",
+      "properties": {
+        "repo": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "depth": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fetch": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "username_secret_name": {
+          "type": "string"
+        },
+        "username_secret_key": {
+          "type": "string"
+        },
+        "password_secret_name": {
+          "type": "string"
+        },
+        "password_secret_key": {
+          "type": "string"
+        },
+        "ssh_private_key_secret_name": {
+          "type": "string"
+        },
+        "ssh_private_key_secret_key": {
+          "type": "string"
+        },
+        "insecure_ignore_host_key": {
+          "type": "boolean"
+        },
+        "disable_submodules": {
+          "type": "boolean"
+        },
+        "single_branch": {
+          "type": "boolean"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "insecure_skip_tls": {
+          "type": "boolean"
+        }
+      },
+      "title": "Git Artifact location"
+    },
+    "artifact.HDFSArtifact": {
+      "type": "object",
+      "properties": {
+        "addresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "hdfs_user": {
+          "type": "string"
+        },
+        "data_transfer_protection": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "force": {
+          "type": "boolean"
+        }
+      },
+      "title": "HDFS Artifact location"
+    },
+    "artifact.HTTPArtifact": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "username_secret_name": {
+          "type": "string"
+        },
+        "username_secret_key": {
+          "type": "string"
+        },
+        "password_secret_name": {
+          "type": "string"
+        },
+        "password_secret_key": {
+          "type": "string"
+        }
+      },
+      "title": "HTTP Artifact location"
     },
     "artifact.IsDirectoryRequest": {
       "type": "object",
@@ -318,6 +542,42 @@
         }
       }
     },
+    "artifact.OSSArtifact": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "type": "string"
+        },
+        "bucket": {
+          "type": "string"
+        },
+        "access_key_secret_name": {
+          "type": "string"
+        },
+        "access_key_secret_key": {
+          "type": "string"
+        },
+        "secret_key_secret_name": {
+          "type": "string"
+        },
+        "secret_key_secret_key": {
+          "type": "string"
+        },
+        "create_bucket_if_not_present": {
+          "type": "boolean"
+        },
+        "security_token": {
+          "type": "string"
+        },
+        "use_sdk_creds": {
+          "type": "boolean"
+        },
+        "key": {
+          "type": "string"
+        }
+      },
+      "title": "OSS Artifact location"
+    },
     "artifact.OpenStreamRequest": {
       "type": "object",
       "properties": {
@@ -340,6 +600,79 @@
           "type": "string"
         }
       }
+    },
+    "artifact.PluginArtifact": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "configuration": {
+          "type": "string"
+        },
+        "connection_timeout_seconds": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "key": {
+          "type": "string"
+        }
+      },
+      "title": "Plugin Artifact configuration"
+    },
+    "artifact.RawArtifact": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "string"
+        }
+      },
+      "title": "Raw Artifact"
+    },
+    "artifact.S3Artifact": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "type": "string"
+        },
+        "bucket": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        },
+        "insecure": {
+          "type": "boolean"
+        },
+        "access_key_secret_name": {
+          "type": "string"
+        },
+        "access_key_secret_key": {
+          "type": "string"
+        },
+        "secret_key_secret_name": {
+          "type": "string"
+        },
+        "secret_key_secret_key": {
+          "type": "string"
+        },
+        "session_token_secret_name": {
+          "type": "string"
+        },
+        "session_token_secret_key": {
+          "type": "string"
+        },
+        "role_arn": {
+          "type": "string"
+        },
+        "use_sdk_creds": {
+          "type": "boolean"
+        },
+        "key": {
+          "type": "string"
+        }
+      },
+      "title": "S3 Artifact location"
     },
     "artifact.SaveArtifactRequest": {
       "type": "object",
