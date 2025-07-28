@@ -31,12 +31,146 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// Simple Artifact representation for gRPC
+// Plugin Artifact configuration
+type PluginArtifact struct {
+	Name                     string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Configuration            string   `protobuf:"bytes,2,opt,name=configuration,proto3" json:"configuration,omitempty"`
+	ConnectionTimeoutSeconds int32    `protobuf:"varint,3,opt,name=connection_timeout_seconds,json=connectionTimeoutSeconds,proto3" json:"connection_timeout_seconds,omitempty"`
+	Key                      string   `protobuf:"bytes,4,opt,name=key,proto3" json:"key,omitempty"`
+	XXX_NoUnkeyedLiteral     struct{} `json:"-"`
+	XXX_unrecognized         []byte   `json:"-"`
+	XXX_sizecache            int32    `json:"-"`
+}
+
+func (m *PluginArtifact) Reset()         { *m = PluginArtifact{} }
+func (m *PluginArtifact) String() string { return proto.CompactTextString(m) }
+func (*PluginArtifact) ProtoMessage()    {}
+func (*PluginArtifact) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a89d6010ce1ebcb2, []int{0}
+}
+func (m *PluginArtifact) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *PluginArtifact) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_PluginArtifact.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *PluginArtifact) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PluginArtifact.Merge(m, src)
+}
+func (m *PluginArtifact) XXX_Size() int {
+	return m.Size()
+}
+func (m *PluginArtifact) XXX_DiscardUnknown() {
+	xxx_messageInfo_PluginArtifact.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PluginArtifact proto.InternalMessageInfo
+
+func (m *PluginArtifact) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *PluginArtifact) GetConfiguration() string {
+	if m != nil {
+		return m.Configuration
+	}
+	return ""
+}
+
+func (m *PluginArtifact) GetConnectionTimeoutSeconds() int32 {
+	if m != nil {
+		return m.ConnectionTimeoutSeconds
+	}
+	return 0
+}
+
+func (m *PluginArtifact) GetKey() string {
+	if m != nil {
+		return m.Key
+	}
+	return ""
+}
+
+// Artifact Location containing all possible artifact storage types
+type ArtifactLocation struct {
+	ArchiveLogs          bool            `protobuf:"varint,1,opt,name=archive_logs,json=archiveLogs,proto3" json:"archive_logs,omitempty"`
+	Plugin               *PluginArtifact `protobuf:"bytes,2,opt,name=plugin,proto3" json:"plugin,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
+}
+
+func (m *ArtifactLocation) Reset()         { *m = ArtifactLocation{} }
+func (m *ArtifactLocation) String() string { return proto.CompactTextString(m) }
+func (*ArtifactLocation) ProtoMessage()    {}
+func (*ArtifactLocation) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a89d6010ce1ebcb2, []int{1}
+}
+func (m *ArtifactLocation) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ArtifactLocation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ArtifactLocation.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ArtifactLocation) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ArtifactLocation.Merge(m, src)
+}
+func (m *ArtifactLocation) XXX_Size() int {
+	return m.Size()
+}
+func (m *ArtifactLocation) XXX_DiscardUnknown() {
+	xxx_messageInfo_ArtifactLocation.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ArtifactLocation proto.InternalMessageInfo
+
+func (m *ArtifactLocation) GetArchiveLogs() bool {
+	if m != nil {
+		return m.ArchiveLogs
+	}
+	return false
+}
+
+func (m *ArtifactLocation) GetPlugin() *PluginArtifact {
+	if m != nil {
+		return m.Plugin
+	}
+	return nil
+}
+
+// Comprehensive Artifact representation for gRPC
 type Artifact struct {
 	Name                 string            `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Path                 string            `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
-	Url                  string            `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
-	Options              map[string]string `protobuf:"bytes,4,rep,name=options,proto3" json:"options,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Mode                 int32             `protobuf:"varint,3,opt,name=mode,proto3" json:"mode,omitempty"`
+	From                 string            `protobuf:"bytes,4,opt,name=from,proto3" json:"from,omitempty"`
+	ArtifactLocation     *ArtifactLocation `protobuf:"bytes,5,opt,name=artifact_location,json=artifactLocation,proto3" json:"artifact_location,omitempty"`
+	Optional             bool              `protobuf:"varint,6,opt,name=optional,proto3" json:"optional,omitempty"`
+	SubPath              string            `protobuf:"bytes,7,opt,name=sub_path,json=subPath,proto3" json:"sub_path,omitempty"`
+	RecurseMode          bool              `protobuf:"varint,8,opt,name=recurse_mode,json=recurseMode,proto3" json:"recurse_mode,omitempty"`
+	FromExpression       string            `protobuf:"bytes,9,opt,name=from_expression,json=fromExpression,proto3" json:"from_expression,omitempty"`
+	Deleted              bool              `protobuf:"varint,10,opt,name=deleted,proto3" json:"deleted,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
 	XXX_unrecognized     []byte            `json:"-"`
 	XXX_sizecache        int32             `json:"-"`
@@ -46,7 +180,7 @@ func (m *Artifact) Reset()         { *m = Artifact{} }
 func (m *Artifact) String() string { return proto.CompactTextString(m) }
 func (*Artifact) ProtoMessage()    {}
 func (*Artifact) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a89d6010ce1ebcb2, []int{0}
+	return fileDescriptor_a89d6010ce1ebcb2, []int{2}
 }
 func (m *Artifact) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -89,18 +223,60 @@ func (m *Artifact) GetPath() string {
 	return ""
 }
 
-func (m *Artifact) GetUrl() string {
+func (m *Artifact) GetMode() int32 {
 	if m != nil {
-		return m.Url
+		return m.Mode
+	}
+	return 0
+}
+
+func (m *Artifact) GetFrom() string {
+	if m != nil {
+		return m.From
 	}
 	return ""
 }
 
-func (m *Artifact) GetOptions() map[string]string {
+func (m *Artifact) GetArtifactLocation() *ArtifactLocation {
 	if m != nil {
-		return m.Options
+		return m.ArtifactLocation
 	}
 	return nil
+}
+
+func (m *Artifact) GetOptional() bool {
+	if m != nil {
+		return m.Optional
+	}
+	return false
+}
+
+func (m *Artifact) GetSubPath() string {
+	if m != nil {
+		return m.SubPath
+	}
+	return ""
+}
+
+func (m *Artifact) GetRecurseMode() bool {
+	if m != nil {
+		return m.RecurseMode
+	}
+	return false
+}
+
+func (m *Artifact) GetFromExpression() string {
+	if m != nil {
+		return m.FromExpression
+	}
+	return ""
+}
+
+func (m *Artifact) GetDeleted() bool {
+	if m != nil {
+		return m.Deleted
+	}
+	return false
 }
 
 type LoadArtifactRequest struct {
@@ -115,7 +291,7 @@ func (m *LoadArtifactRequest) Reset()         { *m = LoadArtifactRequest{} }
 func (m *LoadArtifactRequest) String() string { return proto.CompactTextString(m) }
 func (*LoadArtifactRequest) ProtoMessage()    {}
 func (*LoadArtifactRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a89d6010ce1ebcb2, []int{1}
+	return fileDescriptor_a89d6010ce1ebcb2, []int{3}
 }
 func (m *LoadArtifactRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -170,7 +346,7 @@ func (m *LoadArtifactResponse) Reset()         { *m = LoadArtifactResponse{} }
 func (m *LoadArtifactResponse) String() string { return proto.CompactTextString(m) }
 func (*LoadArtifactResponse) ProtoMessage()    {}
 func (*LoadArtifactResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a89d6010ce1ebcb2, []int{2}
+	return fileDescriptor_a89d6010ce1ebcb2, []int{4}
 }
 func (m *LoadArtifactResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -224,7 +400,7 @@ func (m *OpenStreamRequest) Reset()         { *m = OpenStreamRequest{} }
 func (m *OpenStreamRequest) String() string { return proto.CompactTextString(m) }
 func (*OpenStreamRequest) ProtoMessage()    {}
 func (*OpenStreamRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a89d6010ce1ebcb2, []int{3}
+	return fileDescriptor_a89d6010ce1ebcb2, []int{5}
 }
 func (m *OpenStreamRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -273,7 +449,7 @@ func (m *OpenStreamResponse) Reset()         { *m = OpenStreamResponse{} }
 func (m *OpenStreamResponse) String() string { return proto.CompactTextString(m) }
 func (*OpenStreamResponse) ProtoMessage()    {}
 func (*OpenStreamResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a89d6010ce1ebcb2, []int{4}
+	return fileDescriptor_a89d6010ce1ebcb2, []int{6}
 }
 func (m *OpenStreamResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -335,7 +511,7 @@ func (m *SaveArtifactRequest) Reset()         { *m = SaveArtifactRequest{} }
 func (m *SaveArtifactRequest) String() string { return proto.CompactTextString(m) }
 func (*SaveArtifactRequest) ProtoMessage()    {}
 func (*SaveArtifactRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a89d6010ce1ebcb2, []int{5}
+	return fileDescriptor_a89d6010ce1ebcb2, []int{7}
 }
 func (m *SaveArtifactRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -390,7 +566,7 @@ func (m *SaveArtifactResponse) Reset()         { *m = SaveArtifactResponse{} }
 func (m *SaveArtifactResponse) String() string { return proto.CompactTextString(m) }
 func (*SaveArtifactResponse) ProtoMessage()    {}
 func (*SaveArtifactResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a89d6010ce1ebcb2, []int{6}
+	return fileDescriptor_a89d6010ce1ebcb2, []int{8}
 }
 func (m *SaveArtifactResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -444,7 +620,7 @@ func (m *DeleteArtifactRequest) Reset()         { *m = DeleteArtifactRequest{} }
 func (m *DeleteArtifactRequest) String() string { return proto.CompactTextString(m) }
 func (*DeleteArtifactRequest) ProtoMessage()    {}
 func (*DeleteArtifactRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a89d6010ce1ebcb2, []int{7}
+	return fileDescriptor_a89d6010ce1ebcb2, []int{9}
 }
 func (m *DeleteArtifactRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -492,7 +668,7 @@ func (m *DeleteArtifactResponse) Reset()         { *m = DeleteArtifactResponse{}
 func (m *DeleteArtifactResponse) String() string { return proto.CompactTextString(m) }
 func (*DeleteArtifactResponse) ProtoMessage()    {}
 func (*DeleteArtifactResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a89d6010ce1ebcb2, []int{8}
+	return fileDescriptor_a89d6010ce1ebcb2, []int{10}
 }
 func (m *DeleteArtifactResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -546,7 +722,7 @@ func (m *ListObjectsRequest) Reset()         { *m = ListObjectsRequest{} }
 func (m *ListObjectsRequest) String() string { return proto.CompactTextString(m) }
 func (*ListObjectsRequest) ProtoMessage()    {}
 func (*ListObjectsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a89d6010ce1ebcb2, []int{9}
+	return fileDescriptor_a89d6010ce1ebcb2, []int{11}
 }
 func (m *ListObjectsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -594,7 +770,7 @@ func (m *ListObjectsResponse) Reset()         { *m = ListObjectsResponse{} }
 func (m *ListObjectsResponse) String() string { return proto.CompactTextString(m) }
 func (*ListObjectsResponse) ProtoMessage()    {}
 func (*ListObjectsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a89d6010ce1ebcb2, []int{10}
+	return fileDescriptor_a89d6010ce1ebcb2, []int{12}
 }
 func (m *ListObjectsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -648,7 +824,7 @@ func (m *IsDirectoryRequest) Reset()         { *m = IsDirectoryRequest{} }
 func (m *IsDirectoryRequest) String() string { return proto.CompactTextString(m) }
 func (*IsDirectoryRequest) ProtoMessage()    {}
 func (*IsDirectoryRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a89d6010ce1ebcb2, []int{11}
+	return fileDescriptor_a89d6010ce1ebcb2, []int{13}
 }
 func (m *IsDirectoryRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -696,7 +872,7 @@ func (m *IsDirectoryResponse) Reset()         { *m = IsDirectoryResponse{} }
 func (m *IsDirectoryResponse) String() string { return proto.CompactTextString(m) }
 func (*IsDirectoryResponse) ProtoMessage()    {}
 func (*IsDirectoryResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a89d6010ce1ebcb2, []int{12}
+	return fileDescriptor_a89d6010ce1ebcb2, []int{14}
 }
 func (m *IsDirectoryResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -740,8 +916,9 @@ func (m *IsDirectoryResponse) GetError() string {
 }
 
 func init() {
+	proto.RegisterType((*PluginArtifact)(nil), "artifact.PluginArtifact")
+	proto.RegisterType((*ArtifactLocation)(nil), "artifact.ArtifactLocation")
 	proto.RegisterType((*Artifact)(nil), "artifact.Artifact")
-	proto.RegisterMapType((map[string]string)(nil), "artifact.Artifact.OptionsEntry")
 	proto.RegisterType((*LoadArtifactRequest)(nil), "artifact.LoadArtifactRequest")
 	proto.RegisterType((*LoadArtifactResponse)(nil), "artifact.LoadArtifactResponse")
 	proto.RegisterType((*OpenStreamRequest)(nil), "artifact.OpenStreamRequest")
@@ -761,52 +938,62 @@ func init() {
 }
 
 var fileDescriptor_a89d6010ce1ebcb2 = []byte{
-	// 705 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x95, 0xdd, 0x4e, 0xdb, 0x4a,
-	0x10, 0xc7, 0xe5, 0x24, 0x40, 0x98, 0x70, 0xe0, 0x9c, 0x0d, 0xa0, 0x28, 0x40, 0x4e, 0x30, 0xaa,
-	0x44, 0x91, 0x88, 0x5b, 0xb8, 0x29, 0x69, 0x6f, 0xda, 0x42, 0xbf, 0x84, 0x8a, 0x64, 0xd4, 0x9b,
-	0xde, 0xa0, 0xc5, 0x5e, 0xc2, 0x82, 0xe3, 0x75, 0x77, 0xd7, 0x41, 0xdc, 0xf6, 0x15, 0xfa, 0x1c,
-	0x7d, 0x82, 0xbe, 0x40, 0x2f, 0x2b, 0xf5, 0x05, 0x2a, 0xd4, 0x07, 0xa9, 0x76, 0x6d, 0xc7, 0x0e,
-	0x76, 0x5a, 0x9a, 0xbb, 0x99, 0xdd, 0xf1, 0xfc, 0x7f, 0x33, 0x9e, 0xb1, 0xe1, 0x5e, 0x70, 0xd9,
-	0xb3, 0x70, 0x40, 0x1d, 0x8f, 0x12, 0x5f, 0x5a, 0x98, 0x4b, 0x7a, 0x86, 0x9d, 0xd4, 0xe8, 0x04,
-	0x9c, 0x49, 0x86, 0xaa, 0x89, 0xdf, 0x5c, 0xed, 0x31, 0xd6, 0xf3, 0x88, 0x7a, 0xc6, 0xc2, 0xbe,
-	0xcf, 0x24, 0x96, 0x94, 0xf9, 0x22, 0x8a, 0x33, 0xbf, 0x18, 0x50, 0x7d, 0x1a, 0x87, 0x22, 0x04,
-	0x15, 0x1f, 0xf7, 0x49, 0xc3, 0x68, 0x1b, 0x9b, 0xb3, 0xb6, 0xb6, 0xd5, 0x59, 0x80, 0xe5, 0x79,
-	0xa3, 0x14, 0x9d, 0x29, 0x1b, 0xfd, 0x0b, 0xe5, 0x90, 0x7b, 0x8d, 0xb2, 0x3e, 0x52, 0x26, 0xda,
-	0x83, 0x19, 0x16, 0xe8, 0xbc, 0x8d, 0x4a, 0xbb, 0xbc, 0x59, 0xdb, 0xf9, 0xbf, 0x33, 0x04, 0x4a,
-	0xd2, 0x77, 0x8e, 0xa2, 0x88, 0x03, 0x5f, 0xf2, 0x6b, 0x3b, 0x89, 0x6f, 0x76, 0x61, 0x2e, 0x7b,
-	0xa1, 0x92, 0x5f, 0x92, 0xeb, 0x98, 0x41, 0x99, 0x68, 0x11, 0xa6, 0x06, 0xd8, 0x0b, 0x49, 0xcc,
-	0x10, 0x39, 0xdd, 0xd2, 0x23, 0xc3, 0x74, 0xa1, 0x7e, 0xc8, 0xb0, 0x9b, 0x28, 0xd8, 0xe4, 0x43,
-	0x48, 0x84, 0x44, 0x7b, 0x30, 0x4f, 0xfd, 0x20, 0x94, 0x27, 0x09, 0x83, 0xce, 0x56, 0xdb, 0x41,
-	0x79, 0x28, 0xfb, 0x1f, 0x1d, 0x99, 0x6d, 0xc1, 0xed, 0x72, 0xcd, 0x17, 0xb0, 0x38, 0xaa, 0x22,
-	0x02, 0xe6, 0x0b, 0x82, 0x1a, 0x30, 0x23, 0x42, 0xc7, 0x21, 0x42, 0xe8, 0xfc, 0x55, 0x3b, 0x71,
-	0x15, 0x31, 0xe1, 0x9c, 0xf1, 0x84, 0x58, 0x3b, 0xe6, 0x73, 0xf8, 0xef, 0x28, 0x20, 0xfe, 0xb1,
-	0xe4, 0x04, 0xf7, 0x13, 0xd6, 0x0e, 0x54, 0xef, 0x40, 0x39, 0x8c, 0x31, 0xdf, 0x01, 0xca, 0x26,
-	0x89, 0x51, 0x10, 0x54, 0x5c, 0x2c, 0xb1, 0xce, 0x30, 0x67, 0x6b, 0x1b, 0x2d, 0xc1, 0x34, 0x15,
-	0x27, 0xc4, 0x77, 0x35, 0x45, 0xd5, 0x9e, 0xa2, 0xe2, 0xc0, 0x77, 0x53, 0xb6, 0x72, 0x96, 0xed,
-	0x0c, 0xea, 0xc7, 0x78, 0x40, 0x6e, 0x77, 0x32, 0x69, 0x87, 0x91, 0x79, 0xfb, 0x8f, 0x61, 0x81,
-	0x85, 0x72, 0xa4, 0xbd, 0xa5, 0xb1, 0xe0, 0xf3, 0x51, 0x68, 0xe2, 0xab, 0x5e, 0x8e, 0xea, 0x4c,
-	0xd8, 0xcb, 0x97, 0xb0, 0xb4, 0x4f, 0x3c, 0x22, 0x73, 0xc4, 0x7f, 0xdb, 0xcf, 0x57, 0xb0, 0x7c,
-	0x3b, 0xd1, 0x84, 0x48, 0xfb, 0x80, 0x0e, 0xa9, 0x90, 0x47, 0xa7, 0x17, 0xc4, 0x91, 0x62, 0x52,
-	0x9e, 0x03, 0xa8, 0x8f, 0x64, 0x49, 0x61, 0x58, 0x74, 0xd4, 0x30, 0xda, 0xe5, 0xcd, 0x59, 0x3b,
-	0x71, 0xc7, 0xc3, 0xbc, 0x16, 0xfb, 0x94, 0x13, 0x47, 0x32, 0x7e, 0x3d, 0x29, 0xcc, 0x5b, 0xa8,
-	0x8f, 0x64, 0x89, 0x61, 0xd6, 0x61, 0x8e, 0x8a, 0x13, 0x37, 0x39, 0x8f, 0xdb, 0x53, 0xa3, 0x69,
-	0x68, 0x31, 0xd5, 0xce, 0xe7, 0x29, 0x58, 0x48, 0x64, 0x8e, 0x09, 0x1f, 0x50, 0x87, 0xa0, 0x73,
-	0xa8, 0xa8, 0xed, 0x42, 0x6b, 0x29, 0x49, 0xc1, 0x4e, 0x37, 0x5b, 0xe3, 0xae, 0x23, 0x26, 0x73,
-	0xfd, 0xe3, 0xf7, 0x9f, 0x9f, 0x4a, 0x2b, 0xe6, 0xb2, 0xfe, 0xd0, 0x0d, 0x1e, 0x0e, 0x3f, 0x88,
-	0xc2, 0xf2, 0x18, 0x76, 0xbb, 0xc6, 0x16, 0xf2, 0x01, 0xd2, 0xd5, 0x41, 0x2b, 0x69, 0xc2, 0xdc,
-	0x56, 0x36, 0x57, 0x8b, 0x2f, 0x63, 0xad, 0x0d, 0xad, 0xb5, 0x66, 0x36, 0xf2, 0x5a, 0x42, 0x47,
-	0x76, 0x8d, 0xad, 0x07, 0x86, 0xaa, 0x4c, 0xcd, 0x7a, 0xb6, 0xb2, 0x82, 0x1d, 0xcb, 0x56, 0x56,
-	0xb4, 0x1a, 0xbf, 0xab, 0x4c, 0xe0, 0x01, 0x51, 0x95, 0x05, 0x30, 0x1d, 0x0d, 0x31, 0xca, 0x7c,
-	0x77, 0x0b, 0xf7, 0xa3, 0xd9, 0x1e, 0x1f, 0xf0, 0xe7, 0xea, 0x5c, 0xfd, 0x84, 0x52, 0xec, 0x43,
-	0x2d, 0x33, 0xa6, 0x28, 0xd3, 0xaf, 0xfc, 0x0e, 0x34, 0xd7, 0xc6, 0xdc, 0xde, 0xe1, 0xd5, 0x51,
-	0x21, 0x95, 0x5c, 0x08, 0xb5, 0xcc, 0x20, 0x66, 0xe5, 0xf2, 0x53, 0x9e, 0x95, 0x2b, 0x98, 0x5e,
-	0xf3, 0xbe, 0x96, 0xdb, 0x30, 0x5b, 0x79, 0x39, 0x2a, 0xb6, 0x87, 0x53, 0xdd, 0x35, 0xb6, 0x9e,
-	0xbd, 0xf9, 0x7a, 0xd3, 0x32, 0xbe, 0xdd, 0xb4, 0x8c, 0x1f, 0x37, 0x2d, 0xe3, 0xfd, 0x93, 0x1e,
-	0x95, 0xe7, 0xe1, 0x69, 0xc7, 0x61, 0x7d, 0x0b, 0xf3, 0x1e, 0x0b, 0x38, 0xbb, 0xd0, 0xc6, 0xf6,
-	0x15, 0xe3, 0x97, 0x67, 0x1e, 0xbb, 0x12, 0xd6, 0x60, 0xd7, 0x2a, 0xfe, 0x41, 0x9f, 0x4e, 0xeb,
-	0x1f, 0xee, 0xee, 0xaf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x1e, 0x2a, 0xea, 0xe2, 0xc1, 0x07, 0x00,
-	0x00,
+	// 873 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x56, 0x41, 0x73, 0xdb, 0x44,
+	0x14, 0x1e, 0x25, 0xb6, 0xa3, 0x3e, 0xa7, 0x49, 0xba, 0x69, 0x3b, 0x42, 0x6d, 0x4c, 0xa2, 0xc2,
+	0x50, 0x32, 0xd3, 0xb8, 0x84, 0x53, 0x03, 0x17, 0x20, 0x21, 0x30, 0x13, 0x68, 0x47, 0x86, 0x0b,
+	0x17, 0xcd, 0x5a, 0x5a, 0xcb, 0xdb, 0xc8, 0xbb, 0x62, 0x77, 0xe5, 0xd2, 0x2b, 0x7f, 0x81, 0x1b,
+	0xff, 0x81, 0xff, 0xc0, 0x91, 0x23, 0x33, 0xfc, 0x01, 0x26, 0xc3, 0x0f, 0x61, 0x76, 0x25, 0x59,
+	0xb2, 0x2d, 0x97, 0xe2, 0xdb, 0x7b, 0x6f, 0xdf, 0xbe, 0xef, 0xfb, 0x9e, 0xde, 0x93, 0x04, 0xef,
+	0xa7, 0xd7, 0x71, 0x1f, 0xa7, 0x34, 0x4c, 0x28, 0x61, 0xaa, 0x8f, 0x85, 0xa2, 0x23, 0x1c, 0x56,
+	0xc6, 0x49, 0x2a, 0xb8, 0xe2, 0xc8, 0x2e, 0x7d, 0xf7, 0x61, 0xcc, 0x79, 0x9c, 0x10, 0x7d, 0xa7,
+	0x8f, 0x19, 0xe3, 0x0a, 0x2b, 0xca, 0x99, 0xcc, 0xf3, 0xbc, 0x5f, 0x2d, 0xd8, 0x79, 0x91, 0x64,
+	0x31, 0x65, 0x9f, 0x15, 0x17, 0x10, 0x82, 0x16, 0xc3, 0x13, 0xe2, 0x58, 0x87, 0xd6, 0xe3, 0x5b,
+	0xbe, 0xb1, 0xd1, 0x7b, 0x70, 0x3b, 0xe4, 0x6c, 0x44, 0xe3, 0x4c, 0x98, 0xeb, 0xce, 0x86, 0x39,
+	0x9c, 0x0f, 0xa2, 0x4f, 0xc1, 0x0d, 0x39, 0x63, 0x24, 0xd4, 0x5e, 0xa0, 0xe8, 0x84, 0xf0, 0x4c,
+	0x05, 0x92, 0x84, 0x9c, 0x45, 0xd2, 0xd9, 0x3c, 0xb4, 0x1e, 0xb7, 0x7d, 0xa7, 0xca, 0xf8, 0x2e,
+	0x4f, 0x18, 0xe4, 0xe7, 0x68, 0x0f, 0x36, 0xaf, 0xc9, 0x6b, 0xa7, 0x65, 0x2a, 0x6b, 0xd3, 0x8b,
+	0x61, 0xaf, 0x64, 0x75, 0xc5, 0xc3, 0x1c, 0xe3, 0x08, 0xb6, 0xb1, 0x08, 0xc7, 0x74, 0x4a, 0x82,
+	0x84, 0xc7, 0xd2, 0xb0, 0xb4, 0xfd, 0x6e, 0x11, 0xbb, 0xe2, 0xb1, 0x44, 0x4f, 0xa1, 0x93, 0x1a,
+	0x49, 0x86, 0x65, 0xf7, 0xd4, 0x39, 0x99, 0x35, 0x67, 0x5e, 0xaa, 0x5f, 0xe4, 0x79, 0xbf, 0x6f,
+	0x80, 0xfd, 0x46, 0xfd, 0x08, 0x5a, 0x29, 0x56, 0xe3, 0x42, 0xb6, 0xb1, 0x75, 0x6c, 0xc2, 0x23,
+	0x52, 0xe8, 0x32, 0xb6, 0x8e, 0x8d, 0x04, 0x9f, 0x14, 0x22, 0x8c, 0x8d, 0x2e, 0xe1, 0x4e, 0x89,
+	0x1f, 0x24, 0x85, 0x0c, 0xa7, 0x6d, 0x98, 0xb9, 0x15, 0xb3, 0x45, 0xa1, 0xfe, 0x1e, 0x5e, 0x94,
+	0xee, 0x82, 0xcd, 0x53, 0x6d, 0xe1, 0xc4, 0xe9, 0x18, 0xd9, 0x33, 0x1f, 0xbd, 0x03, 0xb6, 0xcc,
+	0x86, 0x81, 0x21, 0xb9, 0x65, 0xc0, 0xb7, 0x64, 0x36, 0x7c, 0xa1, 0x79, 0x1e, 0xc1, 0xb6, 0x20,
+	0x61, 0x26, 0x24, 0x09, 0x0c, 0x5f, 0x3b, 0xef, 0x58, 0x11, 0xfb, 0x46, 0xd3, 0xfe, 0x00, 0x76,
+	0x35, 0xd5, 0x80, 0xfc, 0x94, 0x0a, 0x22, 0xa5, 0x26, 0x78, 0xcb, 0x14, 0xd9, 0xd1, 0xe1, 0x8b,
+	0x59, 0x14, 0x39, 0xb0, 0x15, 0x91, 0x84, 0x28, 0x12, 0x39, 0x60, 0xca, 0x94, 0xae, 0x17, 0xc1,
+	0xfe, 0x15, 0xc7, 0xd1, 0xac, 0xb5, 0xe4, 0xc7, 0x8c, 0x48, 0x85, 0x9e, 0xc1, 0x0e, 0x65, 0x69,
+	0xa6, 0x82, 0x52, 0x8d, 0x69, 0x6b, 0xf7, 0x14, 0x2d, 0x2b, 0xf7, 0x6f, 0x9b, 0xcc, 0xfa, 0x73,
+	0x58, 0xec, 0xb9, 0xf7, 0x25, 0xdc, 0x9d, 0x47, 0x91, 0x29, 0x67, 0x92, 0x68, 0x5e, 0x32, 0x0b,
+	0x43, 0x22, 0xcb, 0x81, 0x28, 0x5d, 0x74, 0x17, 0xda, 0x44, 0x08, 0x2e, 0x8a, 0x32, 0xb9, 0xe3,
+	0x7d, 0x01, 0x77, 0x9e, 0xa7, 0x84, 0x0d, 0x94, 0x20, 0x78, 0x52, 0x72, 0x3d, 0x01, 0xfb, 0x2d,
+	0x58, 0xce, 0x72, 0xbc, 0xef, 0x01, 0xd5, 0x8b, 0x14, 0x54, 0x10, 0xb4, 0x22, 0xac, 0xb0, 0xa9,
+	0xb0, 0xed, 0x1b, 0x1b, 0xdd, 0x83, 0x0e, 0x95, 0x01, 0x61, 0x91, 0x61, 0x61, 0xfb, 0x6d, 0x2a,
+	0x2f, 0x58, 0x54, 0x71, 0xdb, 0xac, 0x73, 0x1b, 0xc1, 0xfe, 0x00, 0x4f, 0xc9, 0x62, 0x27, 0xcb,
+	0x76, 0x58, 0xb5, 0x11, 0xfc, 0x04, 0x76, 0x79, 0xa6, 0xe6, 0xda, 0xbb, 0xb1, 0x92, 0xf8, 0x4e,
+	0x9e, 0x5a, 0xfa, 0xba, 0x97, 0xf3, 0x38, 0x6b, 0xf6, 0xf2, 0x12, 0xee, 0x9d, 0x9b, 0x21, 0x58,
+	0x64, 0xfc, 0x7f, 0xfb, 0xf9, 0x15, 0xdc, 0x5f, 0x2c, 0xb4, 0x26, 0xa5, 0x73, 0x40, 0x57, 0x54,
+	0xaa, 0xe7, 0xc3, 0x97, 0x24, 0x54, 0x72, 0x5d, 0x3e, 0x17, 0xb0, 0x3f, 0x57, 0xa5, 0x22, 0xc3,
+	0xf3, 0x90, 0x63, 0x1d, 0x6e, 0xea, 0x4d, 0x2b, 0xdc, 0xd5, 0x64, 0xbe, 0x96, 0xe7, 0x54, 0x90,
+	0x50, 0x71, 0xf1, 0x7a, 0x5d, 0x32, 0xdf, 0xc2, 0xfe, 0x5c, 0x95, 0x82, 0xcc, 0x11, 0x6c, 0x53,
+	0x19, 0x44, 0x65, 0xbc, 0x7c, 0x1d, 0xd2, 0x2a, 0xb5, 0x99, 0xd5, 0xe9, 0x6f, 0x6d, 0xd8, 0x2d,
+	0x61, 0x06, 0x44, 0x4c, 0x69, 0x48, 0xd0, 0x18, 0x5a, 0x7a, 0xbb, 0xd0, 0x41, 0xc5, 0xa4, 0x61,
+	0xa7, 0xdd, 0xde, 0xaa, 0xe3, 0x9c, 0x93, 0x77, 0xf4, 0xf3, 0x5f, 0xff, 0xfc, 0xb2, 0xf1, 0xc0,
+	0xbb, 0x6f, 0xbe, 0x39, 0xd3, 0x8f, 0x66, 0xdf, 0x26, 0xd9, 0x4f, 0x38, 0x8e, 0xce, 0xac, 0x63,
+	0xc4, 0x00, 0xaa, 0xd5, 0x41, 0x0f, 0xaa, 0x82, 0x4b, 0x5b, 0xe9, 0x3e, 0x6c, 0x3e, 0x2c, 0xb0,
+	0x1e, 0x19, 0xac, 0x03, 0xcf, 0x59, 0xc6, 0x92, 0x26, 0xf3, 0xcc, 0x3a, 0x7e, 0x6a, 0x69, 0x65,
+	0x7a, 0xd6, 0xeb, 0xca, 0x1a, 0x76, 0xac, 0xae, 0xac, 0x69, 0x35, 0xde, 0xa4, 0x4c, 0xe2, 0x29,
+	0xd1, 0xca, 0x52, 0xe8, 0xe4, 0x43, 0x8c, 0xde, 0xad, 0x8a, 0x35, 0xee, 0x87, 0x7b, 0xb8, 0x3a,
+	0xe1, 0xbf, 0xd5, 0xe5, 0xef, 0x5d, 0x8d, 0x38, 0x81, 0x6e, 0x6d, 0x4c, 0x51, 0xad, 0x5f, 0xcb,
+	0x3b, 0xe0, 0x1e, 0xac, 0x38, 0x7d, 0x8b, 0x47, 0x47, 0xa5, 0xd2, 0x70, 0x19, 0x74, 0x6b, 0x83,
+	0x58, 0x87, 0x5b, 0x9e, 0xf2, 0x3a, 0x5c, 0xc3, 0xf4, 0x7a, 0x1f, 0x1a, 0xb8, 0x47, 0x5e, 0x6f,
+	0x19, 0x8e, 0xca, 0x27, 0xb3, 0xa9, 0x3e, 0xb3, 0x8e, 0x3f, 0xbf, 0xfc, 0xe3, 0xa6, 0x67, 0xfd,
+	0x79, 0xd3, 0xb3, 0xfe, 0xbe, 0xe9, 0x59, 0x3f, 0x3c, 0x8b, 0xa9, 0x1a, 0x67, 0xc3, 0x93, 0x90,
+	0x4f, 0xfa, 0x58, 0xc4, 0x3c, 0x15, 0xfc, 0xa5, 0x31, 0x9e, 0xbc, 0xe2, 0xe2, 0x7a, 0x94, 0xf0,
+	0x57, 0xb2, 0xdf, 0xfc, 0xa3, 0x34, 0xec, 0x98, 0x1f, 0x9f, 0x8f, 0xff, 0x0d, 0x00, 0x00, 0xff,
+	0xff, 0x09, 0xb8, 0x0c, 0xe5, 0x49, 0x09, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1097,6 +1284,108 @@ var _ArtifactService_serviceDesc = grpc.ServiceDesc{
 	Metadata: "pkg/apiclient/artifact/artifact.proto",
 }
 
+func (m *PluginArtifact) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *PluginArtifact) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *PluginArtifact) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if len(m.Key) > 0 {
+		i -= len(m.Key)
+		copy(dAtA[i:], m.Key)
+		i = encodeVarintArtifact(dAtA, i, uint64(len(m.Key)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.ConnectionTimeoutSeconds != 0 {
+		i = encodeVarintArtifact(dAtA, i, uint64(m.ConnectionTimeoutSeconds))
+		i--
+		dAtA[i] = 0x18
+	}
+	if len(m.Configuration) > 0 {
+		i -= len(m.Configuration)
+		copy(dAtA[i:], m.Configuration)
+		i = encodeVarintArtifact(dAtA, i, uint64(len(m.Configuration)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = encodeVarintArtifact(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ArtifactLocation) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ArtifactLocation) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ArtifactLocation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if m.Plugin != nil {
+		{
+			size, err := m.Plugin.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintArtifact(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.ArchiveLogs {
+		i--
+		if m.ArchiveLogs {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *Artifact) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1121,31 +1410,73 @@ func (m *Artifact) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i -= len(m.XXX_unrecognized)
 		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if len(m.Options) > 0 {
-		for k := range m.Options {
-			v := m.Options[k]
-			baseI := i
-			i -= len(v)
-			copy(dAtA[i:], v)
-			i = encodeVarintArtifact(dAtA, i, uint64(len(v)))
-			i--
-			dAtA[i] = 0x12
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = encodeVarintArtifact(dAtA, i, uint64(len(k)))
-			i--
-			dAtA[i] = 0xa
-			i = encodeVarintArtifact(dAtA, i, uint64(baseI-i))
-			i--
-			dAtA[i] = 0x22
-		}
-	}
-	if len(m.Url) > 0 {
-		i -= len(m.Url)
-		copy(dAtA[i:], m.Url)
-		i = encodeVarintArtifact(dAtA, i, uint64(len(m.Url)))
+	if m.Deleted {
 		i--
-		dAtA[i] = 0x1a
+		if m.Deleted {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x50
+	}
+	if len(m.FromExpression) > 0 {
+		i -= len(m.FromExpression)
+		copy(dAtA[i:], m.FromExpression)
+		i = encodeVarintArtifact(dAtA, i, uint64(len(m.FromExpression)))
+		i--
+		dAtA[i] = 0x4a
+	}
+	if m.RecurseMode {
+		i--
+		if m.RecurseMode {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x40
+	}
+	if len(m.SubPath) > 0 {
+		i -= len(m.SubPath)
+		copy(dAtA[i:], m.SubPath)
+		i = encodeVarintArtifact(dAtA, i, uint64(len(m.SubPath)))
+		i--
+		dAtA[i] = 0x3a
+	}
+	if m.Optional {
+		i--
+		if m.Optional {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.ArtifactLocation != nil {
+		{
+			size, err := m.ArtifactLocation.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintArtifact(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.From) > 0 {
+		i -= len(m.From)
+		copy(dAtA[i:], m.From)
+		i = encodeVarintArtifact(dAtA, i, uint64(len(m.From)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.Mode != 0 {
+		i = encodeVarintArtifact(dAtA, i, uint64(m.Mode))
+		i--
+		dAtA[i] = 0x18
 	}
 	if len(m.Path) > 0 {
 		i -= len(m.Path)
@@ -1693,6 +2024,52 @@ func encodeVarintArtifact(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *PluginArtifact) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + sovArtifact(uint64(l))
+	}
+	l = len(m.Configuration)
+	if l > 0 {
+		n += 1 + l + sovArtifact(uint64(l))
+	}
+	if m.ConnectionTimeoutSeconds != 0 {
+		n += 1 + sovArtifact(uint64(m.ConnectionTimeoutSeconds))
+	}
+	l = len(m.Key)
+	if l > 0 {
+		n += 1 + l + sovArtifact(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *ArtifactLocation) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.ArchiveLogs {
+		n += 2
+	}
+	if m.Plugin != nil {
+		l = m.Plugin.Size()
+		n += 1 + l + sovArtifact(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
 func (m *Artifact) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1707,17 +2084,33 @@ func (m *Artifact) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovArtifact(uint64(l))
 	}
-	l = len(m.Url)
+	if m.Mode != 0 {
+		n += 1 + sovArtifact(uint64(m.Mode))
+	}
+	l = len(m.From)
 	if l > 0 {
 		n += 1 + l + sovArtifact(uint64(l))
 	}
-	if len(m.Options) > 0 {
-		for k, v := range m.Options {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovArtifact(uint64(len(k))) + 1 + len(v) + sovArtifact(uint64(len(v)))
-			n += mapEntrySize + 1 + sovArtifact(uint64(mapEntrySize))
-		}
+	if m.ArtifactLocation != nil {
+		l = m.ArtifactLocation.Size()
+		n += 1 + l + sovArtifact(uint64(l))
+	}
+	if m.Optional {
+		n += 2
+	}
+	l = len(m.SubPath)
+	if l > 0 {
+		n += 1 + l + sovArtifact(uint64(l))
+	}
+	if m.RecurseMode {
+		n += 2
+	}
+	l = len(m.FromExpression)
+	if l > 0 {
+		n += 1 + l + sovArtifact(uint64(l))
+	}
+	if m.Deleted {
+		n += 2
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -1956,6 +2349,279 @@ func sovArtifact(x uint64) (n int) {
 func sozArtifact(x uint64) (n int) {
 	return sovArtifact(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+func (m *PluginArtifact) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowArtifact
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: PluginArtifact: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: PluginArtifact: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowArtifact
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthArtifact
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthArtifact
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Configuration", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowArtifact
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthArtifact
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthArtifact
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Configuration = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ConnectionTimeoutSeconds", wireType)
+			}
+			m.ConnectionTimeoutSeconds = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowArtifact
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ConnectionTimeoutSeconds |= int32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Key", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowArtifact
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthArtifact
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthArtifact
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Key = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipArtifact(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthArtifact
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ArtifactLocation) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowArtifact
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ArtifactLocation: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ArtifactLocation: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ArchiveLogs", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowArtifact
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.ArchiveLogs = bool(v != 0)
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Plugin", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowArtifact
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthArtifact
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthArtifact
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Plugin == nil {
+				m.Plugin = &PluginArtifact{}
+			}
+			if err := m.Plugin.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipArtifact(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthArtifact
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *Artifact) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2050,8 +2716,27 @@ func (m *Artifact) Unmarshal(dAtA []byte) error {
 			m.Path = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Mode", wireType)
+			}
+			m.Mode = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowArtifact
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Mode |= int32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Url", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field From", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2079,11 +2764,11 @@ func (m *Artifact) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Url = string(dAtA[iNdEx:postIndex])
+			m.From = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Options", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ArtifactLocation", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2110,104 +2795,137 @@ func (m *Artifact) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Options == nil {
-				m.Options = make(map[string]string)
+			if m.ArtifactLocation == nil {
+				m.ArtifactLocation = &ArtifactLocation{}
 			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowArtifact
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowArtifact
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthArtifact
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthArtifact
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowArtifact
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthArtifact
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthArtifact
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipArtifact(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if (skippy < 0) || (iNdEx+skippy) < 0 {
-						return ErrInvalidLengthArtifact
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
+			if err := m.ArtifactLocation.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
 			}
-			m.Options[mapkey] = mapvalue
 			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Optional", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowArtifact
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Optional = bool(v != 0)
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SubPath", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowArtifact
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthArtifact
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthArtifact
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SubPath = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RecurseMode", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowArtifact
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.RecurseMode = bool(v != 0)
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FromExpression", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowArtifact
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthArtifact
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthArtifact
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FromExpression = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 10:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Deleted", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowArtifact
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Deleted = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skipArtifact(dAtA[iNdEx:])

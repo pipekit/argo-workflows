@@ -196,14 +196,32 @@ func convertToGRPC(a *wfv1.Artifact) *artifact.Artifact {
 	grpcArtifact := &artifact.Artifact{
 		Name: a.Name,
 		Path: a.Path,
+		From: a.From,
+		Optional: a.Optional,
+		SubPath: a.SubPath,
+		RecurseMode: a.RecurseMode,
+		FromExpression: a.FromExpression,
+		Deleted: a.Deleted,
 	}
 
-	// Convert plugin-specific configuration to options
+	// Handle pointer types
+	if a.Mode != nil {
+		grpcArtifact.Mode = *a.Mode
+	}
+
+	// Convert plugin-specific configuration to ArtifactLocation
 	if a.Plugin != nil {
-		grpcArtifact.Options = map[string]string{
-			"plugin_name":   string(a.Plugin.Name),
-			"plugin_config": a.Plugin.Configuration,
-			"plugin_key":    a.Plugin.Key,
+		grpcArtifact.ArtifactLocation = &artifact.ArtifactLocation{
+			Plugin: &artifact.PluginArtifact{
+				Name: string(a.Plugin.Name),
+				Configuration: a.Plugin.Configuration,
+				ConnectionTimeoutSeconds: a.Plugin.ConnectionTimeoutSeconds,
+				Key: a.Plugin.Key,
+			},
+		}
+		// Handle ArchiveLogs pointer
+		if a.ArchiveLogs != nil {
+			grpcArtifact.ArtifactLocation.ArchiveLogs = *a.ArchiveLogs
 		}
 	}
 

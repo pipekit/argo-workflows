@@ -4960,16 +4960,25 @@ func schema_pkg_apis_workflow_v1alpha1_PluginArtifact(ref common.ReferenceCallba
 				Properties: map[string]spec.Schema{
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Name is the name of the artifact driver plugin",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"configuration": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Configuration is the plugin defined configuration for the artifact driver plugin",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"connectionTimeoutSeconds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ConnectionTimeoutSeconds is the timeout for the artifact driver connection, 5 seconds if not set",
+							Type:        []string{"integer"},
+							Format:      "int32",
 						},
 					},
 					"key": {
