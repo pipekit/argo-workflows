@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	"github.com/argoproj/argo-workflows/v3/util/logging"
 )
 
 func TestConvertToGRPC(t *testing.T) {
@@ -15,7 +16,7 @@ func TestConvertToGRPC(t *testing.T) {
 		artifact           *wfv1.Artifact
 		expectPlugin       bool
 		expectedPluginName string
-		expectedConfig     string
+ 		expectedConfig     string
 		expectedKey        string
 	}{
 		{
@@ -82,7 +83,7 @@ func TestConvertToGRPC(t *testing.T) {
 func TestNewDriver(t *testing.T) {
 	// This test would require a mock gRPC server to be running
 	// For now, we'll just test that the function returns an error for invalid socket paths
-	_, err := NewDriver("test-plugin", "/nonexistent/socket", 1)
+	_, err := NewDriver(logging.TestContext(t.Context()), "test-plugin", "/nonexistent/socket", 1)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to connect to plugin test-plugin")
 }

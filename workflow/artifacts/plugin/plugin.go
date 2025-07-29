@@ -24,7 +24,7 @@ type Driver struct {
 }
 
 // NewDriver creates a new plugin artifact driver
-func NewDriver(pluginName wfv1.ArtifactPluginName, socketPath string, connectionTimeoutSeconds int32) (*Driver, error) {
+func NewDriver(ctx context.Context, pluginName wfv1.ArtifactPluginName, socketPath string, connectionTimeoutSeconds int32) (*Driver, error) {
 	// Connect to the plugin via Unix socket
 	conn, err := grpc.NewClient(
 		"unix://"+socketPath,
@@ -44,7 +44,7 @@ func NewDriver(pluginName wfv1.ArtifactPluginName, socketPath string, connection
 	if connectionTimeoutSeconds == 0 {
 		connectionTimeoutSeconds = defaultConnectionTimeoutSeconds
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(connectionTimeoutSeconds)*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(connectionTimeoutSeconds)*time.Second)
 	defer cancel()
 
 	// Wait for the connection to be ready
@@ -69,9 +69,9 @@ func (d *Driver) Close() error {
 }
 
 // Load implements ArtifactDriver.Load by calling the plugin service
-func (d *Driver) Load(inputArtifact *wfv1.Artifact, path string) error {
+func (d *Driver) Load(ctx context.Context, inputArtifact *wfv1.Artifact, path string) error {
 	grpcArtifact := convertToGRPC(inputArtifact)
-	resp, err := d.client.Load(context.Background(), &artifact.LoadArtifactRequest{
+	resp, err := d.client.Load(ctx, &artifact.LoadArtifactRequest{
 		InputArtifact: grpcArtifact,
 		Path:          path,
 	})
@@ -85,9 +85,9 @@ func (d *Driver) Load(inputArtifact *wfv1.Artifact, path string) error {
 }
 
 // OpenStream implements ArtifactDriver.OpenStream by calling the plugin service
-func (d *Driver) OpenStream(a *wfv1.Artifact) (io.ReadCloser, error) {
+func (d *Driver) OpenStream(ctx context.Context, a *wfv1.Artifact) (io.ReadCloser, error) {
 	grpcArtifact := convertToGRPC(a)
-	stream, err := d.client.OpenStream(context.Background(), &artifact.OpenStreamRequest{
+	stream, err := d.client.OpenStream(ctx, &artifact.OpenStreamRequest{
 		Artifact: grpcArtifact,
 	})
 	if err != nil {
@@ -127,9 +127,9 @@ func (d *Driver) OpenStream(a *wfv1.Artifact) (io.ReadCloser, error) {
 }
 
 // Save implements ArtifactDriver.Save by calling the plugin service
-func (d *Driver) Save(path string, outputArtifact *wfv1.Artifact) error {
+func (d *Driver) Save(ctx context.Context, path string, outputArtifact *wfv1.Artifact) error {
 	grpcArtifact := convertToGRPC(outputArtifact)
-	resp, err := d.client.Save(context.Background(), &artifact.SaveArtifactRequest{
+	resp, err := d.client.Save(ctx, &artifact.SaveArtifactRequest{
 		Path:           path,
 		OutputArtifact: grpcArtifact,
 	})
@@ -143,9 +143,9 @@ func (d *Driver) Save(path string, outputArtifact *wfv1.Artifact) error {
 }
 
 // Delete implements ArtifactDriver.Delete by calling the plugin service
-func (d *Driver) Delete(artifactRef *wfv1.Artifact) error {
+func (d *Driver) Delete(ctx context.Context, artifactRef *wfv1.Artifact) error {
 	grpcArtifact := convertToGRPC(artifactRef)
-	resp, err := d.client.Delete(context.Background(), &artifact.DeleteArtifactRequest{
+	resp, err := d.client.Delete(ctx, &artifact.DeleteArtifactRequest{
 		Artifact: grpcArtifact,
 	})
 	if err != nil {
@@ -158,9 +158,9 @@ func (d *Driver) Delete(artifactRef *wfv1.Artifact) error {
 }
 
 // ListObjects implements ArtifactDriver.ListObjects by calling the plugin service
-func (d *Driver) ListObjects(artifactRef *wfv1.Artifact) ([]string, error) {
+func (d *Driver) ListObjects(ctx context.Context, artifactRef *wfv1.Artifact) ([]string, error) {
 	grpcArtifact := convertToGRPC(artifactRef)
-	resp, err := d.client.ListObjects(context.Background(), &artifact.ListObjectsRequest{
+	resp, err := d.client.ListObjects(ctx, &artifact.ListObjectsRequest{
 		Artifact: grpcArtifact,
 	})
 	if err != nil {
@@ -173,9 +173,9 @@ func (d *Driver) ListObjects(artifactRef *wfv1.Artifact) ([]string, error) {
 }
 
 // IsDirectory implements ArtifactDriver.IsDirectory by calling the plugin service
-func (d *Driver) IsDirectory(artifactRef *wfv1.Artifact) (bool, error) {
+func (d *Driver) IsDirectory(ctx context.Context, artifactRef *wfv1.Artifact) (bool, error) {
 	grpcArtifact := convertToGRPC(artifactRef)
-	resp, err := d.client.IsDirectory(context.Background(), &artifact.IsDirectoryRequest{
+	resp, err := d.client.IsDirectory(ctx, &artifact.IsDirectoryRequest{
 		Artifact: grpcArtifact,
 	})
 	if err != nil {
@@ -194,29 +194,30 @@ func convertToGRPC(a *wfv1.Artifact) *artifact.Artifact {
 	}
 
 	grpcArtifact := &artifact.Artifact{
-		Name: a.Name,
-		Path: a.Path,
-		From: a.From,
-		Optional: a.Optional,
-		SubPath: a.SubPath,
-		RecurseMode: a.RecurseMode,
+		Name:           a.Name,
+		Path:           a.Path,
+		From:           a.From,
+		Optional:       a.Optional,
+		SubPath:        a.SubPath,
+		RecurseMode:    a.RecurseMode,
 		FromExpression: a.FromExpression,
-		Deleted: a.Deleted,
+		Deleted:        a.Deleted,
 	}
 
 	// Handle pointer types
 	if a.Mode != nil {
 		grpcArtifact.Mode = *a.Mode
+
 	}
 
 	// Convert plugin-specific configuration to ArtifactLocation
 	if a.Plugin != nil {
 		grpcArtifact.ArtifactLocation = &artifact.ArtifactLocation{
 			Plugin: &artifact.PluginArtifact{
-				Name: string(a.Plugin.Name),
-				Configuration: a.Plugin.Configuration,
+				Name:                     string(a.Plugin.Name),
+				Configuration:            a.Plugin.Configuration,
 				ConnectionTimeoutSeconds: a.Plugin.ConnectionTimeoutSeconds,
-				Key: a.Plugin.Key,
+				Key:                      a.Plugin.Key,
 			},
 		}
 		// Handle ArchiveLogs pointer
