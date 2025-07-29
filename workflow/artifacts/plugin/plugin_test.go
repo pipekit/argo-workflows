@@ -11,14 +11,17 @@ import (
 
 func TestConvertToGRPC(t *testing.T) {
 	tests := []struct {
-		name     string
-		artifact *wfv1.Artifact
-		expected map[string]string
+		name               string
+		artifact           *wfv1.Artifact
+		expectPlugin       bool
+		expectedPluginName string
+		expectedConfig     string
+		expectedKey        string
 	}{
 		{
-			name:     "nil artifact",
-			artifact: nil,
-			expected: nil,
+			name:         "nil artifact",
+			artifact:     nil,
+			expectPlugin: false,
 		},
 		{
 			name: "basic artifact",
@@ -26,7 +29,7 @@ func TestConvertToGRPC(t *testing.T) {
 				Name: "test-artifact",
 				Path: "/tmp/test",
 			},
-			expected: nil,
+			expectPlugin: false,
 		},
 		{
 			name: "plugin artifact",
@@ -41,11 +44,10 @@ func TestConvertToGRPC(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]string{
-				"plugin_name":   "test-plugin",
-				"plugin_config": "config: value",
-				"plugin_key":    "test-key",
-			},
+			expectPlugin:       true,
+			expectedPluginName: "test-plugin",
+			expectedConfig:     "config: value",
+			expectedKey:        "test-key",
 		},
 	}
 
@@ -62,10 +64,16 @@ func TestConvertToGRPC(t *testing.T) {
 			assert.Equal(t, tt.artifact.Name, result.Name)
 			assert.Equal(t, tt.artifact.Path, result.Path)
 
-			if tt.expected != nil {
-				assert.Equal(t, tt.expected, result.Options)
+			if tt.expectPlugin {
+				require.NotNil(t, result.ArtifactLocation)
+				require.NotNil(t, result.ArtifactLocation.Plugin)
+				assert.Equal(t, tt.expectedPluginName, result.ArtifactLocation.Plugin.Name)
+				assert.Equal(t, tt.expectedConfig, result.ArtifactLocation.Plugin.Configuration)
+				assert.Equal(t, tt.expectedKey, result.ArtifactLocation.Plugin.Key)
 			} else {
-				assert.Nil(t, result.Options)
+				if result.ArtifactLocation != nil {
+					assert.Nil(t, result.ArtifactLocation.Plugin)
+				}
 			}
 		})
 	}
