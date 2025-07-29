@@ -10490,7 +10490,6 @@
       ],
       "properties": {
         "configuration": {
-<<<<<<< HEAD
           "description": "Configuration is the plugin defined configuration for the artifact driver plugin",
           "type": "string"
         },
@@ -10498,19 +10497,12 @@
           "description": "ConnectionTimeoutSeconds is the timeout for the artifact driver connection, 5 seconds if not set",
           "type": "integer"
         },
-=======
-          "type": "string"
-        },
->>>>>>> c134dcd5a (feat: initial commit for artifact plugins)
         "key": {
           "description": "Key is the path in the artifact repository where the artifact resides",
           "type": "string"
         },
         "name": {
-<<<<<<< HEAD
           "description": "Name is the name of the artifact driver plugin",
-=======
->>>>>>> c134dcd5a (feat: initial commit for artifact plugins)
           "type": "string"
         }
       }

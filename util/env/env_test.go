@@ -1,6 +1,7 @@
 package env
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -48,4 +49,17 @@ func TestLookupEnvStringOr(t *testing.T) {
 	assert.Equal(t, "b", LookupEnvStringOr("FOO", "a"), "env var value")
 	t.Setenv("FOO", "")
 	assert.Equal(t, "a", LookupEnvStringOr("FOO", "a"), "empty var value; default value")
+}
+
+func TestGetHostname(t *testing.T) {
+	// Test when HOSTNAME is set
+	originalHostname := os.Getenv("HOSTNAME")
+	defer os.Setenv("HOSTNAME", originalHostname)
+
+	os.Setenv("HOSTNAME", "test-hostname")
+	assert.Equal(t, "test-hostname", GetHostname())
+
+	// Test when HOSTNAME is not set
+	os.Unsetenv("HOSTNAME")
+	assert.Equal(t, "", GetHostname())
 }
