@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -230,12 +229,12 @@ func TestValidateArtifactDriverImages(t *testing.T) {
 
 			// Check results
 			if tt.expectedError {
-				assert.Error(t, err)
+				require.Error(t, err)
 				if tt.expectedErrMsg != "" {
-					assert.Contains(t, err.Error(), tt.expectedErrMsg)
+					require.Contains(t, err.Error(), tt.expectedErrMsg)
 				}
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 		})
 	}

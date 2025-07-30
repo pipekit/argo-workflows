@@ -547,7 +547,7 @@ func (as *argoServer) validateArtifactDriverImages(ctx context.Context, cfg *con
 	}
 
 	for _, container := range pod.Spec.Containers {
-		slices.DeleteFunc(images, func(image string) bool {
+		images = slices.DeleteFunc(images, func(image string) bool {
 			return image == container.Image
 		})
 	}
