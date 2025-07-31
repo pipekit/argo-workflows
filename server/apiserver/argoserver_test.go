@@ -2,7 +2,6 @@ package apiserver
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -220,9 +219,7 @@ func TestValidateArtifactDriverImages(t *testing.T) {
 			}
 
 			// Set HOSTNAME environment variable
-			originalHostname := os.Getenv("HOSTNAME")
-			defer os.Setenv("HOSTNAME", originalHostname)
-			os.Setenv("HOSTNAME", "test-pod")
+			t.Setenv("HOSTNAME", "test-pod")
 
 			// Run the validation
 			err := as.validateArtifactDriverImages(context.Background(), tt.config)
