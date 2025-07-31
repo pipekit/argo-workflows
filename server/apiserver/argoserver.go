@@ -215,7 +215,7 @@ func (as *argoServer) Run(ctx context.Context, port int, browserOpenFunc func(st
 		log.WithFatal().Error(ctx, err.Error())
 	}
 
-	// Validate artifact driver images against server deployment
+	// Validate artifact driver images against server pod images
 	if err := as.validateArtifactDriverImages(ctx, config); err != nil {
 		log.WithFatal().WithError(err).Error(ctx, "failed to validate artifact driver images")
 	}
