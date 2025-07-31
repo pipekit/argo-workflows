@@ -216,12 +216,12 @@ func (as *argoServer) Run(ctx context.Context, port int, browserOpenFunc func(st
 
 	// Validate artifact driver images against server deployment
 	if err := as.validateArtifactDriverImages(ctx, config); err != nil {
-		log.WithFatal().Error(ctx, err.Error())
+		log.WithFatal().WithError(err).Error(ctx, "failed to validate artifact driver images")
 	}
 
 	// Validate artifact driver connections
 	if err := as.validateArtifactDriverConnections(ctx, config); err != nil {
-		log.WithFatal().Error(ctx, err.Error())
+		log.WithFatal().WithError(err).Error(ctx, "failed to validate artifact driver connections")
 	}
 
 	log.WithFields(argo.GetVersion().Fields()).WithField("instanceID", config.InstanceID).Info(ctx, "Starting Argo Server")
@@ -479,7 +479,7 @@ func (as *argoServer) validateArtifactDriverConnections(ctx context.Context, cfg
 			defer wg.Done()
 
 			// Create a new driver connection
-			pluginDriver, err := plugin.NewDriver(ctx, driver.Name, driver.Name.SocketPath(), 5) // 5 second timeout
+			pluginDriver, err := plugin.NewDriver(ctx, driver.Name, driver.Name.SocketPath(), 5) // replace with driver.ConnectionTimeoutSeconds once we have it
 			if err != nil {
 				errors <- fmt.Errorf("failed to connect to artifact driver %s: %w", driver.Name, err)
 				return
@@ -508,7 +508,7 @@ func (as *argoServer) validateArtifactDriverConnections(ctx context.Context, cfg
 
 	if len(connectionErrors) > 0 {
 		errorMsg := fmt.Sprintf("Artifact driver connection validation failed: %v", connectionErrors)
-		log.Error(ctx, errorMsg)
+		log.WithField("errors", connectionErrors).Error(ctx, errorMsg)
 		return fmt.Errorf(errorMsg)
 	}
 
