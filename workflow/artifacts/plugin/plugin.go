@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
+	"os"
 	"time"
 
 	"google.golang.org/grpc"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/argoproj/argo-workflows/v3/pkg/apiclient/artifact"
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	"github.com/argoproj/argo-workflows/v3/util/logging"
 )
 
 const defaultConnectionTimeoutSeconds = int32(5)
@@ -25,13 +28,68 @@ type Driver struct {
 
 // NewDriver creates a new plugin artifact driver
 func NewDriver(ctx context.Context, pluginName wfv1.ArtifactPluginName, socketPath string, connectionTimeoutSeconds int32) (*Driver, error) {
-	// Connect to the plugin via Unix socket
+	// Check for the unix socket, retrying for up to a minute if it doesn't exist immediately
+	logger := logging.RequireLoggerFromContext(ctx)
+	
+	// Try for up to 120 seconds, checking once per second
+	const maxRetries = 120
+	var info os.FileInfo
+	var statErr error
+	var socketExists bool
+	
+	for retry := 0; retry < maxRetries; retry++ {
+		info, statErr = os.Stat(socketPath)
+		if statErr == nil {
+			socketExists = true
+			break
+		}
+		
+		if !os.IsNotExist(statErr) {
+			// If error is not due to missing file, fail immediately
+			return nil, fmt.Errorf("plugin %s cannot stat unix socket at %q: %w", pluginName, socketPath, statErr)
+		}
+		
+		// Socket doesn't exist yet, log at debug level and retry
+		logger.WithFields(logging.Fields{
+			"pluginName": pluginName,
+			"socketPath": socketPath,
+			"retry":      retry,
+			"maxRetries": maxRetries,
+		}).Debug(ctx, "plugin socket not found, retrying in 1s")
+		time.Sleep(time.Second)
+	}
+	
+	// If socket still doesn't exist after all retries, fail with error
+	if !socketExists {
+		return nil, fmt.Errorf("plugin %s expected unix socket at %q but it does not exist after waiting for %d seconds", pluginName, socketPath, maxRetries)
+	}
+	
+	if (info.Mode() & os.ModeSocket) == 0 {
+		logger.WithFields(logging.Fields{
+			"pluginName": pluginName,
+			"socketPath": socketPath,
+			"mode":       info.Mode(),
+		}).Warn(ctx, "plugin socket file exists but is not a unix socket")
+	}
+	logger.WithFields(logging.Fields{
+		"pluginName": pluginName,
+		"socketPath": socketPath,
+		"mode":       info.Mode(),
+	}).Info(ctx, "plugin socket file exists and is a unix socket")
+
 	conn, err := grpc.NewClient(
 		"unix://"+socketPath,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
+			// Strip unix:// prefix if present
+			if len(addr) > 7 && addr[:7] == "unix://" {
+				addr = addr[7:]
+			}
+			return net.DialTimeout("unix", addr, time.Duration(connectionTimeoutSeconds)*time.Second)
+		}),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to plugin %s at %s: %w", pluginName, socketPath, err)
+		return nil, fmt.Errorf("failed to dial plugin %s at %q: %w", pluginName, socketPath, err)
 	}
 
 	driver := &Driver{
@@ -47,16 +105,15 @@ func NewDriver(ctx context.Context, pluginName wfv1.ArtifactPluginName, socketPa
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(connectionTimeoutSeconds)*time.Second)
 	defer cancel()
 
-	// Wait for the connection to be ready
+	conn.Connect()
+	
+	// Wait for the connection to be ready within the timeout.
 	if !conn.WaitForStateChange(ctx, connectivity.Idle) {
-		return nil, fmt.Errorf("failed to connect to plugin %s at %s: connection timeout", pluginName, socketPath)
+		_ = conn.Close()
+		return nil, fmt.Errorf("timeout waiting for plugin %s connection to become active (socket=%q)", pluginName, socketPath)
 	}
-
-	state := conn.GetState()
-	if state != connectivity.Ready {
-		return nil, fmt.Errorf("failed to connect to plugin %s at %s: connection not ready (state: %s)", pluginName, socketPath, state)
-	}
-
+	
+	logger.Info(ctx, fmt.Sprintf("plugin %s: connected successfully to %q", pluginName, socketPath))
 	return driver, nil
 }
 

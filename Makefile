@@ -936,15 +936,8 @@ devcontainer-up: $(TOOL_DEVCONTAINER)
 	devcontainer up --workspace-folder .
 
 # gRPC/protobuf generation for artifact.proto
-pkg/apiclient/artifact/artifact.pb.go: $(PROTO_BINARIES) pkg/apiclient/artifact/artifact.proto
+pkg/apiclient/artifact/artifact.swagger.json: $(PROTO_BINARIES) $(TYPES) pkg/apiclient/artifact/artifact.proto
 	$(call protoc,pkg/apiclient/artifact/artifact.proto)
 
-pkg/apiclient/artifact/artifact.pb.gw.go: $(PROTO_BINARIES) pkg/apiclient/artifact/artifact.proto
-	$(call protoc,pkg/apiclient/artifact/artifact.proto)
-
-# Add these to the types/codegen targets
-.PHONY: artifact-proto
-artifact-proto: pkg/apiclient/artifact/artifact.pb.go pkg/apiclient/artifact/artifact.pb.gw.go
-
-# Add artifact-proto to codegen dependencies
-codegen: artifact-proto
+# Add artifact-proto to swagger dependencies
+swagger: pkg/apiclient/artifact/artifact.swagger.json

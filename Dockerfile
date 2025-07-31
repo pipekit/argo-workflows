@@ -16,7 +16,7 @@ RUN apk update && apk add --no-cache \
     libc-dev \
     bash \
     mailcap
-
+    
 WORKDIR /go/src/github.com/argoproj/argo-workflows
 COPY go.mod .
 COPY go.sum .

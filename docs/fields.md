@@ -3113,6 +3113,12 @@ Memoization enables caching for the Outputs of the template
 
 Plugin is an Object with exactly one key
 
+<details markdown>
+<summary>Examples with this field (click to open)</summary>
+
+- [`artifact-passing.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/artifact-passing.yaml)
+</details>
+
 ## ResourceTemplate
 
 ResourceTemplate is a template subtype to manipulate kubernetes resources
@@ -3806,12 +3812,19 @@ OSSArtifact is the location of an Alibaba Cloud OSS artifact
 
 PluginArtifact is the location of a plugin artifact
 
+<details markdown>
+<summary>Examples with this field (click to open)</summary>
+
+- [`artifact-passing.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/artifact-passing.yaml)
+</details>
+
 ### Fields
 | Field Name | Field Type | Description   |
 |:----------:|:----------:|---------------|
-|`configuration`|`string`|_No description available_|
+|`configuration`|`string`|Configuration is the plugin defined configuration for the artifact driver plugin|
+|`connectionTimeoutSeconds`|`integer`|ConnectionTimeoutSeconds is the timeout for the artifact driver connection, 5 seconds if not set|
 |`key`|`string`|Key is the path in the artifact repository where the artifact resides|
-|`name`|`string`|_No description available_|
+|`name`|`string`|Name is the name of the artifact driver plugin|
 
 ## RawArtifact
 
@@ -4592,10 +4605,17 @@ OSSArtifactRepository defines the controller configuration for an OSS artifact r
 
 PluginArtifactRepository defines the controller configuration for a plugin artifact repository
 
+<details markdown>
+<summary>Examples with this field (click to open)</summary>
+
+- [`artifact-passing.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/artifact-passing.yaml)
+</details>
+
 ### Fields
 | Field Name | Field Type | Description   |
 |:----------:|:----------:|---------------|
 |`configuration`|`string`|_No description available_|
+|`keyFormat`|`string`|_No description available_|
 |`name`|`string`|_No description available_|
 
 ## S3ArtifactRepository

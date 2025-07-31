@@ -10518,6 +10518,9 @@
         "configuration": {
           "type": "string"
         },
+        "keyFormat": {
+          "type": "string"
+        },
         "name": {
           "type": "string"
         }

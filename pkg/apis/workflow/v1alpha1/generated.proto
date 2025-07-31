@@ -1318,7 +1318,9 @@ message PluginArtifact {
 message PluginArtifactRepository {
   optional string name = 1;
 
-  optional string configuration = 2;
+  optional string keyFormat = 2;
+
+  optional string configuration = 3;
 }
 
 // PodGC describes how to delete completed pods as they complete

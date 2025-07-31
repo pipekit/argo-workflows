@@ -5010,6 +5010,12 @@ func schema_pkg_apis_workflow_v1alpha1_PluginArtifactRepository(ref common.Refer
 							Format:  "",
 						},
 					},
+					"keyFormat": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"configuration": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",

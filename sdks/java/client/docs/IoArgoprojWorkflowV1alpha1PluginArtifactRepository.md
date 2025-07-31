@@ -9,6 +9,7 @@ PluginArtifactRepository defines the controller configuration for a plugin artif
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **_configuration** | **String** |  | 
+**keyFormat** | **String** |  |  [optional]
 **name** | **String** |  | 
 
 

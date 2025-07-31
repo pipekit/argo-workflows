@@ -1255,7 +1255,7 @@ func (we *WorkflowExecutor) monitorDeadline(ctx context.Context, containerNames 
 
 	var message string
 	logger := logging.RequireLoggerFromContext(ctx)
-	logger.Info(ctx, "Starting deadline monitor")
+	logger.WithField("containers", containerNames).Info(ctx, "Starting deadline monitor")
 	select {
 	case <-ctx.Done():
 		logger.Info(ctx, "Deadline monitor stopped")

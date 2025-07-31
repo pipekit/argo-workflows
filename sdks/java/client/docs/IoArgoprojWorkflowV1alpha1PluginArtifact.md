@@ -8,9 +8,10 @@ PluginArtifact is the location of a plugin artifact
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**_configuration** | **String** |  | 
+**_configuration** | **String** | Configuration is the plugin defined configuration for the artifact driver plugin | 
+**connectionTimeoutSeconds** | **Integer** | ConnectionTimeoutSeconds is the timeout for the artifact driver connection, 5 seconds if not set |  [optional]
 **key** | **String** | Key is the path in the artifact repository where the artifact resides | 
-**name** | **String** |  | 
+**name** | **String** | Name is the name of the artifact driver plugin | 
 
 
 

@@ -11,7 +11,9 @@ rules:
       - ""
     resources:
       - pods
+      - secrets
     verbs:
       - create
       - get
       - patch
+      - list

@@ -83,6 +83,7 @@ class IoArgoprojWorkflowV1alpha1PluginArtifactRepository(ModelNormal):
         return {
             'configuration': (str,),  # noqa: E501
             'name': (str,),  # noqa: E501
+            'key_format': (str,),  # noqa: E501
         }
 
     @cached_property
@@ -93,6 +94,7 @@ class IoArgoprojWorkflowV1alpha1PluginArtifactRepository(ModelNormal):
     attribute_map = {
         'configuration': 'configuration',  # noqa: E501
         'name': 'name',  # noqa: E501
+        'key_format': 'keyFormat',  # noqa: E501
     }
 
     read_only_vars = {
@@ -140,6 +142,7 @@ class IoArgoprojWorkflowV1alpha1PluginArtifactRepository(ModelNormal):
                                 Animal class but this time we won't travel
                                 through its discriminator because we passed in
                                 _visited_composed_classes = (Animal,)
+            key_format (str): [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)
@@ -227,6 +230,7 @@ class IoArgoprojWorkflowV1alpha1PluginArtifactRepository(ModelNormal):
                                 Animal class but this time we won't travel
                                 through its discriminator because we passed in
                                 _visited_composed_classes = (Animal,)
+            key_format (str): [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)

@@ -52,6 +52,8 @@ func (a *ArtifactRepository) Get() ArtifactRepositoryType {
 		return a.HDFS
 	} else if a.OSS != nil {
 		return a.OSS
+	} else if a.Plugin != nil {
+		return a.Plugin
 	} else if a.S3 != nil {
 		return a.S3
 	}
@@ -183,9 +185,14 @@ func (r *HDFSArtifactRepository) IntoArtifactLocation(l *ArtifactLocation) {
 // PluginArtifactRepository defines the controller configuration for a plugin artifact repository
 type PluginArtifactRepository struct {
 	Name          ArtifactPluginName `json:"name" protobuf:"bytes,1,opt,name=name"`
-	Configuration string             `json:"configuration" protobuf:"bytes,2,opt,name=configuration"`
+	KeyFormat     string             `json:"keyFormat,omitempty" protobuf:"bytes,2,opt,name=keyFormat"`
+	Configuration string             `json:"configuration" protobuf:"bytes,3,opt,name=configuration"`
 }
 
 func (r *PluginArtifactRepository) IntoArtifactLocation(l *ArtifactLocation) {
-	l.Plugin = &PluginArtifact{Name: r.Name, Configuration: r.Configuration}
+	k := r.KeyFormat
+	if k == "" {
+		k = DefaultArchivePattern
+	}
+	l.Plugin = &PluginArtifact{Name: r.Name, Configuration: r.Configuration, Key: k}
 }

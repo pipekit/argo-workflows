@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
@@ -423,12 +424,12 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 			execCmd := append(append([]string{common.VarRunArgoPath + "/argoexec", "emissary"}, woc.getExecutorLogOpts(ctx)...), "--")
 			c.Command = append(execCmd, c.Command...)
 		}
-		if c.Image == woc.controller.executorImage() {
-			// mount tmp dir to wait container
+		// Mount shared tmp dir to wait container and artifact plugin containers, but not main container
+		if c.Name == common.WaitContainerName || isArtifactPluginContainer(c.Name) {
 			c.VolumeMounts = append(c.VolumeMounts, apiv1.VolumeMount{
 				Name:      volumeTmpDir.Name,
 				MountPath: "/tmp",
-				SubPath:   strconv.Itoa(i),
+				//				SubPath:   strconv.Itoa(i), // TODO: revert this removal
 			})
 		}
 		c.VolumeMounts = append(c.VolumeMounts, volumeMountVarArgo)
@@ -1258,6 +1259,7 @@ func addArtifactPlugins(ctx context.Context, pod *apiv1.Pod, tmpl *wfv1.Template
 	if err != nil {
 		return err
 	}
+
 	for _, driver := range drivers {
 		logging.RequireLoggerFromContext(ctx).WithField("name", driver.Name).Debug(ctx, "Adding artifact plugin")
 
@@ -1268,6 +1270,17 @@ func addArtifactPlugins(ctx context.Context, pod *apiv1.Pod, tmpl *wfv1.Template
 			VolumeMounts: []apiv1.VolumeMount{driver.Name.VolumeMount()},
 		})
 	}
+
+	// Mount plugin volumes to wait container if it exists
+	waitCtrIndex, err := util.FindWaitCtrIndex(pod)
+	if err == nil {
+		waitCtr := &pod.Spec.Containers[waitCtrIndex]
+		for _, driver := range drivers {
+			waitCtr.VolumeMounts = append(waitCtr.VolumeMounts, driver.Name.VolumeMount())
+		}
+		pod.Spec.Containers[waitCtrIndex] = *waitCtr
+	}
+
 	return nil
 }
 
@@ -1436,4 +1449,8 @@ func mirrorVolumeMounts(ctx context.Context, sourceContainer, targetContainer *a
 		targetContainer.VolumeMounts = append(targetContainer.VolumeMounts, volMnt)
 
 	}
+}
+
+func isArtifactPluginContainer(containerName string) bool {
+	return strings.HasPrefix(containerName, "artifact-plugin-")
 }

@@ -16,7 +16,7 @@ func TestConvertToGRPC(t *testing.T) {
 		artifact           *wfv1.Artifact
 		expectPlugin       bool
 		expectedPluginName string
- 		expectedConfig     string
+		expectedConfig     string
 		expectedKey        string
 	}{
 		{

@@ -556,6 +556,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             path="path_example",
                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                 configuration="configuration_example",
+                                connection_timeout_seconds=1,
                                 key="key_example",
                                 name="name_example",
                             ),
@@ -880,6 +881,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -1570,6 +1572,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                         ),
                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                             configuration="configuration_example",
+                            connection_timeout_seconds=1,
                             key="key_example",
                             name="name_example",
                         ),
@@ -2442,6 +2445,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                             path="path_example",
                                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                 configuration="configuration_example",
+                                                connection_timeout_seconds=1,
                                                 key="key_example",
                                                 name="name_example",
                                             ),
@@ -2736,6 +2740,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                     path="path_example",
                                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                         configuration="configuration_example",
+                                                        connection_timeout_seconds=1,
                                                         key="key_example",
                                                         name="name_example",
                                                     ),
@@ -3052,6 +3057,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 path="path_example",
                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                     configuration="configuration_example",
+                                    connection_timeout_seconds=1,
                                     key="key_example",
                                     name="name_example",
                                 ),
@@ -3648,6 +3654,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 path="path_example",
                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                     configuration="configuration_example",
+                                    connection_timeout_seconds=1,
                                     key="key_example",
                                     name="name_example",
                                 ),
@@ -3984,6 +3991,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 path="path_example",
                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                     configuration="configuration_example",
+                                    connection_timeout_seconds=1,
                                     key="key_example",
                                     name="name_example",
                                 ),
@@ -4280,6 +4288,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 path="path_example",
                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                     configuration="configuration_example",
+                                    connection_timeout_seconds=1,
                                     key="key_example",
                                     name="name_example",
                                 ),
@@ -5191,6 +5200,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                             path="path_example",
                                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                 configuration="configuration_example",
+                                                connection_timeout_seconds=1,
                                                 key="key_example",
                                                 name="name_example",
                                             ),
@@ -5481,6 +5491,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                     path="path_example",
                                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                         configuration="configuration_example",
+                                                        connection_timeout_seconds=1,
                                                         key="key_example",
                                                         name="name_example",
                                                     ),
@@ -6453,6 +6464,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             ),
                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                 configuration="configuration_example",
+                                connection_timeout_seconds=1,
                                 key="key_example",
                                 name="name_example",
                             ),
@@ -7325,6 +7337,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 path="path_example",
                                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                     configuration="configuration_example",
+                                                    connection_timeout_seconds=1,
                                                     key="key_example",
                                                     name="name_example",
                                                 ),
@@ -7619,6 +7632,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         path="path_example",
                                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                             configuration="configuration_example",
+                                                            connection_timeout_seconds=1,
                                                             key="key_example",
                                                             name="name_example",
                                                         ),
@@ -7935,6 +7949,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -8531,6 +8546,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -8867,6 +8883,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -9163,6 +9180,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -10074,6 +10092,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 path="path_example",
                                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                     configuration="configuration_example",
+                                                    connection_timeout_seconds=1,
                                                     key="key_example",
                                                     name="name_example",
                                                 ),
@@ -10364,6 +10383,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         path="path_example",
                                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                             configuration="configuration_example",
+                                                            connection_timeout_seconds=1,
                                                             key="key_example",
                                                             name="name_example",
                                                         ),
@@ -11574,6 +11594,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                         ),
                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifactRepository(
                             configuration="configuration_example",
+                            key_format="key_format_example",
                             name="name_example",
                         ),
                         s3=IoArgoprojWorkflowV1alpha1S3ArtifactRepository(
@@ -11852,6 +11873,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -12150,6 +12172,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -12458,6 +12481,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             path="path_example",
                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                 configuration="configuration_example",
+                                connection_timeout_seconds=1,
                                 key="key_example",
                                 name="name_example",
                             ),
@@ -13354,6 +13378,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             ),
                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                 configuration="configuration_example",
+                                connection_timeout_seconds=1,
                                 key="key_example",
                                 name="name_example",
                             ),
@@ -14226,6 +14251,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 path="path_example",
                                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                     configuration="configuration_example",
+                                                    connection_timeout_seconds=1,
                                                     key="key_example",
                                                     name="name_example",
                                                 ),
@@ -14520,6 +14546,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         path="path_example",
                                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                             configuration="configuration_example",
+                                                            connection_timeout_seconds=1,
                                                             key="key_example",
                                                             name="name_example",
                                                         ),
@@ -14836,6 +14863,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -15432,6 +15460,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -15768,6 +15797,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -16064,6 +16094,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -16975,6 +17006,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 path="path_example",
                                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                     configuration="configuration_example",
+                                                    connection_timeout_seconds=1,
                                                     key="key_example",
                                                     name="name_example",
                                                 ),
@@ -17265,6 +17297,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         path="path_example",
                                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                             configuration="configuration_example",
+                                                            connection_timeout_seconds=1,
                                                             key="key_example",
                                                             name="name_example",
                                                         ),
@@ -18264,6 +18297,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 path="path_example",
                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                     configuration="configuration_example",
+                                    connection_timeout_seconds=1,
                                     key="key_example",
                                     name="name_example",
                                 ),
@@ -18588,6 +18622,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         path="path_example",
                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                             configuration="configuration_example",
+                                            connection_timeout_seconds=1,
                                             key="key_example",
                                             name="name_example",
                                         ),
@@ -19278,6 +19313,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             ),
                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                 configuration="configuration_example",
+                                connection_timeout_seconds=1,
                                 key="key_example",
                                 name="name_example",
                             ),
@@ -20150,6 +20186,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 path="path_example",
                                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                     configuration="configuration_example",
+                                                    connection_timeout_seconds=1,
                                                     key="key_example",
                                                     name="name_example",
                                                 ),
@@ -20444,6 +20481,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         path="path_example",
                                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                             configuration="configuration_example",
+                                                            connection_timeout_seconds=1,
                                                             key="key_example",
                                                             name="name_example",
                                                         ),
@@ -20760,6 +20798,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -21356,6 +21395,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -21692,6 +21732,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -21988,6 +22029,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -22899,6 +22941,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 path="path_example",
                                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                     configuration="configuration_example",
+                                                    connection_timeout_seconds=1,
                                                     key="key_example",
                                                     name="name_example",
                                                 ),
@@ -23189,6 +23232,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         path="path_example",
                                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                             configuration="configuration_example",
+                                                            connection_timeout_seconds=1,
                                                             key="key_example",
                                                             name="name_example",
                                                         ),
@@ -24161,6 +24205,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 ),
                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                     configuration="configuration_example",
+                                    connection_timeout_seconds=1,
                                     key="key_example",
                                     name="name_example",
                                 ),
@@ -25033,6 +25078,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                     path="path_example",
                                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                         configuration="configuration_example",
+                                                        connection_timeout_seconds=1,
                                                         key="key_example",
                                                         name="name_example",
                                                     ),
@@ -25327,6 +25373,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                             path="path_example",
                                                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                                 configuration="configuration_example",
+                                                                connection_timeout_seconds=1,
                                                                 key="key_example",
                                                                 name="name_example",
                                                             ),
@@ -25643,6 +25690,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         path="path_example",
                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                             configuration="configuration_example",
+                                            connection_timeout_seconds=1,
                                             key="key_example",
                                             name="name_example",
                                         ),
@@ -26239,6 +26287,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         path="path_example",
                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                             configuration="configuration_example",
+                                            connection_timeout_seconds=1,
                                             key="key_example",
                                             name="name_example",
                                         ),
@@ -26575,6 +26624,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         path="path_example",
                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                             configuration="configuration_example",
+                                            connection_timeout_seconds=1,
                                             key="key_example",
                                             name="name_example",
                                         ),
@@ -26871,6 +26921,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         path="path_example",
                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                             configuration="configuration_example",
+                                            connection_timeout_seconds=1,
                                             key="key_example",
                                             name="name_example",
                                         ),
@@ -27782,6 +27833,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                     path="path_example",
                                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                         configuration="configuration_example",
+                                                        connection_timeout_seconds=1,
                                                         key="key_example",
                                                         name="name_example",
                                                     ),
@@ -28072,6 +28124,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                             path="path_example",
                                                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                                 configuration="configuration_example",
+                                                                connection_timeout_seconds=1,
                                                                 key="key_example",
                                                                 name="name_example",
                                                             ),
@@ -29983,6 +30036,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             path="path_example",
                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                 configuration="configuration_example",
+                                connection_timeout_seconds=1,
                                 key="key_example",
                                 name="name_example",
                             ),
@@ -30307,6 +30361,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -30997,6 +31052,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                         ),
                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                             configuration="configuration_example",
+                            connection_timeout_seconds=1,
                             key="key_example",
                             name="name_example",
                         ),
@@ -31869,6 +31925,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                             path="path_example",
                                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                 configuration="configuration_example",
+                                                connection_timeout_seconds=1,
                                                 key="key_example",
                                                 name="name_example",
                                             ),
@@ -32163,6 +32220,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                     path="path_example",
                                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                         configuration="configuration_example",
+                                                        connection_timeout_seconds=1,
                                                         key="key_example",
                                                         name="name_example",
                                                     ),
@@ -32479,6 +32537,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 path="path_example",
                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                     configuration="configuration_example",
+                                    connection_timeout_seconds=1,
                                     key="key_example",
                                     name="name_example",
                                 ),
@@ -33075,6 +33134,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 path="path_example",
                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                     configuration="configuration_example",
+                                    connection_timeout_seconds=1,
                                     key="key_example",
                                     name="name_example",
                                 ),
@@ -33411,6 +33471,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 path="path_example",
                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                     configuration="configuration_example",
+                                    connection_timeout_seconds=1,
                                     key="key_example",
                                     name="name_example",
                                 ),
@@ -33707,6 +33768,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 path="path_example",
                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                     configuration="configuration_example",
+                                    connection_timeout_seconds=1,
                                     key="key_example",
                                     name="name_example",
                                 ),
@@ -34618,6 +34680,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                             path="path_example",
                                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                 configuration="configuration_example",
+                                                connection_timeout_seconds=1,
                                                 key="key_example",
                                                 name="name_example",
                                             ),
@@ -34908,6 +34971,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                     path="path_example",
                                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                         configuration="configuration_example",
+                                                        connection_timeout_seconds=1,
                                                         key="key_example",
                                                         name="name_example",
                                                     ),
@@ -35880,6 +35944,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             ),
                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                 configuration="configuration_example",
+                                connection_timeout_seconds=1,
                                 key="key_example",
                                 name="name_example",
                             ),
@@ -36752,6 +36817,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 path="path_example",
                                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                     configuration="configuration_example",
+                                                    connection_timeout_seconds=1,
                                                     key="key_example",
                                                     name="name_example",
                                                 ),
@@ -37046,6 +37112,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         path="path_example",
                                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                             configuration="configuration_example",
+                                                            connection_timeout_seconds=1,
                                                             key="key_example",
                                                             name="name_example",
                                                         ),
@@ -37362,6 +37429,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -37958,6 +38026,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -38294,6 +38363,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -38590,6 +38660,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -39501,6 +39572,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 path="path_example",
                                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                     configuration="configuration_example",
+                                                    connection_timeout_seconds=1,
                                                     key="key_example",
                                                     name="name_example",
                                                 ),
@@ -39791,6 +39863,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         path="path_example",
                                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                             configuration="configuration_example",
+                                                            connection_timeout_seconds=1,
                                                             key="key_example",
                                                             name="name_example",
                                                         ),
@@ -41001,6 +41074,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                         ),
                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifactRepository(
                             configuration="configuration_example",
+                            key_format="key_format_example",
                             name="name_example",
                         ),
                         s3=IoArgoprojWorkflowV1alpha1S3ArtifactRepository(
@@ -41279,6 +41353,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -41577,6 +41652,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -41885,6 +41961,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             path="path_example",
                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                 configuration="configuration_example",
+                                connection_timeout_seconds=1,
                                 key="key_example",
                                 name="name_example",
                             ),
@@ -42781,6 +42858,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             ),
                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                 configuration="configuration_example",
+                                connection_timeout_seconds=1,
                                 key="key_example",
                                 name="name_example",
                             ),
@@ -43653,6 +43731,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 path="path_example",
                                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                     configuration="configuration_example",
+                                                    connection_timeout_seconds=1,
                                                     key="key_example",
                                                     name="name_example",
                                                 ),
@@ -43947,6 +44026,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         path="path_example",
                                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                             configuration="configuration_example",
+                                                            connection_timeout_seconds=1,
                                                             key="key_example",
                                                             name="name_example",
                                                         ),
@@ -44263,6 +44343,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -44859,6 +44940,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -45195,6 +45277,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -45491,6 +45574,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -46402,6 +46486,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 path="path_example",
                                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                     configuration="configuration_example",
+                                                    connection_timeout_seconds=1,
                                                     key="key_example",
                                                     name="name_example",
                                                 ),
@@ -46692,6 +46777,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         path="path_example",
                                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                             configuration="configuration_example",
+                                                            connection_timeout_seconds=1,
                                                             key="key_example",
                                                             name="name_example",
                                                         ),
@@ -47691,6 +47777,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 path="path_example",
                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                     configuration="configuration_example",
+                                    connection_timeout_seconds=1,
                                     key="key_example",
                                     name="name_example",
                                 ),
@@ -48015,6 +48102,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         path="path_example",
                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                             configuration="configuration_example",
+                                            connection_timeout_seconds=1,
                                             key="key_example",
                                             name="name_example",
                                         ),
@@ -48705,6 +48793,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             ),
                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                 configuration="configuration_example",
+                                connection_timeout_seconds=1,
                                 key="key_example",
                                 name="name_example",
                             ),
@@ -49577,6 +49666,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 path="path_example",
                                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                     configuration="configuration_example",
+                                                    connection_timeout_seconds=1,
                                                     key="key_example",
                                                     name="name_example",
                                                 ),
@@ -49871,6 +49961,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         path="path_example",
                                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                             configuration="configuration_example",
+                                                            connection_timeout_seconds=1,
                                                             key="key_example",
                                                             name="name_example",
                                                         ),
@@ -50187,6 +50278,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -50783,6 +50875,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -51119,6 +51212,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -51415,6 +51509,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                     path="path_example",
                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                         configuration="configuration_example",
+                                        connection_timeout_seconds=1,
                                         key="key_example",
                                         name="name_example",
                                     ),
@@ -52326,6 +52421,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                 path="path_example",
                                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                     configuration="configuration_example",
+                                                    connection_timeout_seconds=1,
                                                     key="key_example",
                                                     name="name_example",
                                                 ),
@@ -52616,6 +52712,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                         path="path_example",
                                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                             configuration="configuration_example",
+                                                            connection_timeout_seconds=1,
                                                             key="key_example",
                                                             name="name_example",
                                                         ),
@@ -53588,6 +53685,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 ),
                                 plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                     configuration="configuration_example",
+                                    connection_timeout_seconds=1,
                                     key="key_example",
                                     name="name_example",
                                 ),
@@ -54460,6 +54558,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                     path="path_example",
                                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                         configuration="configuration_example",
+                                                        connection_timeout_seconds=1,
                                                         key="key_example",
                                                         name="name_example",
                                                     ),
@@ -54754,6 +54853,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                             path="path_example",
                                                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                                 configuration="configuration_example",
+                                                                connection_timeout_seconds=1,
                                                                 key="key_example",
                                                                 name="name_example",
                                                             ),
@@ -55070,6 +55170,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         path="path_example",
                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                             configuration="configuration_example",
+                                            connection_timeout_seconds=1,
                                             key="key_example",
                                             name="name_example",
                                         ),
@@ -55666,6 +55767,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         path="path_example",
                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                             configuration="configuration_example",
+                                            connection_timeout_seconds=1,
                                             key="key_example",
                                             name="name_example",
                                         ),
@@ -56002,6 +56104,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         path="path_example",
                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                             configuration="configuration_example",
+                                            connection_timeout_seconds=1,
                                             key="key_example",
                                             name="name_example",
                                         ),
@@ -56298,6 +56401,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                         path="path_example",
                                         plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                             configuration="configuration_example",
+                                            connection_timeout_seconds=1,
                                             key="key_example",
                                             name="name_example",
                                         ),
@@ -57209,6 +57313,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                     path="path_example",
                                                     plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                         configuration="configuration_example",
+                                                        connection_timeout_seconds=1,
                                                         key="key_example",
                                                         name="name_example",
                                                     ),
@@ -57499,6 +57604,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                                             path="path_example",
                                                             plugin=IoArgoprojWorkflowV1alpha1PluginArtifact(
                                                                 configuration="configuration_example",
+                                                                connection_timeout_seconds=1,
                                                                 key="key_example",
                                                                 name="name_example",
                                                             ),

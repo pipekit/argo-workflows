@@ -84,6 +84,7 @@ class IoArgoprojWorkflowV1alpha1PluginArtifact(ModelNormal):
             'configuration': (str,),  # noqa: E501
             'key': (str,),  # noqa: E501
             'name': (str,),  # noqa: E501
+            'connection_timeout_seconds': (int,),  # noqa: E501
         }
 
     @cached_property
@@ -95,6 +96,7 @@ class IoArgoprojWorkflowV1alpha1PluginArtifact(ModelNormal):
         'configuration': 'configuration',  # noqa: E501
         'key': 'key',  # noqa: E501
         'name': 'name',  # noqa: E501
+        'connection_timeout_seconds': 'connectionTimeoutSeconds',  # noqa: E501
     }
 
     read_only_vars = {
@@ -108,9 +110,9 @@ class IoArgoprojWorkflowV1alpha1PluginArtifact(ModelNormal):
         """IoArgoprojWorkflowV1alpha1PluginArtifact - a model defined in OpenAPI
 
         Args:
-            configuration (str):
+            configuration (str): Configuration is the plugin defined configuration for the artifact driver plugin
             key (str): Key is the path in the artifact repository where the artifact resides
-            name (str):
+            name (str): Name is the name of the artifact driver plugin
 
         Keyword Args:
             _check_type (bool): if True, values for parameters in openapi_types
@@ -143,6 +145,7 @@ class IoArgoprojWorkflowV1alpha1PluginArtifact(ModelNormal):
                                 Animal class but this time we won't travel
                                 through its discriminator because we passed in
                                 _visited_composed_classes = (Animal,)
+            connection_timeout_seconds (int): ConnectionTimeoutSeconds is the timeout for the artifact driver connection, 5 seconds if not set. [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)
@@ -197,9 +200,9 @@ class IoArgoprojWorkflowV1alpha1PluginArtifact(ModelNormal):
         """IoArgoprojWorkflowV1alpha1PluginArtifact - a model defined in OpenAPI
 
         Args:
-            configuration (str):
+            configuration (str): Configuration is the plugin defined configuration for the artifact driver plugin
             key (str): Key is the path in the artifact repository where the artifact resides
-            name (str):
+            name (str): Name is the name of the artifact driver plugin
 
         Keyword Args:
             _check_type (bool): if True, values for parameters in openapi_types
@@ -232,6 +235,7 @@ class IoArgoprojWorkflowV1alpha1PluginArtifact(ModelNormal):
                                 Animal class but this time we won't travel
                                 through its discriminator because we passed in
                                 _visited_composed_classes = (Animal,)
+            connection_timeout_seconds (int): ConnectionTimeoutSeconds is the timeout for the artifact driver connection, 5 seconds if not set. [optional]  # noqa: E501
         """
 
         _check_type = kwargs.pop('_check_type', True)
