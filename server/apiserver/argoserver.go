@@ -3,6 +3,7 @@ package apiserver
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -470,7 +471,7 @@ func (as *argoServer) validateArtifactDriverConnections(ctx context.Context, cfg
 	log.Info(ctx, "Validating artifact driver connections")
 
 	var wg sync.WaitGroup
-	errors := make(chan error, len(cfg.ArtifactDrivers))
+	errorChannel := make(chan error, len(cfg.ArtifactDrivers))
 
 	// Validate each driver connection in parallel
 	for _, driver := range cfg.ArtifactDrivers {
@@ -481,7 +482,7 @@ func (as *argoServer) validateArtifactDriverConnections(ctx context.Context, cfg
 			// Create a new driver connection
 			pluginDriver, err := plugin.NewDriver(ctx, driver.Name, driver.Name.SocketPath(), 5) // replace with driver.ConnectionTimeoutSeconds once we have it
 			if err != nil {
-				errors <- fmt.Errorf("failed to connect to artifact driver %s: %w", driver.Name, err)
+				errorChannel <- fmt.Errorf("failed to connect to artifact driver %s: %w", driver.Name, err)
 				return
 			}
 
@@ -498,18 +499,18 @@ func (as *argoServer) validateArtifactDriverConnections(ctx context.Context, cfg
 
 	// Wait for all validations to complete
 	wg.Wait()
-	close(errors)
+	close(errorChannel)
 
 	// Collect any errors
 	var connectionErrors []string
-	for err := range errors {
+	for err := range errorChannel {
 		connectionErrors = append(connectionErrors, err.Error())
 	}
 
 	if len(connectionErrors) > 0 {
 		errorMsg := fmt.Sprintf("Artifact driver connection validation failed: %v", connectionErrors)
 		log.WithField("errors", connectionErrors).Error(ctx, errorMsg)
-		return fmt.Errorf(errorMsg)
+		return errors.New(errorMsg)
 	}
 
 	log.WithField("driverCount", len(cfg.ArtifactDrivers)).Info(ctx, "Artifact driver connection validation passed: All configured artifact drivers are accessible")
@@ -555,7 +556,7 @@ func (as *argoServer) validateArtifactDriverImages(ctx context.Context, cfg *con
 	if len(images) > 0 {
 		errorMsg := fmt.Sprintf("Artifact driver validation failed: The following artifact driver images are not present in the server pod: %v. Please ensure all artifact driver images are included in the argo-server pod.", images)
 		log.Error(ctx, errorMsg)
-		return fmt.Errorf(errorMsg)
+		return errors.New(errorMsg)
 	}
 
 	log.WithField("driverCount", len(cfg.ArtifactDrivers)).Info(ctx, "Artifact driver validation passed: All configured artifact driver images are present in the server pod")
