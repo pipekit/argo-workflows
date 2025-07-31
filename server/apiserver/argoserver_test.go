@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
@@ -19,7 +18,6 @@ func TestValidateArtifactDriverImages(t *testing.T) {
 		name           string
 		config         *config.Config
 		pod            *corev1.Pod
-		deployment     *appsv1.Deployment
 		expectedError  bool
 		expectedErrMsg string
 	}{
@@ -31,7 +29,7 @@ func TestValidateArtifactDriverImages(t *testing.T) {
 			expectedError: false,
 		},
 		{
-			name: "All artifact driver images present in deployment - should pass",
+			name: "All artifact driver images present in pod - should pass",
 			config: &config.Config{
 				ArtifactDrivers: []config.ArtifactDriver{
 					{
@@ -47,35 +45,20 @@ func TestValidateArtifactDriverImages(t *testing.T) {
 			pod: &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-pod",
-					OwnerReferences: []metav1.OwnerReference{
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
 						{
-							Kind: "ReplicaSet",
-							Name: "test-rs",
+							Name:  "argo-server",
+							Image: "quay.io/argoproj/argocli:latest",
 						},
-					},
-				},
-			},
-			deployment: &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "argo-server",
-				},
-				Spec: appsv1.DeploymentSpec{
-					Template: corev1.PodTemplateSpec{
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{
-								{
-									Name:  "argo-server",
-									Image: "quay.io/argoproj/argocli:latest",
-								},
-								{
-									Name:  "my-driver",
-									Image: "my-driver:latest",
-								},
-								{
-									Name:  "another-driver",
-									Image: "another-driver:v1.0",
-								},
-							},
+						{
+							Name:  "my-driver",
+							Image: "my-driver:latest",
+						},
+						{
+							Name:  "another-driver",
+							Image: "another-driver:v1.0",
 						},
 					},
 				},
@@ -83,7 +66,7 @@ func TestValidateArtifactDriverImages(t *testing.T) {
 			expectedError: false,
 		},
 		{
-			name: "Missing artifact driver image in deployment - should fail",
+			name: "Missing artifact driver image in pod - should fail",
 			config: &config.Config{
 				ArtifactDrivers: []config.ArtifactDriver{
 					{
@@ -99,37 +82,22 @@ func TestValidateArtifactDriverImages(t *testing.T) {
 			pod: &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-pod",
-					OwnerReferences: []metav1.OwnerReference{
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
 						{
-							Kind: "ReplicaSet",
-							Name: "test-rs",
+							Name:  "argo-server",
+							Image: "quay.io/argoproj/argocli:latest",
 						},
-					},
-				},
-			},
-			deployment: &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "argo-server",
-				},
-				Spec: appsv1.DeploymentSpec{
-					Template: corev1.PodTemplateSpec{
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{
-								{
-									Name:  "argo-server",
-									Image: "quay.io/argoproj/argocli:latest",
-								},
-								{
-									Name:  "my-driver",
-									Image: "my-driver:latest",
-								},
-							},
+						{
+							Name:  "my-driver",
+							Image: "my-driver:latest",
 						},
 					},
 				},
 			},
 			expectedError:  true,
-			expectedErrMsg: "Artifact driver validation failed: The following artifact driver images are not present in the server deployment: [missing-driver:v1.0]",
+			expectedErrMsg: "Artifact driver validation failed: The following artifact driver images are not present in the server pod: [missing-driver:v1.0]",
 		},
 		{
 			name: "Artifact driver image in init container - should pass",
@@ -144,33 +112,18 @@ func TestValidateArtifactDriverImages(t *testing.T) {
 			pod: &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-pod",
-					OwnerReferences: []metav1.OwnerReference{
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
 						{
-							Kind: "ReplicaSet",
-							Name: "test-rs",
+							Name:  "argo-server",
+							Image: "quay.io/argoproj/argocli:latest",
 						},
 					},
-				},
-			},
-			deployment: &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "argo-server",
-				},
-				Spec: appsv1.DeploymentSpec{
-					Template: corev1.PodTemplateSpec{
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{
-								{
-									Name:  "argo-server",
-									Image: "quay.io/argoproj/argocli:latest",
-								},
-							},
-							InitContainers: []corev1.Container{
-								{
-									Name:  "init-driver",
-									Image: "init-driver:latest",
-								},
-							},
+					InitContainers: []corev1.Container{
+						{
+							Name:  "init-driver",
+							Image: "init-driver:latest",
 						},
 					},
 				},
@@ -195,26 +148,6 @@ func TestValidateArtifactDriverImages(t *testing.T) {
 			// Set up the test data
 			if tt.pod != nil {
 				_, err := fakeClient.CoreV1().Pods("argo").Create(context.Background(), tt.pod, metav1.CreateOptions{})
-				require.NoError(t, err)
-			}
-
-			if tt.deployment != nil {
-				// Create ReplicaSet that references the deployment
-				rs := &appsv1.ReplicaSet{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-rs",
-						OwnerReferences: []metav1.OwnerReference{
-							{
-								Kind: "Deployment",
-								Name: "argo-server",
-							},
-						},
-					},
-				}
-				_, err := fakeClient.AppsV1().ReplicaSets("argo").Create(context.Background(), rs, metav1.CreateOptions{})
-				require.NoError(t, err)
-
-				_, err = fakeClient.AppsV1().Deployments("argo").Create(context.Background(), tt.deployment, metav1.CreateOptions{})
 				require.NoError(t, err)
 			}
 
