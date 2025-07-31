@@ -1,7 +1,6 @@
 package env
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -53,13 +52,10 @@ func TestLookupEnvStringOr(t *testing.T) {
 
 func TestGetHostname(t *testing.T) {
 	// Test when HOSTNAME is set
-	originalHostname := os.Getenv("HOSTNAME")
-	defer os.Setenv("HOSTNAME", originalHostname)
-
-	os.Setenv("HOSTNAME", "test-hostname")
+	t.Setenv("HOSTNAME", "test-hostname")
 	require.Equal(t, "test-hostname", GetHostname())
 
 	// Test when HOSTNAME is not set
-	os.Unsetenv("HOSTNAME")
+	t.Setenv("HOSTNAME", "")
 	require.Empty(t, GetHostname())
 }
