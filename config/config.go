@@ -140,10 +140,10 @@ func (c Config) GetArtifactDriver(name wfv1.ArtifactPluginName) (ArtifactDriver,
 	return ArtifactDriver{}, fmt.Errorf("artifact driver %s not found", name)
 }
 
-func (c Config) GetArtifactDrivers(plugins []wfv1.PluginArtifact) ([]ArtifactDriver, error) {
+func (c Config) GetArtifactDrivers(plugins []wfv1.ArtifactPluginName) ([]ArtifactDriver, error) {
 	drivers := []ArtifactDriver{}
 	for _, plugin := range plugins {
-		driver, err := c.GetArtifactDriver(plugin.Name)
+		driver, err := c.GetArtifactDriver(plugin)
 		if err != nil {
 			return nil, err
 		}

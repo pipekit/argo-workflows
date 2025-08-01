@@ -860,14 +860,21 @@ func (a Artifacts) GetArtifactByName(name string) *Artifact {
 	return nil
 }
 
-func (a Artifacts) GetPlugins() []PluginArtifact {
-	plugins := []PluginArtifact{}
+func (a Artifacts) GetPluginNames(defaultRepo *ArtifactRepository) []ArtifactPluginName {
+	plugins := make(map[ArtifactPluginName]bool, 0)
 	for _, art := range a {
-		if art.Plugin != nil {
-			plugins = append(plugins, *art.Plugin)
+		switch {
+		case art.Plugin != nil:
+			plugins[art.Plugin.Name] = true
+		case defaultRepo != nil && defaultRepo.Plugin != nil:
+			plugins[defaultRepo.Plugin.Name] = true
 		}
 	}
-	return plugins
+	pluginNames := make([]ArtifactPluginName, 0, len(plugins))
+	for name := range plugins {
+		pluginNames = append(pluginNames, name)
+	}
+	return pluginNames
 }
 
 // Inputs are the mechanism for passing parameters, artifacts, volumes from one template to another

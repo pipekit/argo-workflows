@@ -307,7 +307,7 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 	// addInitContainers, addSidecars and addOutputArtifactsVolumes should be called after all
 	// volumes have been manipulated in the main container since volumeMounts are mirrored
 	addInitContainers(ctx, pod, tmpl)
-	err = addSidecars(ctx, pod, tmpl, &woc.controller.Config)
+	err = woc.addSidecars(ctx, pod, tmpl, &woc.controller.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -1062,9 +1062,9 @@ func (woc *wfOperationCtx) addInputArtifactsVolumes(ctx context.Context, pod *ap
 
 func (woc *wfOperationCtx) createArtifactVolumeMounts(tmpl *wfv1.Template) []apiv1.Volume {
 	artifactVolumeMounts := []apiv1.Volume{}
-	plugins := tmpl.Outputs.Artifacts.GetPlugins()
+	plugins := tmpl.Outputs.Artifacts.GetPluginNames(woc.artifactRepository)
 	for _, plugin := range plugins {
-		artifactVolumeMounts = append(artifactVolumeMounts, plugin.Name.Volume())
+		artifactVolumeMounts = append(artifactVolumeMounts, plugin.Volume())
 	}
 	return artifactVolumeMounts
 }
@@ -1241,7 +1241,7 @@ func addInitContainers(ctx context.Context, pod *apiv1.Pod, tmpl *wfv1.Template)
 
 // addSidecars adds all sidecars to the pod spec of the step.
 // Optionally volume mounts from the main container to the sidecar
-func addSidecars(ctx context.Context, pod *apiv1.Pod, tmpl *wfv1.Template, config *config.Config) error {
+func (woc *wfOperationCtx) addSidecars(ctx context.Context, pod *apiv1.Pod, tmpl *wfv1.Template, config *config.Config) error {
 	mainCtr := findMainContainer(pod)
 	for _, sidecar := range tmpl.Sidecars {
 		logging.RequireLoggerFromContext(ctx).WithField("name", sidecar.Name).Debug(ctx, "Adding sidecar container")
@@ -1250,11 +1250,11 @@ func addSidecars(ctx context.Context, pod *apiv1.Pod, tmpl *wfv1.Template, confi
 		}
 		pod.Spec.Containers = append(pod.Spec.Containers, sidecar.Container)
 	}
-	return addArtifactPlugins(ctx, pod, tmpl, config)
+	return woc.addArtifactPlugins(ctx, pod, tmpl, config)
 }
 
-func addArtifactPlugins(ctx context.Context, pod *apiv1.Pod, tmpl *wfv1.Template, config *config.Config) error {
-	plugins := tmpl.Outputs.Artifacts.GetPlugins()
+func (woc *wfOperationCtx) addArtifactPlugins(ctx context.Context, pod *apiv1.Pod, tmpl *wfv1.Template, config *config.Config) error {
+	plugins := tmpl.Outputs.Artifacts.GetPluginNames(woc.artifactRepository)
 	drivers, err := config.GetArtifactDrivers(plugins)
 	if err != nil {
 		return err

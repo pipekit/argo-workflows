@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-var (
+const (
 	// DefaultArchivePattern is the default pattern when storing artifacts in an archive repository
 	DefaultArchivePattern = "{{workflow.name}}/{{pod.name}}"
 )
