@@ -424,12 +424,20 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 			execCmd := append(append([]string{common.VarRunArgoPath + "/argoexec", "emissary"}, woc.getExecutorLogOpts(ctx)...), "--")
 			c.Command = append(execCmd, c.Command...)
 		}
-		// Mount shared tmp dir to wait container and artifact plugin containers, but not main container
-		if c.Name == common.WaitContainerName || isArtifactPluginContainer(c.Name) {
+		if c.Image == woc.controller.executorImage() {
+			// mount tmp dir to wait container
 			c.VolumeMounts = append(c.VolumeMounts, apiv1.VolumeMount{
 				Name:      volumeTmpDir.Name,
 				MountPath: "/tmp",
-				//				SubPath:   strconv.Itoa(i), // TODO: revert this removal
+				SubPath:   strconv.Itoa(i),
+			})
+		}
+		// Shared tmp subpath for shared output directory
+		if c.Name == common.WaitContainerName || isArtifactPluginContainer(c.Name) {
+			c.VolumeMounts = append(c.VolumeMounts, apiv1.VolumeMount{
+				Name:      volumeTmpDir.Name,
+				MountPath: "/tmp/argo/outputs",
+				SubPath:   "argo/outputs",
 			})
 		}
 		c.VolumeMounts = append(c.VolumeMounts, volumeMountVarArgo)
