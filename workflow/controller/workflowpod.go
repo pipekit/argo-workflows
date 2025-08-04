@@ -130,7 +130,8 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 		woc.markNodePhase(ctx, nodeName, wfv1.NodeFailed, fmt.Sprintf("workflow shutdown with strategy: %s", woc.GetShutdownStrategy()))
 		return nil, nil
 	}
-
+	log := woc.log.WithFields(logging.Fields{"nodeName": nodeName, "nodeID": nodeID})
+	ctx = logging.WithLogger(ctx, log)
 	tmpl = tmpl.DeepCopy()
 	wfSpec := woc.execWf.Spec.DeepCopy()
 
@@ -270,10 +271,13 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 		pod.Annotations[common.AnnotationKeyPodGCStrategy] = fmt.Sprintf("%s/%s", podGC.GetStrategy(), woc.getPodGCDelay(ctx, podGC))
 	}
 
-	// Add init container only if it needs input artifacts. This is also true for
+	// Add init containers only if it needs input artifacts. This is also true for
 	// script templates (which needs to populate the script)
-	initCtr := woc.newInitContainer(ctx, tmpl)
-	pod.Spec.InitContainers = []apiv1.Container{initCtr}
+	initContainers, err := woc.newInitContainers(ctx, tmpl)
+	if err != nil {
+		return nil, err
+	}
+	pod.Spec.InitContainers = initContainers
 
 	woc.addSchedulingConstraints(ctx, pod, wfSpec, tmpl, nodeName)
 	woc.addMetadata(pod, tmpl)
@@ -283,14 +287,14 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 		if p, ok := wfv1.ParseProgress(x); ok {
 			node, err := woc.wf.Status.Nodes.Get(nodeID)
 			if err != nil {
-				woc.log.WithField("nodeID", nodeID).WithPanic().Error(ctx, "was unable to obtain node")
+				log.WithPanic().Error(ctx, "was unable to obtain node")
 			}
 			node.Progress = p
 			woc.wf.Status.Nodes.Set(ctx, nodeID, *node)
 		}
 	}
 
-	err = woc.addVolumeReferences(pod, woc.volumes, tmpl, woc.wf.Status.PersistentVolumeClaims)
+	err = woc.addVolumeReferences(ctx, pod, woc.volumes, tmpl, woc.wf.Status.PersistentVolumeClaims)
 	if err != nil {
 		return nil, err
 	}
@@ -433,7 +437,7 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 			})
 		}
 		// Shared tmp subpath for shared output directory
-		if c.Name == common.WaitContainerName || isArtifactPluginContainer(c.Name) {
+		if c.Name == common.WaitContainerName || isArtifactPluginSidecar(c.Name) {
 			c.VolumeMounts = append(c.VolumeMounts, apiv1.VolumeMount{
 				Name:      volumeTmpDir.Name,
 				MountPath: "/tmp/argo/outputs",
@@ -485,9 +489,9 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 			if !apierr.IsAlreadyExists(err) {
 				return nil, err
 			}
-			woc.log.WithField("name", cm.Name).Info(ctx, "Configmap already exists")
+			log.WithField("name", cm.Name).Info(ctx, "Configmap already exists")
 		} else {
-			woc.log.WithField("name", created.Name).Info(ctx, "Created configmap")
+			log.WithField("name", created.Name).Info(ctx, "Created configmap")
 		}
 
 		volumeConfig := apiv1.Volume{
@@ -521,7 +525,7 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 	// Check if the template has exceeded its timeout duration. If it hasn't set the applicable activeDeadlineSeconds
 	node, err := woc.wf.GetNodeByName(nodeName)
 	if err != nil {
-		woc.log.WithField("nodeName", nodeName).Warn(ctx, "couldn't retrieve node, will get nil templateDeadline")
+		log.Warn(ctx, "couldn't retrieve node, will get nil templateDeadline")
 	}
 	templateDeadline, err := woc.checkTemplateTimeout(tmpl, node)
 	if err != nil {
@@ -537,7 +541,7 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 		if newActiveDeadlineSeconds <= 1 {
 			return nil, fmt.Errorf("%s exceeded its deadline", nodeName)
 		}
-		woc.log.WithFields(logging.Fields{"newActiveDeadlineSeconds": newActiveDeadlineSeconds, "podNamespace": pod.Namespace, "podName": pod.Name}).Debug(ctx, "Setting new activeDeadlineSeconds")
+		log.WithFields(logging.Fields{"newActiveDeadlineSeconds": newActiveDeadlineSeconds, "podNamespace": pod.Namespace, "podName": pod.Name}).Debug(ctx, "Setting new activeDeadlineSeconds")
 		pod.Spec.ActiveDeadlineSeconds = &newActiveDeadlineSeconds
 	}
 
@@ -545,14 +549,16 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 		return nil, ErrResourceRateLimitReached
 	}
 
-	woc.log.WithFields(logging.Fields{"nodeName": nodeName, "podName": pod.Name}).Debug(ctx, "Creating Pod")
+	log = log.WithField("podName", pod.Name)
+	ctx = logging.WithLogger(ctx, log)
+	log.Debug(ctx, "Creating Pod")
 
 	created, err := woc.controller.kubeclientset.CoreV1().Pods(woc.wf.ObjectMeta.Namespace).Create(ctx, pod, metav1.CreateOptions{})
 	if err != nil {
 		if apierr.IsAlreadyExists(err) {
 			// workflow pod names are deterministic. We can get here if the
 			// controller fails to persist the workflow after creating the pod.
-			woc.log.WithFields(logging.Fields{"nodeName": nodeName, "podName": pod.Name}).Info(ctx, "Failed pod creation: already exists")
+			log.Info(ctx, "Failed pod creation: already exists")
 			// get a reference to the currently existing Pod since the created pod returned before was nil.
 			if existing, err = woc.controller.kubeclientset.CoreV1().Pods(woc.wf.ObjectMeta.Namespace).Get(ctx, pod.Name, metav1.GetOptions{}); err == nil {
 				return existing, nil
@@ -561,10 +567,10 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 		if errorsutil.IsTransientErr(ctx, err) {
 			return nil, err
 		}
-		woc.log.WithFields(logging.Fields{"nodeName": nodeName, "podName": pod.Name, "error": err}).Info(ctx, "Failed to create pod")
+		log.WithError(err).Info(ctx, "Failed to create pod")
 		return nil, errors.InternalWrapError(err)
 	}
-	woc.log.WithFields(logging.Fields{"nodeName": nodeName, "podName": created.Name}).Info(ctx, "Created pod")
+	log.Info(ctx, "Created pod")
 	woc.activePods++
 	return created, nil
 }
@@ -628,10 +634,41 @@ func substitutePodParams(ctx context.Context, pod *apiv1.Pod, globalParams commo
 	return &newSpec, nil
 }
 
-func (woc *wfOperationCtx) newInitContainer(ctx context.Context, tmpl *wfv1.Template) apiv1.Container {
+func (woc *wfOperationCtx) standardInitContainer(ctx context.Context, tmpl *wfv1.Template) *apiv1.Container {
 	ctr := woc.newExecContainer(common.InitContainerName, tmpl)
 	ctr.Command = append([]string{"argoexec", "init"}, woc.getExecutorLogOpts(ctx)...)
-	return *ctr
+	return ctr
+}
+
+func (woc *wfOperationCtx) newInitContainers(ctx context.Context, tmpl *wfv1.Template) ([]apiv1.Container, error) {
+	log := logging.RequireLoggerFromContext(ctx)
+	plugins := tmpl.Inputs.Artifacts.GetPluginNames(ctx, woc.artifactRepository, wfv1.ExcludeLogs)
+
+	log.WithFields(logging.Fields{"plugins": plugins, "pluginLen": len(plugins)}).Debug(ctx, "newInitContainers")
+	initContainers := make([]apiv1.Container, len(plugins)+1)
+	initContainers[0] = *woc.standardInitContainer(ctx, tmpl)
+
+	drivers, err := woc.controller.Config.GetArtifactDrivers(plugins)
+	if err != nil {
+		log.WithError(err).Error(ctx, "failed to get artifact drivers")
+	}
+	for i, driver := range drivers {
+		log.WithFields(logging.Fields{"plugin": driver.Name, "i": i}).Debug(ctx, "adding init container")
+		ctr := woc.newExecContainer(common.ArtifactPluginInitPrefix+string(driver.Name), tmpl)
+		ctr.Image = driver.Image
+		x, err := woc.controller.entrypoint.Lookup(ctx, driver.Image, entrypoint.Options{
+			Namespace: woc.wf.Namespace, ServiceAccountName: woc.execWf.Spec.ServiceAccountName, ImagePullSecrets: woc.execWf.Spec.ImagePullSecrets,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to look-up entrypoint/cmd for image %q, you must either explicitly specify the command, or list the image's command in the index: https://argo-workflows.readthedocs.io/en/latest/workflow-executors/#emissary-emissary: %w", driver.Image, err)
+		}
+
+		ctr.Command = append([]string{common.VarRunArgoPath + "/argoexec", "artifact-plugin", "--plugin-name", string(driver.Name)}, woc.getExecutorLogOpts(ctx)...)
+		ctr.Command = append(ctr.Command, x.Entrypoint...)
+		ctr.Command = append(ctr.Command, driver.Name.SocketPath())
+		initContainers[i+1] = *ctr
+	}
+	return initContainers, nil
 }
 
 func (woc *wfOperationCtx) newWaitContainer(ctx context.Context, tmpl *wfv1.Template) *apiv1.Container {
@@ -883,7 +920,7 @@ func (woc *wfOperationCtx) GetTemplateByBoundaryID(ctx context.Context, boundary
 
 // addVolumeReferences adds any volume mounts that a container/sidecar is referencing, to the pod.spec.volumes
 // These are either specified in the workflow.spec.volumes or the workflow.spec.volumeClaimTemplate section
-func (woc *wfOperationCtx) addVolumeReferences(pod *apiv1.Pod, vols []apiv1.Volume, tmpl *wfv1.Template, pvcs []apiv1.Volume) error {
+func (woc *wfOperationCtx) addVolumeReferences(ctx context.Context, pod *apiv1.Pod, vols []apiv1.Volume, tmpl *wfv1.Template, pvcs []apiv1.Volume) error {
 	switch tmpl.GetType() {
 	case wfv1.TemplateTypeContainer, wfv1.TemplateTypeContainerSet, wfv1.TemplateTypeScript, wfv1.TemplateTypeResource, wfv1.TemplateTypeData:
 	default:
@@ -978,7 +1015,7 @@ func (woc *wfOperationCtx) addVolumeReferences(pod *apiv1.Pod, vols []apiv1.Volu
 			}
 		}
 	}
-	artifactVolumeMounts := woc.createArtifactVolumeMounts(tmpl)
+	artifactVolumeMounts := woc.createArtifactVolumeMounts(ctx, tmpl)
 	pod.Spec.Volumes = append(pod.Spec.Volumes, artifactVolumeMounts...)
 
 	return nil
@@ -1010,9 +1047,13 @@ func (woc *wfOperationCtx) addInputArtifactsVolumes(ctx context.Context, pod *ap
 		},
 	}
 	pod.Spec.Volumes = append(pod.Spec.Volumes, artVol)
-
+	logger := logging.RequireLoggerFromContext(ctx)
+	logger.Debug(ctx, "addInputArtifactsVolumes")
 	for i, initCtr := range pod.Spec.InitContainers {
-		if initCtr.Name == common.InitContainerName {
+		logger.WithFields(logging.Fields{"name": initCtr.Name}).Debug(ctx, "checking init container volumes")
+		
+		if initCtr.Name == common.InitContainerName || isArtifactPluginInit(initCtr.Name) {
+			logger.WithFields(logging.Fields{"name": initCtr.Name}).Debug(ctx, "adding input artifacts volume mount")
 			volMount := apiv1.VolumeMount{
 				Name:      artVol.Name,
 				MountPath: common.ExecutorArtifactBaseDir,
@@ -1031,7 +1072,6 @@ func (woc *wfOperationCtx) addInputArtifactsVolumes(ctx context.Context, pod *ap
 			}
 
 			pod.Spec.InitContainers[i] = initCtr
-			break
 		}
 	}
 
@@ -1068,9 +1108,10 @@ func (woc *wfOperationCtx) addInputArtifactsVolumes(ctx context.Context, pod *ap
 	return nil
 }
 
-func (woc *wfOperationCtx) createArtifactVolumeMounts(tmpl *wfv1.Template) []apiv1.Volume {
+func (woc *wfOperationCtx) createArtifactVolumeMounts(ctx context.Context, tmpl *wfv1.Template) []apiv1.Volume {
 	artifactVolumeMounts := []apiv1.Volume{}
-	plugins := tmpl.Outputs.Artifacts.GetPluginNames(woc.artifactRepository)
+	plugins := tmpl.Outputs.Artifacts.GetPluginNames(ctx, woc.artifactRepository, wfv1.IncludeLogs)
+
 	for _, plugin := range plugins {
 		artifactVolumeMounts = append(artifactVolumeMounts, plugin.Volume())
 	}
@@ -1262,7 +1303,7 @@ func (woc *wfOperationCtx) addSidecars(ctx context.Context, pod *apiv1.Pod, tmpl
 }
 
 func (woc *wfOperationCtx) addArtifactPlugins(ctx context.Context, pod *apiv1.Pod, tmpl *wfv1.Template, config *config.Config) error {
-	plugins := tmpl.Outputs.Artifacts.GetPluginNames(woc.artifactRepository)
+	plugins := tmpl.Outputs.Artifacts.GetPluginNames(ctx,woc.artifactRepository, wfv1.IncludeLogs)
 	drivers, err := config.GetArtifactDrivers(plugins)
 	if err != nil {
 		return err
@@ -1272,7 +1313,7 @@ func (woc *wfOperationCtx) addArtifactPlugins(ctx context.Context, pod *apiv1.Po
 		logging.RequireLoggerFromContext(ctx).WithField("name", driver.Name).Debug(ctx, "Adding artifact plugin")
 
 		pod.Spec.Containers = append(pod.Spec.Containers, apiv1.Container{
-			Name:         "artifact-plugin-" + string(driver.Name),
+			Name:         common.ArtifactPluginSidecarPrefix + string(driver.Name),
 			Image:        driver.Image,
 			Args:         []string{driver.Name.SocketPath()},
 			VolumeMounts: []apiv1.VolumeMount{driver.Name.VolumeMount()},
@@ -1459,6 +1500,10 @@ func mirrorVolumeMounts(ctx context.Context, sourceContainer, targetContainer *a
 	}
 }
 
-func isArtifactPluginContainer(containerName string) bool {
-	return strings.HasPrefix(containerName, "artifact-plugin-")
+func isArtifactPluginSidecar(containerName string) bool {
+	return strings.HasPrefix(containerName, common.ArtifactPluginSidecarPrefix)
+}
+
+func isArtifactPluginInit(containerName string) bool {
+	return strings.HasPrefix(containerName, common.ArtifactPluginInitPrefix)
 }

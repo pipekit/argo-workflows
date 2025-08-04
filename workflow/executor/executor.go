@@ -170,12 +170,20 @@ func (we *WorkflowExecutor) HandleError(ctx context.Context) {
 	}
 }
 
-// LoadArtifacts loads artifacts from location to a container path
-func (we *WorkflowExecutor) LoadArtifacts(ctx context.Context) error {
-	logger := logging.RequireLoggerFromContext(ctx)
-	logger.Info(ctx, "Start loading input artifacts...")
-	for _, art := range we.Template.Inputs.Artifacts {
+func (we *WorkflowExecutor) LoadArtifactsWithoutPlugins(ctx context.Context) error {
+	return we.loadArtifacts(ctx, "")
+}
 
+func (we *WorkflowExecutor) LoadArtifactsFromPlugin(ctx context.Context, pluginName wfv1.ArtifactPluginName) error {
+	return we.loadArtifacts(ctx, pluginName)
+}
+
+// loadArtifacts loads artifacts from location to a container path
+// pluginName is the name of the plugin to load artifacts from, only one plugin can be used at a time
+func (we *WorkflowExecutor) loadArtifacts(ctx context.Context, pluginName wfv1.ArtifactPluginName) error {
+	logger := logging.RequireLoggerFromContext(ctx)
+	logger.WithFields(logging.Fields{"pluginName": pluginName}).Info(ctx, "Start loading input artifacts...")
+	for _, art := range we.Template.Inputs.Artifacts {
 		logger.WithField("name", art.Name).Info(ctx, "Downloading artifact")
 
 		if !art.HasLocationOrKey() {
@@ -194,6 +202,21 @@ func (we *WorkflowExecutor) LoadArtifacts(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("failed to load artifact '%s': %w", art.Name, err)
 		}
+		switch pluginName {
+		// If no plugin is specified only load non-plugin artifacts
+		case "":
+			if driverArt.Plugin != nil {
+				logger.Info(ctx, "Skipping artifact that is from a plugin")
+				continue
+			}
+			// If a plugin is specified only load artifacts from that plugin
+		default:
+			if driverArt.Plugin == nil || driverArt.Plugin.Name != pluginName {
+				logger.WithFields(logging.Fields{"name": driverArt.Name, "plugin": driverArt.Plugin}).Info(ctx, "Skipping artifact that is not from the specified plugin")
+				continue
+			}
+		}
+
 		artDriver, err := we.InitDriver(ctx, driverArt)
 		if err != nil {
 			return err

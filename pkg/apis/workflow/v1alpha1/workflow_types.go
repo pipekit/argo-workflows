@@ -860,19 +860,58 @@ func (a Artifacts) GetArtifactByName(name string) *Artifact {
 	return nil
 }
 
-func (a Artifacts) GetPluginNames(defaultRepo *ArtifactRepository) []ArtifactPluginName {
+type ArtifactPluginLogs int
+
+const (
+	IncludeLogs ArtifactPluginLogs = iota
+	ExcludeLogs
+)
+
+func (a Artifacts) GetPluginNames(ctx context.Context, defaultRepo *ArtifactRepository, includeLogs ArtifactPluginLogs) []ArtifactPluginName {
+	log := logging.RequireLoggerFromContext(ctx)
 	plugins := make(map[ArtifactPluginName]bool, 0)
+	defaultPluginName := ArtifactPluginName("")
+	if defaultRepo != nil &&
+		defaultRepo.Plugin != nil {
+		defaultPluginName = defaultRepo.Plugin.Name
+	}
 	for _, art := range a {
+		artifactPluginName := ArtifactPluginName("")
+		if art.Plugin != nil {
+			artifactPluginName = art.Plugin.Name
+		}
+		log.WithField("artifact", art).Debug(ctx, "checking artifact")
 		switch {
-		case art.Plugin != nil:
-			plugins[art.Plugin.Name] = true
-		case defaultRepo != nil && defaultRepo.Plugin != nil:
-			plugins[defaultRepo.Plugin.Name] = true
+		// if the artifact has a plugin name, add it
+		case artifactPluginName != "":
+			log.WithFields(logging.Fields{"plugin": artifactPluginName}).Debug(ctx, "adding plugin")
+			plugins[artifactPluginName] = true
+		// if the artifact has no plugin name, but the default repo has a plugin name, add it. This is valid, for example an Input From.
+		case artifactPluginName == "" &&
+			defaultPluginName != "":
+			log.WithFields(logging.Fields{"artifact": art, "defaultRepo": defaultRepo}).Debug(ctx, "no plugin name, using default repo plugin")
+			plugins[defaultPluginName] = true
+		// if the default repo has a plugin name, add it
+		case defaultPluginName != "":
+			log.WithFields(logging.Fields{"plugin": defaultPluginName}).Debug(ctx, "adding default repo plugin")
+			plugins[defaultPluginName] = true
+		default:
+			log.WithFields(logging.Fields{"artifact": art.Name, "defaultRepo": defaultRepo}).Debug(ctx, "no plugin")
 		}
 	}
-	pluginNames := make([]ArtifactPluginName, 0, len(plugins))
+	// TODO separate this out into a separate function
+	if includeLogs == IncludeLogs &&
+		defaultRepo != nil &&
+		*defaultRepo.ArchiveLogs &&
+		defaultRepo.Plugin != nil {
+		log.WithFields(logging.Fields{"plugin": defaultRepo.Plugin.Name}).Debug(ctx, "adding logging plugin")
+		plugins[defaultRepo.Plugin.Name] = true
+	}
+	pluginNames := make([]ArtifactPluginName, 0)
 	for name := range plugins {
-		pluginNames = append(pluginNames, name)
+		if name != "" {
+			pluginNames = append(pluginNames, name)
+		}
 	}
 	return pluginNames
 }

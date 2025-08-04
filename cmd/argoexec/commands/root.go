@@ -73,6 +73,7 @@ func NewRootCommand() *cobra.Command {
 		},
 	}
 	command.AddCommand(NewAgentCommand())
+	command.AddCommand(NewArtifactPluginCommand())
 	command.AddCommand(NewEmissaryCommand())
 	command.AddCommand(NewInitCommand())
 	command.AddCommand(NewKillCommand())

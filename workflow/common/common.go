@@ -11,6 +11,8 @@ const (
 	MainContainerName = "main"
 	InitContainerName = "init"
 	WaitContainerName = "wait"
+	ArtifactPluginSidecarPrefix = "artifact-plugin-"
+	ArtifactPluginInitPrefix    = InitContainerName + "-artifact-"
 
 	// AnnotationKeyDefaultContainer is the annotation that specify container that will be used by default in case of kubectl commands for example
 	AnnotationKeyDefaultContainer = "kubectl.kubernetes.io/default-container"
