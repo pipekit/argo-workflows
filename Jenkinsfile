@@ -84,6 +84,15 @@ node(agent_label) {
                   "NO_PROXY": ".bloomberg.com",
               ])
               .addBuildFlags(["--secret id=GIT_PASSWORD,env=GIT_PASSWORD", "--target argocli"])
+              .after(j.hook("generic.ClosureHook").setClosure({ hookCtx ->
+                 def pipeline = hookCtx.pipeline
+                 def version = infoAgent.getVersion()
+                 pipeline.sh("docker create --name argocli workflow-runtimes/argocli:${version}")
+                 pipeline.sh("mkdir dist")
+                 pipeline.sh("docker cp argocli:/bin/argo dist/argo")
+                 pipeline.sh("docker rm argocli")
+                 pipeline.archiveArtifacts(artifacts: "dist/*", allowEmptyArchive: true)
+              }))
 
     j.workflow("SimpleFlow")
                 .infoUsing(infoAgent)
