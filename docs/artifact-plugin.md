@@ -14,6 +14,7 @@ To create an artifact plugin, you need to:
 ### 1. Create and Distribute a Docker Image
 
 Your plugin must be packaged as a Docker image that contains:
+
 - Your plugin implementation
 - All necessary dependencies and runtime requirements
 - The GRPC server that implements the artifact interface
@@ -23,6 +24,7 @@ The Docker image will be deployed alongside workflow pods as sidecars and init c
 ### 2. Implement a GRPC Server
 
 Your plugin's entrypoint must run a GRPC server that:
+
 - Listens on the socket path provided as the first and only command-line parameter
 - Implements the artifact service interface
 - Handles artifact operations (load, save, delete, etc.)
@@ -33,6 +35,7 @@ This contains the main `ArtifactService` interface and all request/response mess
 ### 3. Language Flexibility
 
 You can implement your plugin in any programming language that supports GRPC, including:
+
 - Go
 - Python
 - Java
@@ -50,19 +53,13 @@ Follow these steps to implement an artifact plugin in your chosen language:
 ### 1. Download Protocol Definition
 
 Download the [`artifact.proto`](https://github.com/argoproj/argo-workflows/blob/main/pkg/apiclient/artifact/artifact.proto) file to your project.
-You can add this to your build process (such as a Makefile) to automatically fetch the latest version:
-
-```makefile
-# Example Makefile target
-artifact.proto:
-	curl -o artifact.proto https://raw.githubusercontent.com/argoproj/argo-workflows/main/pkg/apiclient/artifact/artifact.proto
-```
 
 ### 2. Generate GRPC Server Code
 
 Use your language's GRPC tooling to generate server stubs from the protocol definition:
 
 #### Go
+
 ```bash
 # Install protoc-gen-go and protoc-gen-go-grpc
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
@@ -73,6 +70,7 @@ protoc --go_out=. --go-grpc_out=. artifact.proto
 ```
 
 #### Python
+
 ```bash
 # Install grpcio-tools
 pip install grpcio-tools
@@ -82,12 +80,14 @@ python -m grpc_tools.protoc --python_out=. --grpc_python_out=. artifact.proto
 ```
 
 #### Java
+
 ```bash
 # Using protoc with Java plugin
 protoc --java_out=src/main/java --grpc-java_out=src/main/java artifact.proto
 ```
 
 #### Rust
+
 ```rust
 // Add to Cargo.toml
 [build-dependencies]
@@ -100,6 +100,7 @@ fn main() {
 ```
 
 #### Node.JS
+
 ```bash
 # Install grpc-tools
 npm install grpc-tools
@@ -108,7 +109,8 @@ npm install grpc-tools
 grpc_tools_node_protoc --js_out=import_style=commonjs:. --grpc_out=grpc_js:. artifact.proto
 ```
 
-#### C#
+#### C\#
+
 ```bash
 # Install Grpc.Tools package, then use protoc
 protoc --csharp_out=. --grpc_out=. --plugin=protoc-gen-grpc=grpc_csharp_plugin artifact.proto
@@ -124,7 +126,7 @@ Your GRPC server must implement these six methods from the `ArtifactService` int
    - Downloads an artifact from your storage system to the specified local path
    - Called during workflow execution to retrieve input artifacts
 
-2. **`Save(SaveArtifactRequest)` → `SaveArtifactResponse`**  
+2. **`Save(SaveArtifactRequest)` → `SaveArtifactResponse`**
    - Uploads an artifact from a local path to your storage system
    - Called to store output artifacts after step completion
 
@@ -172,6 +174,7 @@ Run your plugin binary directly, providing a Unix socket path:
 ```
 
 or in a container, using the socket path as the command and exposing the socket path as a volume:
+
 ```bash
 docker run -v /tmp/plugin.sock:/tmp/plugin.sock your-plugin-image /tmp/plugin.sock
 ```
@@ -210,6 +213,7 @@ grpcurl -plaintext -unix /tmp/plugin.sock \
 Create simple GRPC clients to test each method:
 
 ##### Go Test Client Example
+
 ```go
 package main
 
@@ -228,9 +232,9 @@ func main() {
         log.Fatal(err)
     }
     defer conn.Close()
-    
+
     client := pb.NewArtifactServiceClient(conn)
-    
+
     // Test Load method
     loadReq := &pb.LoadArtifactRequest{
         InputArtifact: &pb.Artifact{
@@ -245,19 +249,20 @@ func main() {
         },
         Path: "/tmp/downloaded-file.txt",
     }
-    
+
     loadResp, err := client.Load(context.Background(), loadReq)
     if err != nil {
         log.Printf("Load failed: %v", err)
     } else {
         log.Printf("Load success: %v", loadResp.Success)
     }
-    
+
     // Test other methods similarly...
 }
 ```
 
 ##### Python Test Client Example
+
 ```python
 import grpc
 import artifact_pb2
@@ -267,7 +272,7 @@ def test_plugin():
     # Connect to Unix socket
     channel = grpc.insecure_channel('unix:///tmp/plugin.sock')
     stub = artifact_pb2_grpc.ArtifactServiceStub(channel)
-    
+
     # Test Load method
     artifact = artifact_pb2.Artifact(
         name="test-artifact",
@@ -279,12 +284,12 @@ def test_plugin():
             )
         )
     )
-    
+
     request = artifact_pb2.LoadArtifactRequest(
         input_artifact=artifact,
         path="/tmp/downloaded-file.txt"
     )
-    
+
     try:
         response = stub.Load(request)
         print(f"Load success: {response.success}")

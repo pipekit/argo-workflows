@@ -30,25 +30,25 @@ type Driver struct {
 func NewDriver(ctx context.Context, pluginName wfv1.ArtifactPluginName, socketPath string, connectionTimeoutSeconds int32) (*Driver, error) {
 	// Check for the unix socket, retrying for up to a minute if it doesn't exist immediately
 	logger := logging.RequireLoggerFromContext(ctx)
-	
+
 	// Try for up to 120 seconds, checking once per second
 	const maxRetries = 120
 	var info os.FileInfo
 	var statErr error
 	var socketExists bool
-	
+
 	for retry := 0; retry < maxRetries; retry++ {
 		info, statErr = os.Stat(socketPath)
 		if statErr == nil {
 			socketExists = true
 			break
 		}
-		
+
 		if !os.IsNotExist(statErr) {
 			// If error is not due to missing file, fail immediately
 			return nil, fmt.Errorf("plugin %s cannot stat unix socket at %q: %w", pluginName, socketPath, statErr)
 		}
-		
+
 		// Socket doesn't exist yet, log at debug level and retry
 		logger.WithFields(logging.Fields{
 			"pluginName": pluginName,
@@ -58,12 +58,12 @@ func NewDriver(ctx context.Context, pluginName wfv1.ArtifactPluginName, socketPa
 		}).Debug(ctx, "plugin socket not found, retrying in 1s")
 		time.Sleep(time.Second)
 	}
-	
+
 	// If socket still doesn't exist after all retries, fail with error
 	if !socketExists {
 		return nil, fmt.Errorf("plugin %s expected unix socket at %q but it does not exist after waiting for %d seconds", pluginName, socketPath, maxRetries)
 	}
-	
+
 	if (info.Mode() & os.ModeSocket) == 0 {
 		logger.WithFields(logging.Fields{
 			"pluginName": pluginName,
@@ -106,13 +106,13 @@ func NewDriver(ctx context.Context, pluginName wfv1.ArtifactPluginName, socketPa
 	defer cancel()
 
 	conn.Connect()
-	
+
 	// Wait for the connection to be ready within the timeout.
 	if !conn.WaitForStateChange(ctx, connectivity.Idle) {
 		_ = conn.Close()
 		return nil, fmt.Errorf("timeout waiting for plugin %s connection to become active (socket=%q)", pluginName, socketPath)
 	}
-	
+
 	logger.Info(ctx, fmt.Sprintf("plugin %s: connected successfully to %q", pluginName, socketPath))
 	return driver, nil
 }

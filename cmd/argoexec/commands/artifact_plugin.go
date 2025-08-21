@@ -7,11 +7,12 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/argoproj/pkg/stats"
+	"github.com/spf13/cobra"
+
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/argoproj/argo-workflows/v3/util/logging"
 	"github.com/argoproj/argo-workflows/v3/workflow/executor/osspecific"
-	"github.com/argoproj/pkg/stats"
-	"github.com/spf13/cobra"
 )
 
 func NewArtifactPluginCommand() *cobra.Command {
@@ -22,7 +23,7 @@ func NewArtifactPluginCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			logger := logging.RequireLoggerFromContext(ctx)
-			
+
 			name, args := args[0], args[1:]
 			logger.WithFields(logging.Fields{"name": name, "args": args}).Debug(ctx, "starting command")
 
@@ -33,11 +34,11 @@ func NewArtifactPluginCommand() *cobra.Command {
 					return
 				}
 				defer closer()
-		// setup signal handlers
-		signals := make(chan os.Signal, 1)
-		defer close(signals)
-		signal.Notify(signals)
-		defer signal.Reset()
+				// setup signal handlers
+				signals := make(chan os.Signal, 1)
+				defer close(signals)
+				signal.Notify(signals)
+				defer signal.Reset()
 
 				go func() {
 					for s := range signals {
@@ -50,9 +51,9 @@ func NewArtifactPluginCommand() *cobra.Command {
 						_ = osspecific.Kill(command.Process.Pid, s.(syscall.Signal))
 					}
 				}()
-//				pid := command.Process.Pid
-//				ctx, cancel := context.WithCancel(ctx)
-//				defer cancel()
+				//				pid := command.Process.Pid
+				//				ctx, cancel := context.WithCancel(ctx)
+				//				defer cancel()
 			}()
 			err := loadArtifactPlugin(cmd.Context(), artifactPlugin)
 			if err != nil {

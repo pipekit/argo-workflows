@@ -1051,7 +1051,7 @@ func (woc *wfOperationCtx) addInputArtifactsVolumes(ctx context.Context, pod *ap
 	logger.Debug(ctx, "addInputArtifactsVolumes")
 	for i, initCtr := range pod.Spec.InitContainers {
 		logger.WithFields(logging.Fields{"name": initCtr.Name}).Debug(ctx, "checking init container volumes")
-		
+
 		if initCtr.Name == common.InitContainerName || isArtifactPluginInit(initCtr.Name) {
 			logger.WithFields(logging.Fields{"name": initCtr.Name}).Debug(ctx, "adding input artifacts volume mount")
 			volMount := apiv1.VolumeMount{
@@ -1303,7 +1303,7 @@ func (woc *wfOperationCtx) addSidecars(ctx context.Context, pod *apiv1.Pod, tmpl
 }
 
 func (woc *wfOperationCtx) addArtifactPlugins(ctx context.Context, pod *apiv1.Pod, tmpl *wfv1.Template, config *config.Config) error {
-	plugins := tmpl.Outputs.Artifacts.GetPluginNames(ctx,woc.artifactRepository, wfv1.IncludeLogs)
+	plugins := tmpl.Outputs.Artifacts.GetPluginNames(ctx, woc.artifactRepository, wfv1.IncludeLogs)
 	drivers, err := config.GetArtifactDrivers(plugins)
 	if err != nil {
 		return err

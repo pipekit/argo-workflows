@@ -8,9 +8,9 @@ import (
 
 const (
 	// Container names used in the workflow pod
-	MainContainerName = "main"
-	InitContainerName = "init"
-	WaitContainerName = "wait"
+	MainContainerName           = "main"
+	InitContainerName           = "init"
+	WaitContainerName           = "wait"
 	ArtifactPluginSidecarPrefix = "artifact-plugin-"
 	ArtifactPluginInitPrefix    = InitContainerName + "-artifact-"
 

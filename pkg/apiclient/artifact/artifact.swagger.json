@@ -250,7 +250,7 @@
           "type": "boolean"
         }
       },
-      "title": "Comprehensive Artifact representation for gRPC"
+      "title": "Artifact representation for gRPC"
     },
     "artifact.ArtifactLocation": {
       "type": "object",
@@ -262,7 +262,7 @@
           "$ref": "#/definitions/artifact.PluginArtifact"
         }
       },
-      "title": "Artifact Location containing all possible artifact storage types"
+      "title": "Artifact Location containing only plugin location"
     },
     "artifact.DeleteArtifactRequest": {
       "type": "object",

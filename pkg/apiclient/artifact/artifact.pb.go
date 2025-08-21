@@ -103,7 +103,7 @@ func (m *PluginArtifact) GetKey() string {
 	return ""
 }
 
-// Artifact Location containing all possible artifact storage types
+// Artifact Location containing only plugin location
 type ArtifactLocation struct {
 	ArchiveLogs          bool            `protobuf:"varint,1,opt,name=archive_logs,json=archiveLogs,proto3" json:"archive_logs,omitempty"`
 	Plugin               *PluginArtifact `protobuf:"bytes,2,opt,name=plugin,proto3" json:"plugin,omitempty"`
@@ -159,7 +159,7 @@ func (m *ArtifactLocation) GetPlugin() *PluginArtifact {
 	return nil
 }
 
-// Comprehensive Artifact representation for gRPC
+// Artifact representation for gRPC
 type Artifact struct {
 	Name                 string            `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Path                 string            `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
