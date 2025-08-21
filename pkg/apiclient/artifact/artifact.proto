@@ -16,13 +16,13 @@ message PluginArtifact {
   string key = 4;
 }
 
-// Artifact Location containing all possible artifact storage types
+// Artifact Location containing only plugin location
 message ArtifactLocation {
   bool archive_logs = 1;
   PluginArtifact plugin = 2;
 }
 
-// Comprehensive Artifact representation for gRPC
+// Artifact representation for gRPC
 message Artifact {
   string name = 1;
   string path = 2;
