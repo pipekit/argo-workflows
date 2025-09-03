@@ -11,20 +11,11 @@ By implementing a plugin, you can integrate with proprietary storage systems, ad
 
 To create an artifact plugin, you need to:
 
-### 1. Create and Distribute a Docker Image
-
-Your plugin must be packaged as a Docker image that contains:
-
-- Your plugin implementation
-- All necessary dependencies and runtime requirements
-- The GRPC server that implements the artifact interface
-
-The Docker image will be deployed alongside workflow pods as sidecars and init containers.
-
-### 2. Implement a GRPC Server
+### 1. Implement a GRPC Server
 
 Your plugin's entrypoint must run a GRPC server that:
 
+<!-- TODO: specify path format, including `unix:` or not? -->
 - Listens on the socket path provided as the first and only command-line parameter
 - Implements the artifact service interface
 - Handles artifact operations (load, save, delete, etc.)
@@ -32,9 +23,7 @@ Your plugin's entrypoint must run a GRPC server that:
 The GRPC interface is defined in **[`artifact.proto`](https://github.com/argoproj/argo-workflows/blob/main/pkg/apiclient/artifact/artifact.proto)**.
 This contains the main `ArtifactService` interface and all request/response message types your plugin must implement.
 
-### 3. Language Flexibility
-
-You can implement your plugin in any programming language that supports GRPC, including:
+The plugin can be implemented in any programming language that supports GRPC, including:
 
 - Go
 - Python
@@ -46,6 +35,16 @@ You can implement your plugin in any programming language that supports GRPC, in
 
 Choose the language that best fits your team's expertise and your storage backend's SDK requirements.
 
+### 2. Create and Distribute a Docker Image
+
+Your plugin must be packaged as a Docker image that contains:
+
+- Your plugin implementation
+- All necessary dependencies and runtime requirements
+- The GRPC server that implements the artifact interface
+
+The Docker image will be deployed alongside workflow pods as sidecars and init containers.
+
 ## Implementation Steps
 
 Follow these steps to implement an artifact plugin in your chosen language:
@@ -56,7 +55,8 @@ Download the [`artifact.proto`](https://github.com/argoproj/argo-workflows/blob/
 
 ### 2. Generate GRPC Server Code
 
-Use your language's GRPC tooling to generate server stubs from the protocol definition:
+Use your language's GRPC tooling to generate server stubs from the protocol definition.
+You will need the `googleapis` protocol definitions from <https://github.com/googleapis/googleapis>.
 
 #### Go
 
@@ -72,11 +72,17 @@ protoc --go_out=. --go-grpc_out=. artifact.proto
 #### Python
 
 ```bash
-# Install grpcio-tools
-pip install grpcio-tools
+# Create a project and venv
+python -m venv .venv && source .venv/bin/activate
+
+# Install grpcio-tools and protobuf
+pip install grpcio-tools protobuf
+
+# Create a module
+mkdir my_artifact_plugin
 
 # Generate Python code
-python -m grpc_tools.protoc --python_out=. --grpc_python_out=. artifact.proto
+python -m grpc_tools.protoc --python_out=artifact_plugin --pyi_out=artifact_plugin --grpc_python_out=artifact_plugin -I googleapis -I . artifact.proto
 ```
 
 #### Java
@@ -149,7 +155,9 @@ Your GRPC server must implement these six methods from the `ArtifactService` int
 
 #### Implementation Notes
 
+<!-- TODO: confirm why artifact.configuration is actually `artifact.artifact_location.plugin.configuration` -->
 - Parse the plugin configuration from `artifact.configuration` field in each request
+<!-- TODO: also artifact.key is actually `artifact.artifact_location.plugin.key` -->
 - Use the `artifact.key` field to identify the specific artifact location in your storage
 - Handle errors gracefully and return appropriate error messages
 - Support both file and directory artifacts where applicable
@@ -168,6 +176,7 @@ For faster development iteration, test your plugin locally using a simple GRPC c
 
 Run your plugin binary directly, providing a Unix socket path:
 
+<!-- TODO: Confirm if we need to add `unix:`? -->
 ```bash
 # Start your plugin server listening on a Unix socket
 ./your-plugin-binary /tmp/plugin.sock
@@ -175,6 +184,7 @@ Run your plugin binary directly, providing a Unix socket path:
 
 or in a container, using the socket path as the command and exposing the socket path as a volume:
 
+<!-- TODO: Confirm if we need to add `unix:`? -->
 ```bash
 docker run -v /tmp/plugin.sock:/tmp/plugin.sock your-plugin-image /tmp/plugin.sock
 ```
