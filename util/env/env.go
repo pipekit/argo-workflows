@@ -61,8 +61,3 @@ func LookupEnvStringOr(key string, o string) string {
 	}
 	return o
 }
-
-// GetHostname returns the HOSTNAME environment variable value
-func GetHostname() string {
-	return os.Getenv("HOSTNAME")
-}

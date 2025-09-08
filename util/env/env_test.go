@@ -49,13 +49,3 @@ func TestLookupEnvStringOr(t *testing.T) {
 	t.Setenv("FOO", "")
 	require.Equal(t, "a", LookupEnvStringOr("FOO", "a"), "empty var value; default value")
 }
-
-func TestGetHostname(t *testing.T) {
-	// Test when HOSTNAME is set
-	t.Setenv("HOSTNAME", "test-hostname")
-	require.Equal(t, "test-hostname", GetHostname())
-
-	// Test when HOSTNAME is not set
-	t.Setenv("HOSTNAME", "")
-	require.Empty(t, GetHostname())
-}
