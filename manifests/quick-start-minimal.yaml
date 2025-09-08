@@ -2890,10 +2890,12 @@ rules:
   - ""
   resources:
   - pods
+  - secrets
   verbs:
   - create
   - get
   - patch
+  - list
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
