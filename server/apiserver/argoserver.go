@@ -64,10 +64,10 @@ import (
 	"github.com/argoproj/argo-workflows/v3/server/workflowarchive"
 	"github.com/argoproj/argo-workflows/v3/server/workflowtemplate"
 	"github.com/argoproj/argo-workflows/v3/ui"
-	envutil "github.com/argoproj/argo-workflows/v3/util/env"
 	grpcutil "github.com/argoproj/argo-workflows/v3/util/grpc"
 	"github.com/argoproj/argo-workflows/v3/util/instanceid"
 	"github.com/argoproj/argo-workflows/v3/util/json"
+	k8sutil "github.com/argoproj/argo-workflows/v3/util/k8s"
 	"github.com/argoproj/argo-workflows/v3/util/logging"
 	rbacutil "github.com/argoproj/argo-workflows/v3/util/rbac"
 	"github.com/argoproj/argo-workflows/v3/util/sqldb"
@@ -527,12 +527,14 @@ func (as *argoServer) validateArtifactDriverImages(ctx context.Context, cfg *con
 
 	log.Info(ctx, "Validating artifact driver images against server pod")
 
-	// Get the current pod to check what images are available
-	podName := envutil.GetHostname()
-	if podName == "" {
-		log.Warn(ctx, "HOSTNAME environment variable not set, cannot validate artifact driver images")
+	// Get the current pod name using the standard Argo pattern
+	podName, err := k8sutil.GetCurrentPodName(ctx, as.clients.Kubernetes, as.namespace, "app=argo-server")
+	if err != nil {
+		log.WithError(err).Warn(ctx, "Failed to get current pod name, cannot validate artifact driver images")
 		return nil
 	}
+
+	log.WithField("podName", podName).Debug(ctx, "Found argo-server pod for validation")
 
 	// Get the current pod to check the available images
 	pod, err := as.clients.Kubernetes.CoreV1().Pods(as.namespace).Get(ctx, podName, metav1.GetOptions{})
