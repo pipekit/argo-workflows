@@ -664,6 +664,7 @@ func (woc *wfOperationCtx) newInitContainers(ctx context.Context, tmpl *wfv1.Tem
 		}
 
 		ctr.Command = append([]string{common.VarRunArgoPath + "/argoexec", "artifact-plugin", "--plugin-name", string(driver.Name)}, woc.getExecutorLogOpts(ctx)...)
+		ctr.Command = append(ctr.Command, "--")
 		ctr.Command = append(ctr.Command, x.Entrypoint...)
 		ctr.Command = append(ctr.Command, driver.Name.SocketPath())
 		initContainers[i+1] = *ctr

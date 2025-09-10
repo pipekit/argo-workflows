@@ -51,11 +51,8 @@ func NewArtifactPluginCommand() *cobra.Command {
 						_ = osspecific.Kill(command.Process.Pid, s.(syscall.Signal))
 					}
 				}()
-				//				pid := command.Process.Pid
-				//				ctx, cancel := context.WithCancel(ctx)
-				//				defer cancel()
 			}()
-			err := loadArtifactPlugin(cmd.Context(), artifactPlugin)
+			err := loadArtifactPlugin(cmd.Context(), wfv1.ArtifactPluginName(artifactPlugin))
 			if err != nil {
 				return fmt.Errorf("%+v", err)
 			}
@@ -66,7 +63,10 @@ func NewArtifactPluginCommand() *cobra.Command {
 	return &command
 }
 
-func loadArtifactPlugin(ctx context.Context, pluginName string) error {
+func loadArtifactPlugin(ctx context.Context, pluginName wfv1.ArtifactPluginName) error {
+	if err := os.MkdirAll(pluginName.SocketDir(), 0755); err != nil {
+		return err
+	}
 	wfExecutor := initExecutor(ctx)
 	defer wfExecutor.HandleError(ctx)
 	defer stats.LogStats()
