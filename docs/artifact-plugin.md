@@ -15,8 +15,7 @@ To create an artifact plugin, you need to:
 
 Your plugin's entrypoint must run a GRPC server that:
 
-<!-- TODO: specify path format, including `unix:` or not? -->
-- Listens on the socket path provided as the first and only command-line parameter
+- Listens on the Unix socket path provided as the first and only command-line parameter. The `unix://` prefix should not be necessary.
 - Implements the artifact service interface
 - Handles artifact operations (load, save, delete, etc.)
 
@@ -155,10 +154,8 @@ Your GRPC server must implement these six methods from the `ArtifactService` int
 
 #### Implementation Notes
 
-<!-- TODO: confirm why artifact.configuration is actually `artifact.artifact_location.plugin.configuration` -->
-- Parse the plugin configuration from `artifact.configuration` field in each request
-<!-- TODO: also artifact.key is actually `artifact.artifact_location.plugin.key` -->
-- Use the `artifact.key` field to identify the specific artifact location in your storage
+- Parse the plugin configuration from `artifact.plugin.configuration` field in each request
+- Use the `artifact.plugin.key` field to identify the specific artifact location in your storage
 - Handle errors gracefully and return appropriate error messages
 - Support both file and directory artifacts where applicable
 - Consider implementing timeouts and retry logic for storage operations
@@ -176,7 +173,6 @@ For faster development iteration, test your plugin locally using a simple GRPC c
 
 Run your plugin binary directly, providing a Unix socket path:
 
-<!-- TODO: Confirm if we need to add `unix:`? -->
 ```bash
 # Start your plugin server listening on a Unix socket
 ./your-plugin-binary /tmp/plugin.sock
@@ -184,7 +180,6 @@ Run your plugin binary directly, providing a Unix socket path:
 
 or in a container, using the socket path as the command and exposing the socket path as a volume:
 
-<!-- TODO: Confirm if we need to add `unix:`? -->
 ```bash
 docker run -v /tmp/plugin.sock:/tmp/plugin.sock your-plugin-image /tmp/plugin.sock
 ```
