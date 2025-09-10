@@ -18,6 +18,7 @@ Your plugin's entrypoint must run a GRPC server that:
 - Listens on the Unix socket path provided as the first and only command-line parameter. The `unix://` prefix should not be necessary.
 - Implements the artifact service interface
 - Handles artifact operations (load, save, delete, etc.)
+- Shuts down gracefully when given a SIGTERM signal
 
 The GRPC interface is defined in **[`artifact.proto`](https://github.com/argoproj/argo-workflows/blob/main/pkg/apiclient/artifact/artifact.proto)**.
 This contains the main `ArtifactService` interface and all request/response message types your plugin must implement.
@@ -159,6 +160,7 @@ Your GRPC server must implement these six methods from the `ArtifactService` int
 - Handle errors gracefully and return appropriate error messages
 - Support both file and directory artifacts where applicable
 - Consider implementing timeouts and retry logic for storage operations
+- IMPORTANT: SIGTERM signals must be handled gracefully to exit with a `0` exit code
 
 ### 4. Build and Package
 
@@ -310,6 +312,6 @@ if __name__ == "__main__":
 Once local testing passes, test with the full workflow controller:
 
 1. Build and push your Docker image
-2. Configure it in the workflow controller ConfigMap
+2. Configure it in the workflow controller ConfigMap, as shown under [Configuring Your Artifact Repository](configure-artifact-repository.md#plugin-configuration)
 3. Create workflows that use your plugin for artifacts
 4. Verify all artifact operations work correctly by using artifacts as inputs, outputs and performing garbage collection
