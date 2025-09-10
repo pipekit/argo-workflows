@@ -88,7 +88,7 @@ node(agent_label) {
                  def pipeline = hookCtx.pipeline
                  def version = infoAgent.getVersion()
                  pipeline.sh("docker create --name argocli workflow-runtimes/argocli:${version}")
-                 pipeline.sh("mkdir dist")
+                 pipeline.sh("mkdir -p dist")
                  pipeline.sh("docker cp argocli:/bin/argo dist/argo")
                  pipeline.sh("docker rm argocli")
                  pipeline.archiveArtifacts(artifacts: "dist/*", allowEmptyArchive: true)
