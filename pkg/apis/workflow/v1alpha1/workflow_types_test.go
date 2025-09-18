@@ -518,6 +518,21 @@ func TestArtifactLocation_SetType(t *testing.T) {
 		require.NoError(t, l.SetType(&AzureArtifact{}))
 		assert.NotNil(t, l.Azure)
 	})
+
+	t.Run("SetType_Plugin", func(t *testing.T) {
+		location := &ArtifactLocation{}
+		pluginArtifact := &PluginArtifact{
+			Name:          "test-plugin",
+			Configuration: `{"bucket": "my-bucket"}`,
+			Key:           "path/to/artifact",
+		}
+
+		err := location.SetType(pluginArtifact)
+		assert.NoError(t, err)
+		assert.NotNil(t, location.Plugin)
+		// Note: SetType creates a new empty instance, not copying the values
+		assert.Equal(t, ArtifactPluginName(""), location.Plugin.Name)
+	})
 }
 
 func TestArtifactLocation_Key(t *testing.T) {
