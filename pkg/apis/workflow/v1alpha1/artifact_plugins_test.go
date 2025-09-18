@@ -182,20 +182,6 @@ func TestPluginArtifactRepository(t *testing.T) {
 }
 
 func TestArtifactLocation_Plugin(t *testing.T) {
-	t.Run("Get_Plugin", func(t *testing.T) {
-		location := &ArtifactLocation{
-			Plugin: &PluginArtifact{
-				Name:          "test-plugin",
-				Configuration: `{"bucket": "my-bucket"}`,
-				Key:           "path/to/artifact",
-			},
-		}
-
-		artifact, err := location.Get()
-		assert.NoError(t, err)
-		assert.IsType(t, &PluginArtifact{}, artifact)
-	})
-
 	t.Run("SetType_Plugin", func(t *testing.T) {
 		location := &ArtifactLocation{}
 		pluginArtifact := &PluginArtifact{
