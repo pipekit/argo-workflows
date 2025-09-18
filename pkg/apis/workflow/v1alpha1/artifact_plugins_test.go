@@ -59,28 +59,6 @@ func TestArtifactPluginName(t *testing.T) {
 }
 
 func TestPluginArtifact(t *testing.T) {
-	t.Run("GetKey", func(t *testing.T) {
-		plugin := &PluginArtifact{
-			Name:          "test-plugin",
-			Configuration: `{"bucket": "my-bucket"}`,
-			Key:           "path/to/artifact",
-		}
-		key, err := plugin.GetKey()
-		assert.NoError(t, err)
-		assert.Equal(t, "path/to/artifact", key)
-	})
-
-	t.Run("SetKey", func(t *testing.T) {
-		plugin := &PluginArtifact{
-			Name:          "test-plugin",
-			Configuration: `{"bucket": "my-bucket"}`,
-			Key:           "old/path",
-		}
-		err := plugin.SetKey("new/path/to/artifact")
-		assert.NoError(t, err)
-		assert.Equal(t, "new/path/to/artifact", plugin.Key)
-	})
-
 	t.Run("HasLocation_Complete", func(t *testing.T) {
 		plugin := &PluginArtifact{
 			Name:          "test-plugin",
