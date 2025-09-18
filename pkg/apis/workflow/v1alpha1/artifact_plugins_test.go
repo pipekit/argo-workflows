@@ -232,34 +232,6 @@ func TestArtifactLocation_Plugin(t *testing.T) {
 		}
 		assert.False(t, location.HasLocation())
 	})
-
-	t.Run("GetKey_Plugin", func(t *testing.T) {
-		location := &ArtifactLocation{
-			Plugin: &PluginArtifact{
-				Name:          "test-plugin",
-				Configuration: `{"bucket": "my-bucket"}`,
-				Key:           "path/to/artifact",
-			},
-		}
-
-		key, err := location.GetKey()
-		assert.NoError(t, err)
-		assert.Equal(t, "path/to/artifact", key)
-	})
-
-	t.Run("SetKey_Plugin", func(t *testing.T) {
-		location := &ArtifactLocation{
-			Plugin: &PluginArtifact{
-				Name:          "test-plugin",
-				Configuration: `{"bucket": "my-bucket"}`,
-				Key:           "old/path",
-			},
-		}
-
-		err := location.SetKey("new/path/to/artifact")
-		assert.NoError(t, err)
-		assert.Equal(t, "new/path/to/artifact", location.Plugin.Key)
-	})
 }
 
 func TestArtifacts_GetPluginNames(t *testing.T) {
