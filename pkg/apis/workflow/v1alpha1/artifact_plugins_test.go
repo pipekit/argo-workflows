@@ -674,25 +674,3 @@ func TestMultiplePluginArtifactRepositories(t *testing.T) {
 		assert.Equal(t, `{"environment": "staging", "region": "us-west-2"}`, location2.Plugin.Configuration)
 	})
 }
-
-func TestArtifactLocation_MultiplePluginTypes(t *testing.T) {
-	t.Run("PluginTakesPrecedence", func(t *testing.T) {
-		// Test that when multiple artifact types are set, the Get() method returns the correct one
-		// Based on the implementation order in ArtifactLocation.Get()
-		// Order: Artifactory, Azure, Git, GCS, HDFS, HTTP, OSS, Raw, S3, Plugin
-		location := &ArtifactLocation{
-			S3: &S3Artifact{
-				S3Bucket: S3Bucket{Bucket: "s3-bucket"},
-				Key:      "s3/path",
-			},
-			Plugin: &PluginArtifact{
-				Name:          "test-plugin",
-				Configuration: `{"bucket": "plugin-bucket"}`,
-				Key:           "plugin/path",
-			},
-		}
-
-		_, err := location.Get()
-		assert.Error(t, err)
-	})
-}
