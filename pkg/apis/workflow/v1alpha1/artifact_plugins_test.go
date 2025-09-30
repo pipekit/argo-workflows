@@ -692,12 +692,7 @@ func TestArtifactLocation_MultiplePluginTypes(t *testing.T) {
 			},
 		}
 
-		artifact, err := location.Get()
-		assert.NoError(t, err)
-		// S3 should take precedence over Plugin based on the order in Get() method
-		assert.IsType(t, &S3Artifact{}, artifact)
-
-		s3Artifact := artifact.(*S3Artifact)
-		assert.Equal(t, "s3-bucket", s3Artifact.Bucket)
+		_, err := location.Get()
+		assert.Error(t, err)
 	})
 }
