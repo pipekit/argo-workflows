@@ -18,12 +18,15 @@ import (
 	"github.com/argoproj/argo-workflows/v3/workflow/hydrator"
 )
 
+
 func (wfc *WorkflowController) updateConfig(ctx context.Context) error {
-	bytes, err := yaml.Marshal(wfc.Config)
+	_, err := yaml.Marshal(wfc.Config)
+
 	if err != nil {
 		return err
 	}
-	log.Info("Configuration:\n" + string(bytes))
+	log.Info("Configuration updated")
+
 	wfc.artifactRepositories = artifactrepositories.New(wfc.kubeclientset, wfc.namespace, &wfc.Config.ArtifactRepository)
 	wfc.offloadNodeStatusRepo = persist.ExplosiveOffloadNodeStatusRepo
 	wfc.wfArchive = persist.NullWorkflowArchive
