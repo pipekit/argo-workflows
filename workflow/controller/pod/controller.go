@@ -179,8 +179,7 @@ func (c *Controller) podOrphaned(pod *v1.Pod) bool {
 func podGCFromPod(pod *v1.Pod) wfv1.PodGC {
 	if val, ok := pod.ObjectMeta.Annotations[common.AnnotationKeyPodGCStrategy]; ok {
 		parts := strings.Split(val, "/")
-		delay, _ := time.ParseDuration(parts[1])
-		return wfv1.PodGC{Strategy: wfv1.PodGCStrategy(parts[0]), DeleteDelayDuration: &metav1.Duration{delay}}
+		return wfv1.PodGC{Strategy: wfv1.PodGCStrategy(parts[0]), DeleteDelayDuration: parts[1]}
 	}
 	return wfv1.PodGC{Strategy: wfv1.PodGCOnPodNone}
 }
@@ -225,9 +224,10 @@ func (c *Controller) commonPodEvent(pod *v1.Pod, deleting bool) {
 		lastTransition := podLastTransition(pod)
 		// GetDeleteDelayDuration returns -1 if no duration, we don't care about failure to parse otherwise here
 		delay := time.Duration(0)
-		delayDuration := minimumDelay
-		if podGC.DeleteDelayDuration != nil && podGC.DeleteDelayDuration.Duration > delayDuration {
-			delayDuration = podGC.DeleteDelayDuration.Duration
+		delayDuration, _ := podGC.GetDeleteDelayDuration()
+		// In the case of a raw delete make sure we've had some time to process it if there was a finalizer
+		if delayDuration < minimumDelay {
+			delayDuration = minimumDelay
 		}
 		if !lastTransition.IsZero() && delayDuration > 0 {
 			delay = time.Until(lastTransition.Add(delayDuration))

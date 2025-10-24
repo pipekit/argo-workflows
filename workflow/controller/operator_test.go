@@ -1785,8 +1785,9 @@ func TestAssessNodeStatus(t *testing.T) {
 				Phase:   apiv1.PodFailed,
 			},
 		},
-		node:      &wfv1.NodeStatus{TemplateName: templateName},
-		wantPhase: wfv1.NodeFailed,
+		node:        &wfv1.NodeStatus{TemplateName: templateName},
+		wantPhase:   wfv1.NodeFailed,
+		wantMessage: "failed since wait contain waiting",
 	}, {
 		name: "pod running",
 		pod: &apiv1.Pod{
@@ -1827,8 +1828,9 @@ func TestAssessNodeStatus(t *testing.T) {
 				Phase:   apiv1.PodFailed,
 			},
 		},
-		node:      &wfv1.NodeStatus{TemplateName: templateName},
-		wantPhase: wfv1.NodeFailed,
+		node:        &wfv1.NodeStatus{TemplateName: templateName},
+		wantPhase:   wfv1.NodeFailed,
+		wantMessage: "Pod Failed",
 	}}
 
 	nonDaemonWf := wfv1.MustUnmarshalWorkflow(helloWorldWf)

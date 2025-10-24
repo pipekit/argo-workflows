@@ -1116,7 +1116,6 @@ spec:
 
 	woc.operate(ctx)
 	assert.True(t, controller.PodController.TestingProcessNextItem(ctx))
-	assert.True(t, controller.PodController.TestingProcessNextItem(ctx))
 	assert.Equal(t, wfv1.WorkflowSucceeded, woc.wf.Status.Phase)
 	podCleanupKey := "test/my-wf/labelPodCompleted"
 	assert.Equal(t, 0, controller.PodController.TestingQueueNumRequeues(podCleanupKey))
@@ -1149,30 +1148,10 @@ spec:
 	assert.True(t, controller.PodController.TestingProcessNextItem(ctx))
 	assert.True(t, controller.PodController.TestingProcessNextItem(ctx))
 	assert.True(t, controller.PodController.TestingProcessNextItem(ctx))
-	assert.True(t, controller.PodController.TestingProcessNextItem(ctx))
 	assert.Equal(t, wfv1.WorkflowFailed, woc.wf.Status.Phase)
 	pods, err := listPods(woc)
 	require.NoError(t, err)
 	assert.Empty(t, pods.Items)
-}
-
-func TestPendingPodWhenTerminate(t *testing.T) {
-	wf := wfv1.MustUnmarshalWorkflow(helloWorldWf)
-	wf.Spec.Shutdown = wfv1.ShutdownStrategyTerminate
-	wf.Status.Phase = wfv1.WorkflowPending
-
-	cancel, controller := newController(wf)
-	defer cancel()
-
-	ctx := context.Background()
-	assert.True(t, controller.processNextItem(ctx))
-
-	woc := newWorkflowOperationCtx(wf, controller)
-	woc.operate(ctx)
-	assert.Equal(t, wfv1.WorkflowSucceeded, woc.wf.Status.Phase)
-	for _, node := range woc.wf.Status.Nodes {
-		assert.Equal(t, wfv1.NodeSkipped, node.Phase)
-	}
 }
 
 func TestPendingPodWhenTerminate(t *testing.T) {
