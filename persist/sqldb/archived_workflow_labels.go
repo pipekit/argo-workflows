@@ -19,7 +19,7 @@ import (
 func (r *workflowArchive) ListWorkflowsLabelKeys(ctx context.Context) (*wfv1.LabelKeys, error) {
 	var archivedWfLabels []archivedWorkflowLabelRecord
 
-	err := r.session.SQL().
+	err := r.sessionProxy.Session().SQL().
 		Select(db.Raw("DISTINCT name")).
 		From(archiveLabelsTableName).
 		All(&archivedWfLabels)
@@ -38,7 +38,7 @@ func (r *workflowArchive) ListWorkflowsLabelKeys(ctx context.Context) (*wfv1.Lab
 // SELECT DISTINCT value FROM argo_archived_workflows_labels WHERE name=labelkey
 func (r *workflowArchive) ListWorkflowsLabelValues(ctx context.Context, key string) (*wfv1.LabelValues, error) {
 	var archivedWfLabels []archivedWorkflowLabelRecord
-	err := r.session.SQL().
+	err := r.sessionProxy.Session().SQL().
 		Select(db.Raw("DISTINCT value")).
 		From(archiveLabelsTableName).
 		Where(db.Cond{"name": key}).

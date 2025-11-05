@@ -85,7 +85,7 @@ type WorkflowArchive interface {
 }
 
 type workflowArchive struct {
-	session           db.Session
+	sessionProxy      *sqldb.SessionProxy
 	clusterName       string
 	managedNamespace  string
 	instanceIDService instanceid.Service
@@ -97,8 +97,8 @@ func (r *workflowArchive) IsEnabled() bool {
 }
 
 // NewWorkflowArchive returns a new workflowArchive
-func NewWorkflowArchive(session db.Session, clusterName, managedNamespace string, instanceIDService instanceid.Service) WorkflowArchive {
-	return &workflowArchive{session: session, clusterName: clusterName, managedNamespace: managedNamespace, instanceIDService: instanceIDService, dbType: sqldb.DBTypeFor(session)}
+func NewWorkflowArchive(sessionProxy *sqldb.SessionProxy, clusterName, managedNamespace string, instanceIDService instanceid.Service) WorkflowArchive {
+	return &workflowArchive{sessionProxy: sessionProxy, clusterName: clusterName, managedNamespace: managedNamespace, instanceIDService: instanceIDService, dbType: sqldb.DBTypeFor(sessionProxy.Session())}
 }
 
 func (r *workflowArchive) ArchiveWorkflow(ctx context.Context, wf *wfv1.Workflow) error {
@@ -112,7 +112,7 @@ func (r *workflowArchive) ArchiveWorkflow(ctx context.Context, wf *wfv1.Workflow
 	if r.dbType == sqldb.Postgres {
 		workflow = bytes.ReplaceAll(workflow, []byte("\\u0000"), []byte(postgresNullReplacement))
 	}
-	return r.session.Tx(func(sess db.Session) error {
+	return r.sessionProxy.Session().Tx(func(sess db.Session) error {
 		_, err := sess.SQL().
 			DeleteFrom(archiveTableName).
 			Where(r.clusterManagedNamespaceAndInstanceID()).
@@ -167,7 +167,7 @@ func (r *workflowArchive) ArchiveWorkflow(ctx context.Context, wf *wfv1.Workflow
 
 func (r *workflowArchive) ListWorkflows(ctx context.Context, options sutils.ListOptions) (wfv1.Workflows, error) {
 	var archivedWfs []archivedWorkflowMetadata
-	var baseSelector = r.session.SQL().Select("name", "namespace", "uid", "phase", "startedat", "finishedat", "creationtimestamp")
+	var baseSelector = r.sessionProxy.Session().SQL().Select("name", "namespace", "uid", "phase", "startedat", "finishedat", "creationtimestamp")
 
 	switch r.dbType {
 	case sqldb.MySQL:
@@ -220,7 +220,7 @@ func (r *workflowArchive) ListWorkflows(ctx context.Context, options sutils.List
 			db.Raw("coalesce(status->>'resourcesDuration', '{}') as resourcesduration"),
 		)
 
-		err = r.session.SQL().
+		err = r.sessionProxy.Session().SQL().
 			Iterator("WITH workflows AS ? ?", cteSelector, selectQuery.From("workflows")).
 			All(&archivedWfs)
 		if err != nil {
@@ -285,7 +285,7 @@ func (r *workflowArchive) CountWorkflows(ctx context.Context, options sutils.Lis
 	total := &archivedWorkflowCount{}
 
 	if len(options.LabelRequirements) == 0 {
-		selector := r.session.SQL().
+		selector := r.sessionProxy.Session().SQL().
 			Select(db.Raw("count(*) as total")).
 			From(archiveTableName).
 			Where(r.clusterManagedNamespaceAndInstanceID()).
@@ -319,7 +319,7 @@ func (r *workflowArchive) CountWorkflows(ctx context.Context, options sutils.Lis
 		return int64(total.Total), nil
 	}
 
-	selector := r.session.SQL().
+	selector := r.sessionProxy.Session().SQL().
 		Select(db.Raw("count(*) as total")).
 		From(archiveTableName).
 		Where(r.clusterManagedNamespaceAndInstanceID())
@@ -337,7 +337,7 @@ func (r *workflowArchive) CountWorkflows(ctx context.Context, options sutils.Lis
 }
 
 func (r *workflowArchive) countWorkflowsOptimized(options sutils.ListOptions) (int64, error) {
-	sampleSelector := r.session.SQL().
+	sampleSelector := r.sessionProxy.Session().SQL().
 		Select(db.Raw("count(*) as total")).
 		From(archiveTableName).
 		Where(r.clusterManagedNamespaceAndInstanceID()).
@@ -391,7 +391,7 @@ func (r *workflowArchive) countWorkflowsOptimized(options sutils.ListOptions) (i
 }
 
 func (r *workflowArchive) HasMoreWorkflows(ctx context.Context, options sutils.ListOptions) (bool, error) {
-	selector := r.session.SQL().
+	selector := r.sessionProxy.Session().SQL().
 		Select("uid").
 		From(archiveTableName).
 		Where(r.clusterManagedNamespaceAndInstanceID()).
@@ -513,7 +513,7 @@ func (r *workflowArchive) GetWorkflow(ctx context.Context, uid string, namespace
 	var err error
 	archivedWf := &archivedWorkflowRecord{}
 	if uid != "" {
-		err = r.session.SQL().
+		err = r.sessionProxy.Session().SQL().
 			Select("workflow").
 			From(archiveTableName).
 			Where(r.clusterManagedNamespaceAndInstanceID()).
@@ -522,7 +522,7 @@ func (r *workflowArchive) GetWorkflow(ctx context.Context, uid string, namespace
 	} else {
 		if name != "" && namespace != "" {
 			total := &archivedWorkflowCount{}
-			err = r.session.SQL().
+			err = r.sessionProxy.Session().SQL().
 				Select(db.Raw("count(*) as total")).
 				From(archiveTableName).
 				Where(r.clusterManagedNamespaceAndInstanceID()).
@@ -540,7 +540,7 @@ func (r *workflowArchive) GetWorkflow(ctx context.Context, uid string, namespace
 					"num":       num,
 				}).Debug(ctx, "returning latest of archived workflows")
 			}
-			err = r.session.SQL().
+			err = r.sessionProxy.Session().SQL().
 				Select("workflow").
 				From(archiveTableName).
 				Where(r.clusterManagedNamespaceAndInstanceID()).
@@ -572,7 +572,7 @@ func (r *workflowArchive) GetWorkflow(ctx context.Context, uid string, namespace
 }
 
 func (r *workflowArchive) GetWorkflowForEstimator(ctx context.Context, namespace string, requirements []labels.Requirement) (*wfv1.Workflow, error) {
-	selector := r.session.SQL().
+	selector := r.sessionProxy.Session().SQL().
 		Select("name", "namespace", "uid", "startedat", "finishedat").
 		From(archiveTableName).
 		Where(r.clusterManagedNamespaceAndInstanceID()).
@@ -613,7 +613,7 @@ func (r *workflowArchive) GetWorkflowForEstimator(ctx context.Context, namespace
 
 func (r *workflowArchive) DeleteWorkflow(ctx context.Context, uid string) error {
 	logger := logging.RequireLoggerFromContext(ctx)
-	rs, err := r.session.SQL().
+	rs, err := r.sessionProxy.Session().SQL().
 		DeleteFrom(archiveTableName).
 		Where(r.clusterManagedNamespaceAndInstanceID()).
 		And(db.Cond{"uid": uid}).
@@ -631,7 +631,7 @@ func (r *workflowArchive) DeleteWorkflow(ctx context.Context, uid string) error 
 
 func (r *workflowArchive) DeleteExpiredWorkflows(ctx context.Context, ttl time.Duration) error {
 	logger := logging.RequireLoggerFromContext(ctx)
-	rs, err := r.session.SQL().
+	rs, err := r.sessionProxy.Session().SQL().
 		DeleteFrom(archiveTableName).
 		Where(r.clusterManagedNamespaceAndInstanceID()).
 		And(fmt.Sprintf("finishedat < current_timestamp - interval '%d' second", int(ttl.Seconds()))).

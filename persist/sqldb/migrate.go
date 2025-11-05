@@ -3,8 +3,6 @@ package sqldb
 import (
 	"context"
 
-	"github.com/upper/db/v4"
-
 	"github.com/argoproj/argo-workflows/v3/util/sqldb"
 )
 
@@ -12,9 +10,9 @@ const (
 	versionTable = "schema_history"
 )
 
-func Migrate(ctx context.Context, session db.Session, clusterName, tableName string) (err error) {
-	dbType := sqldb.DBTypeFor(session)
-	return sqldb.Migrate(ctx, session, versionTable, []sqldb.Change{
+func Migrate(ctx context.Context, sessionProxy *sqldb.SessionProxy, clusterName, tableName string) (err error) {
+	dbType := sqldb.DBTypeFor(sessionProxy.Session())
+	return sqldb.Migrate(ctx, sessionProxy.Session(), versionTable, []sqldb.Change{
 		sqldb.AnsiSQLChange(`create table if not exists ` + tableName + ` (
     id varchar(128) ,
     name varchar(256),

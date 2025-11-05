@@ -1631,13 +1631,13 @@ func TestBackgroundNotifierClearsExpiredLocks(t *testing.T) {
 			now := time.Now()
 			staleTime := now.Add(-info.Config.InactiveControllerTimeout * 2) // Double the inactive timeout
 
-			_, err = info.Session.Collection(info.Config.ControllerTable).Insert(&syncdb.ControllerHealthRecord{
+			_, err = info.SessionProxy.Session().Collection(info.Config.ControllerTable).Insert(&syncdb.ControllerHealthRecord{
 				Controller: activeController,
 				Time:       now,
 			})
 			require.NoError(t, err)
 
-			_, err = info.Session.Collection(info.Config.ControllerTable).Insert(&syncdb.ControllerHealthRecord{
+			_, err = info.SessionProxy.Session().Collection(info.Config.ControllerTable).Insert(&syncdb.ControllerHealthRecord{
 				Controller: inactiveController,
 				Time:       staleTime,
 			})
@@ -1647,21 +1647,21 @@ func TestBackgroundNotifierClearsExpiredLocks(t *testing.T) {
 			lockName1 := "test-lock-active"
 			lockName2 := "test-lock-inactive"
 
-			_, err = info.Session.Collection(info.Config.LockTable).Insert(&syncdb.LockRecord{
+			_, err = info.SessionProxy.Session().Collection(info.Config.LockTable).Insert(&syncdb.LockRecord{
 				Name:       lockName1,
 				Controller: activeController,
 				Time:       now,
 			})
 			require.NoError(t, err)
 
-			_, err = info.Session.Collection(info.Config.LockTable).Insert(&syncdb.LockRecord{
+			_, err = info.SessionProxy.Session().Collection(info.Config.LockTable).Insert(&syncdb.LockRecord{
 				Name:       lockName2,
 				Controller: inactiveController,
 				Time:       now, // Time doesn't matter, controller is what matters
 			})
 			require.NoError(t, err)
 
-			_, err = info.Session.SQL().Exec("INSERT INTO sync_limit (name, sizelimit) VALUES (?, ?)", "foo/test-semaphore", 100)
+			_, err = info.SessionProxy.Session().SQL().Exec("INSERT INTO sync_limit (name, sizelimit) VALUES (?, ?)", "foo/test-semaphore", 100)
 			require.NoError(t, err)
 			// Initialize a semaphore so it gets added to the syncLockMap
 			testsem, err := newDatabaseSemaphore(ctx, "test-semaphore", "foo/test-semaphore", func(key string) {}, info, 0)
@@ -1670,7 +1670,7 @@ func TestBackgroundNotifierClearsExpiredLocks(t *testing.T) {
 			syncLockMap["sem/test-semaphore"] = testsem
 
 			// Verify both lock records exist initially
-			lockCount, err := info.Session.Collection(info.Config.LockTable).Count()
+			lockCount, err := info.SessionProxy.Session().Collection(info.Config.LockTable).Count()
 			require.NoError(t, err)
 			assert.Equal(t, uint64(2), lockCount, "Should have two lock records initially")
 
@@ -1681,7 +1681,7 @@ func TestBackgroundNotifierClearsExpiredLocks(t *testing.T) {
 
 			// Check that only the active controller's lock remains
 			var remainingLocks []syncdb.LockRecord
-			err = info.Session.SQL().Select("*").From(info.Config.LockTable).All(&remainingLocks)
+			err = info.SessionProxy.Session().SQL().Select("*").From(info.Config.LockTable).All(&remainingLocks)
 			require.NoError(t, err)
 
 			assert.Len(t, remainingLocks, 1, "Should have one lock record remaining")
@@ -1799,10 +1799,11 @@ func TestUnconfiguredSemaphores(t *testing.T) {
 				defer cleanup()
 
 				// Configure sync manager
-				syncManager := createLockManager(ctx, info.Session, &syncConfig, nil, func(key string) {
+				sessionProxy := sqldb.NewSessionProxyFromSession(info.SessionProxy.Session(), config.DBConfig{}, "", "")
+				syncManager := createLockManager(ctx, sessionProxy, &syncConfig, nil, func(key string) {
 				}, WorkflowExistenceFunc)
 				require.NotNil(t, syncManager)
-				require.NotNil(t, syncManager.dbInfo.Session)
+				require.NotNil(t, syncManager.dbInfo.SessionProxy.Session())
 
 				// Create a workflow with a database semaphore
 				wf := wfv1.MustUnmarshalWorkflow(wfWithDBSemaphore)

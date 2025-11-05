@@ -16,6 +16,7 @@ import (
 	"github.com/argoproj/argo-workflows/v3/config"
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/argoproj/argo-workflows/v3/util/logging"
+	"github.com/argoproj/argo-workflows/v3/util/sqldb"
 	syncdb "github.com/argoproj/argo-workflows/v3/util/sync/db"
 )
 
@@ -45,10 +46,15 @@ const (
 )
 
 func NewLockManager(ctx context.Context, kubectlConfig kubernetes.Interface, namespace string, config *config.SyncConfig, getSyncLimit GetSyncLimit, nextWorkflow NextWorkflow, isWFDeleted IsWorkflowDeleted) *Manager {
-	return createLockManager(ctx, syncdb.DBSessionFromConfig(ctx, kubectlConfig, namespace, config), config, getSyncLimit, nextWorkflow, isWFDeleted)
+	dbSession := syncdb.DBSessionFromConfig(ctx, kubectlConfig, namespace, config)
+	var sessionProxy *sqldb.SessionProxy
+	if dbSession != nil {
+		sessionProxy = sqldb.NewSessionProxyFromSession(dbSession, config.DBConfig, "", "")
+	}
+	return createLockManager(ctx, sessionProxy, config, getSyncLimit, nextWorkflow, isWFDeleted)
 }
 
-func createLockManager(ctx context.Context, dbSession db.Session, config *config.SyncConfig, getSyncLimit GetSyncLimit, nextWorkflow NextWorkflow, isWFDeleted IsWorkflowDeleted) *Manager {
+func createLockManager(ctx context.Context, sessionProxy *sqldb.SessionProxy, config *config.SyncConfig, getSyncLimit GetSyncLimit, nextWorkflow NextWorkflow, isWFDeleted IsWorkflowDeleted) *Manager {
 	syncLimitCacheTTL := time.Duration(0)
 	if config != nil && config.SemaphoreLimitCacheSeconds != nil {
 		syncLimitCacheTTL = time.Duration(*config.SemaphoreLimitCacheSeconds) * time.Second
@@ -57,8 +63,8 @@ func createLockManager(ctx context.Context, dbSession db.Session, config *config
 
 	log.WithField("syncLimitCacheTTL", syncLimitCacheTTL).Info(ctx, "Sync manager ttl")
 	dbInfo := syncdb.DBInfo{
-		Session: dbSession,
-		Config:  syncdb.DBConfigFromConfig(config),
+		SessionProxy: sessionProxy,
+		Config:       syncdb.DBConfigFromConfig(config),
 	}
 	sm := &Manager{
 		syncLockMap:       make(map[string]semaphore),
@@ -68,13 +74,13 @@ func createLockManager(ctx context.Context, dbSession db.Session, config *config
 		syncLimitCacheTTL: syncLimitCacheTTL,
 		isWFDeleted:       isWFDeleted,
 		dbInfo:            dbInfo,
-		queries:           syncdb.NewSyncQueries(dbSession, dbInfo.Config),
+		queries:           syncdb.NewSyncQueries(sessionProxy, dbInfo.Config),
 		log:               log,
 	}
-	log.WithField("dbConfigured", sm.dbInfo.Session != nil).Info(ctx, "Sync manager initialized")
+	log.WithField("dbConfigured", sm.dbInfo.SessionProxy != nil).Info(ctx, "Sync manager initialized")
 	sm.dbInfo.Migrate(ctx)
 
-	if sm.dbInfo.Session != nil {
+	if sm.dbInfo.SessionProxy != nil {
 		sm.backgroundNotifier(ctx, config.PollSeconds)
 		sm.dbControllerHeartbeat(ctx, config.HeartbeatSeconds)
 	}
@@ -232,7 +238,7 @@ func (sm *Manager) Initialize(ctx context.Context, wfs []wfv1.Workflow) {
 						continue
 					}
 					key := getUpgradedKey(&wf, holders, level)
-					tx := &transaction{db: &sm.dbInfo.Session}
+					tx := &transaction{sessionProxy: sm.dbInfo.SessionProxy}
 					if semaphore != nil && semaphore.acquire(ctx, key, tx) {
 						sm.log.WithFields(logging.Fields{"key": key, "semaphore": holding.Semaphore}).Info(ctx, "Lock acquired")
 					}
@@ -257,7 +263,7 @@ func (sm *Manager) Initialize(ctx context.Context, wfs []wfv1.Workflow) {
 							continue
 						}
 						key := getUpgradedKey(&wf, holding.Holder, level)
-						tx := &transaction{db: &sm.dbInfo.Session}
+						tx := &transaction{sessionProxy: sm.dbInfo.SessionProxy}
 						mutex.acquire(ctx, key, tx)
 					}
 					sm.syncLockMap[holding.Mutex] = mutex
@@ -303,7 +309,7 @@ func (sm *Manager) TryAcquire(ctx context.Context, wf *wfv1.Workflow, nodeName s
 	if err != nil {
 		return false, false, "", failedLockName, fmt.Errorf("couldn't decode locks for session: %w", err)
 	}
-	if needDB && sm.dbInfo.Session == nil {
+	if needDB && sm.dbInfo.SessionProxy == nil {
 		return false, false, "", failedLockName, fmt.Errorf("synchronization database session is not available")
 	}
 	if needDB {
@@ -313,13 +319,14 @@ func (sm *Manager) TryAcquire(ctx context.Context, wf *wfv1.Workflow, nodeName s
 		var failedLockName string
 		var lastErr error
 		for retryCounter := range 5 {
-			err := sm.dbInfo.Session.TxContext(ctx, func(sess db.Session) error {
+			err := sm.dbInfo.SessionProxy.Session().TxContext(ctx, func(sess db.Session) error {
 				sm.log.WithFields(logging.Fields{
 					"holderKey": holderKey,
 					"attempt":   retryCounter + 1,
 				}).Info(ctx, "TryAcquire - starting transaction")
 				var err error
-				tx := &transaction{db: &sess}
+				s := sqldb.NewSessionProxyFromSession(sess, config.DBConfig{}, "", "")
+				tx := &transaction{s}
 				already, updated, msg, failedLockName, err = sm.tryAcquireImpl(ctx, wf, tx, holderKey, failedLockName, syncItems, lockKeys)
 				sm.log.WithFields(logging.Fields{
 					"holderKey": holderKey,
@@ -615,7 +622,7 @@ func (sm *Manager) initializeSemaphore(ctx context.Context, semaphoreName string
 	case lockKindConfigMap:
 		return newInternalSemaphore(ctx, semaphoreName, sm.nextWorkflow, sm.getSyncLimit, sm.syncLimitCacheTTL)
 	case lockKindDatabase:
-		if sm.dbInfo.Session == nil {
+		if sm.dbInfo.SessionProxy == nil {
 			return nil, fmt.Errorf("database session is not available for semaphore %s", semaphoreName)
 		}
 		return newDatabaseSemaphore(ctx, semaphoreName, lock.dbKey(), sm.nextWorkflow, sm.dbInfo, sm.syncLimitCacheTTL)
@@ -633,7 +640,7 @@ func (sm *Manager) initializeMutex(ctx context.Context, mutexName string) (semap
 	case lockKindMutex:
 		return newInternalMutex(mutexName, sm.nextWorkflow), nil
 	case lockKindDatabase:
-		if sm.dbInfo.Session == nil {
+		if sm.dbInfo.SessionProxy == nil {
 			return nil, fmt.Errorf("database session is not available for mutex %s", mutexName)
 		}
 		return newDatabaseMutex(mutexName, lock.dbKey(), sm.nextWorkflow, sm.dbInfo), nil
