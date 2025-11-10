@@ -244,10 +244,6 @@ func (sp *SessionProxy) With(ctx context.Context, fn func(db.Session) error) err
 
 // Reconnect performs reconnection with retry logic and exponential backoff
 func (sp *SessionProxy) Reconnect(ctx context.Context) error {
-	if sp.closed {
-		return fmt.Errorf("session proxy is closed")
-	}
-
 	var lastErr error
 	sp.mu.Lock()
 	defer sp.mu.Unlock()
