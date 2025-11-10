@@ -105,8 +105,10 @@ func (sp *SessionProxy) Tx() *SessionProxy {
 }
 
 // TxWith runs a With transaction
-func (sp *SessionProxy) TxWith(ctx context.Context, fn func(db.Session) error) error {
-	return sp.Tx().With(ctx, fn)
+func (sp *SessionProxy) TxWith(ctx context.Context, fn func(db.Session) error, opts *sql.TxOptions) error {
+	return sp.Tx().With(ctx, func(s db.Session) error {
+		return s.TxContext(ctx, fn, opts)
+	})
 }
 
 func (sp *SessionProxy) connect(ctx context.Context) error {
