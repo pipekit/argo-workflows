@@ -49,7 +49,7 @@ func NewLockManager(ctx context.Context, kubectlConfig kubernetes.Interface, nam
 	dbSession := syncdb.DBSessionFromConfig(ctx, kubectlConfig, namespace, config)
 	var sessionProxy *sqldb.SessionProxy
 	if dbSession != nil {
-		sessionProxy = sqldb.NewSessionProxyFromSession(dbSession, config.DBConfig, "", "")
+		sessionProxy = sqldb.NewSessionProxyFromSession(dbSession, nil, "", "")
 	}
 	return createLockManager(ctx, sessionProxy, config, getSyncLimit, nextWorkflow, isWFDeleted)
 }
@@ -317,52 +317,24 @@ func (sm *Manager) TryAcquire(ctx context.Context, wf *wfv1.Workflow, nodeName s
 		var already bool
 		var msg string
 		var failedLockName string
-		var lastErr error
-		for retryCounter := range 5 {
-			err := sm.dbInfo.SessionProxy.Session().TxContext(ctx, func(sess db.Session) error {
-				sm.log.WithFields(logging.Fields{
-					"holderKey": holderKey,
-					"attempt":   retryCounter + 1,
-				}).Info(ctx, "TryAcquire - starting transaction")
+		err := sm.dbInfo.SessionProxy.TxWith(ctx, func(sess db.Session) error {
+			return sess.TxContext(ctx, func(txSess db.Session) error {
+				sm.log.WithField("holderKey", holderKey).Info(ctx, "TryAcquire - starting transaction")
 				var err error
-				s := sqldb.NewSessionProxyFromSession(sess, config.DBConfig{}, "", "")
+				s := sqldb.NewSessionProxyFromSession(txSess, nil, "", "")
 				tx := &transaction{s}
 				already, updated, msg, failedLockName, err = sm.tryAcquireImpl(ctx, wf, tx, holderKey, failedLockName, syncItems, lockKeys)
-				sm.log.WithFields(logging.Fields{
-					"holderKey": holderKey,
-					"attempt":   retryCounter + 1,
-				}).Info(ctx, "TryAcquire - transaction completed")
+				sm.log.WithField("holderKey", holderKey).Info(ctx, "TryAcquire - transaction completed")
 				return err
 			}, &sql.TxOptions{
 				Isolation: sql.LevelSerializable,
 				ReadOnly:  false,
 			})
-			if err == nil {
-				return already, updated, msg, failedLockName, nil
-			}
-			lastErr = err
-			// Check if this is a serialization error
-			if strings.Contains(err.Error(), "serialization") ||
-				strings.Contains(err.Error(), "dependencies") ||
-				strings.Contains(err.Error(), "deadlock") ||
-				strings.Contains(err.Error(), "rollback") {
-				sm.log.WithFields(logging.Fields{
-					"holderKey": holderKey,
-					"attempt":   retryCounter + 1,
-					"error":     err,
-				}).Info(ctx, "TryAcquire - serialization conflict, retrying")
-				continue
-			} else {
-				sm.log.WithFields(logging.Fields{
-					"holderKey": holderKey,
-					"attempt":   retryCounter + 1,
-					"error":     err,
-				}).Info(ctx, "TryAcquire - tx failed")
-			}
-			// For other errors, return immediately
+		})
+		if err != nil {
 			return false, false, "", failedLockName, err
 		}
-		return false, false, "", failedLockName, fmt.Errorf("failed after %d retries: %w", 5, lastErr)
+		return already, updated, msg, failedLockName, nil
 	}
 	return sm.tryAcquireImpl(ctx, wf, nil, holderKey, failedLockName, syncItems, lockKeys)
 }

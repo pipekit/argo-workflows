@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/uuid"
 
-	"github.com/argoproj/argo-workflows/v3/config"
 	"github.com/argoproj/argo-workflows/v3/persist/sqldb"
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/argoproj/argo-workflows/v3/util/instanceid"
@@ -22,7 +21,6 @@ import (
 )
 
 var session db.Session
-var sessionProxy *utilsqldb.SessionProxy
 
 func main() {
 	var dsn string
@@ -35,7 +33,6 @@ func main() {
 		if err != nil {
 			return err
 		}
-		sessionProxy = utilsqldb.NewSessionProxyFromSession(session, config.DBConfig{}, "", "")
 		return
 	}
 	rootCmd.PersistentFlags().StringVarP(&dsn, "dsn", "d", "postgres://postgres@localhost:5432/postgres", "DSN connection string. For MySQL, use 'mysql:password@tcp/argo'.")
@@ -53,7 +50,7 @@ func NewMigrateCommand() *cobra.Command {
 		Use:   "migrate",
 		Short: "Force DB migration for given cluster/table",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return sqldb.Migrate(cmd.Context(), sessionProxy, cluster, table)
+			return sqldb.Migrate(cmd.Context(), session, cluster, table)
 		},
 	}
 	migrationCmd.Flags().StringVar(&cluster, "cluster", "default", "Cluster name")
@@ -79,7 +76,7 @@ func NewFakeDataCommand() *cobra.Command {
 			for i := 0; i < rows; i++ {
 				wf := randomizeWorkflow(wfTmpl, namespaces)
 				cluster := clusters[rand.Intn(len(clusters))]
-				sessionProxy := utilsqldb.NewSessionProxyFromSession(session, config.DBConfig{}, "", "")
+				sessionProxy := utilsqldb.NewSessionProxyFromSession(session, nil, "", "")
 				wfArchive := sqldb.NewWorkflowArchive(sessionProxy, cluster, "", instanceIDService)
 				if err := wfArchive.ArchiveWorkflow(ctx, wf); err != nil {
 					return err

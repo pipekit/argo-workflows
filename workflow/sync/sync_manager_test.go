@@ -1799,7 +1799,7 @@ func TestUnconfiguredSemaphores(t *testing.T) {
 				defer cleanup()
 
 				// Configure sync manager
-				sessionProxy := sqldb.NewSessionProxyFromSession(info.SessionProxy.Session(), config.DBConfig{}, "", "")
+				sessionProxy := sqldb.NewSessionProxyFromSession(info.SessionProxy.Session(), nil, "", "")
 				syncManager := createLockManager(ctx, sessionProxy, &syncConfig, nil, func(key string) {
 				}, WorkflowExistenceFunc)
 				require.NotNil(t, syncManager)

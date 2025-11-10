@@ -22,7 +22,7 @@ type SessionProxy struct {
 	// Connection configuration for reconnection
 	kubectlConfig kubernetes.Interface
 	namespace     string
-	dbConfig      config.DBConfig
+	dbConfig      *config.DBConfig
 	username      string
 	password      string
 
@@ -36,6 +36,8 @@ type SessionProxy struct {
 	baseDelay     time.Duration
 	maxDelay      time.Duration
 	retryMultiple float64
+
+	insideTransaction bool
 }
 
 // SessionProxyConfig contains configuration for creating a SessionProxy
@@ -55,7 +57,7 @@ func NewSessionProxy(ctx context.Context, config SessionProxyConfig) (*SessionPr
 	proxy := &SessionProxy{
 		kubectlConfig: config.KubectlConfig,
 		namespace:     config.Namespace,
-		dbConfig:      config.DBConfig,
+		dbConfig:      &config.DBConfig,
 		username:      config.Username,
 		password:      config.Password,
 		maxRetries:    config.MaxRetries,
@@ -82,7 +84,7 @@ func NewSessionProxy(ctx context.Context, config SessionProxyConfig) (*SessionPr
 }
 
 // NewSessionProxyFromSession creates a SessionProxy from an existing session with credentials
-func NewSessionProxyFromSession(sess db.Session, dbConfig config.DBConfig, username, password string) *SessionProxy {
+func NewSessionProxyFromSession(sess db.Session, dbConfig *config.DBConfig, username, password string) *SessionProxy {
 	return &SessionProxy{
 		sess:          sess,
 		dbConfig:      dbConfig,
@@ -95,16 +97,28 @@ func NewSessionProxyFromSession(sess db.Session, dbConfig config.DBConfig, usern
 	}
 }
 
+// Tx returns a transaction SessionProxy
+func (sp *SessionProxy) Tx() *SessionProxy {
+	s := NewSessionProxyFromSession(sp.Session(), nil, "", "")
+	s.insideTransaction = true
+	return s
+}
+
+// TxWith runs a With transaction
+func (sp *SessionProxy) TxWith(ctx context.Context, fn func(db.Session) error) error {
+	return sp.Tx().With(ctx, fn)
+}
+
 func (sp *SessionProxy) connect(ctx context.Context) error {
 	var sess db.Session
 	var err error
 
-	if sp.kubectlConfig != nil && sp.namespace != "" {
+	if sp.kubectlConfig != nil && sp.namespace != "" && sp.dbConfig != nil {
 		// Use Kubernetes secrets for authentication
-		sess, err = CreateDBSession(ctx, sp.kubectlConfig, sp.namespace, sp.dbConfig)
-	} else if sp.username != "" && sp.password != "" {
+		sess, err = CreateDBSession(ctx, sp.kubectlConfig, sp.namespace, *sp.dbConfig)
+	} else if sp.username != "" && sp.password != "" && sp.dbConfig != nil {
 		// Use direct credentials
-		sess, err = CreateDBSessionWithCreds(sp.dbConfig, sp.username, sp.password)
+		sess, err = CreateDBSessionWithCreds(*sp.dbConfig, sp.username, sp.password)
 	} else {
 		return fmt.Errorf("insufficient authentication information provided")
 	}
@@ -112,6 +126,12 @@ func (sp *SessionProxy) connect(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	err = sess.Ping()
+	if err != nil {
+		return err
+	}
+	sp.closed = false
 
 	sp.sess = sess
 	return nil
@@ -180,80 +200,105 @@ func (sp *SessionProxy) With(ctx context.Context, fn func(db.Session) error) err
 	}
 	sp.mu.RUnlock()
 
+	// Get current session
+	sp.mu.RLock()
+	sess := sp.sess
+	sp.mu.RUnlock()
+
+	if sess == nil {
+		return fmt.Errorf("no active session")
+	}
+
+	// Execute the operation
+	err := fn(sess)
+	if err == nil {
+		return nil
+	}
+
+	// If it's not a network error or inside a tx do not retry
+	if !sp.isNetworkError(err) || sp.insideTransaction {
+		return err
+	}
+
+	// Network error detected - try to reconnect once
+	if reconnectErr := sp.Reconnect(ctx); reconnectErr != nil {
+		return fmt.Errorf("operation failed and reconnection failed: %w", reconnectErr)
+	}
+
+	// Reconnection succeeded, retry the operation once more
+	sp.mu.RLock()
+	sess = sp.sess
+	sp.mu.RUnlock()
+
+	if sess == nil {
+		return fmt.Errorf("no active session after reconnection")
+	}
+
+	// Retry the operation once after successful reconnection
+	if retryErr := fn(sess); retryErr != nil {
+		return fmt.Errorf("operation failed after reconnection: %w", retryErr)
+	}
+
+	return nil
+}
+
+// Reconnect performs reconnection with retry logic and exponential backoff
+func (sp *SessionProxy) Reconnect(ctx context.Context) error {
+	if sp.closed {
+		return fmt.Errorf("session proxy is closed")
+	}
+
 	var lastErr error
-	delay := sp.baseDelay
+	sp.mu.Lock()
+	defer sp.mu.Unlock()
 
 	for attempt := 0; attempt <= sp.maxRetries; attempt++ {
-		// Get current session
-		sp.mu.RLock()
-		sess := sp.sess
-		sp.mu.RUnlock()
+		// Perform the reconnection attempt
+		func() {
+			// Close the bad connection if it exists
+			if sp.sess != nil {
+				sp.sess.Close()
+			}
 
-		if sess == nil {
-			sp.mu.RUnlock()
-			return fmt.Errorf("no active session")
-		}
+			// Try to reconnect
+			if err := sp.connect(ctx); err != nil {
+				lastErr = err
+				return
+			}
 
-		// Execute the operation
-		err := fn(sess)
-		if err == nil {
+			// Test the connection with ping
+			if err := sp.sess.Ping(); err != nil {
+				lastErr = err
+				return
+			}
+
+			// Successfully reconnected
+			lastErr = nil
+		}()
+
+		// If reconnection succeeded, return success
+		if lastErr == nil {
 			return nil
 		}
 
-		lastErr = err
-
-		// If it's not a network error, don't retry
-		if !sp.isNetworkError(err) {
-			return err
-		}
-
-		// If this is the last attempt, don't retry
-		if attempt == sp.maxRetries {
+		// If this is the last attempt, don't wait
+		if attempt == sp.maxRetries || !sp.isNetworkError(lastErr) {
 			break
 		}
 
-		// Wait before retrying
+		// Calculate delay for next retry with exponential backoff
+		delay := time.Duration(float64(sp.baseDelay) * float64(attempt+1) * sp.retryMultiple)
+		delay = min(delay, sp.maxDelay)
+
+		// Wait before retrying with context cancellation support
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-time.After(delay):
 		}
-
-		// Try to reconnect
-		sp.mu.Lock()
-		if !sp.closed {
-			if sp.sess != nil {
-				sp.sess.Close() // Close the bad connection
-			}
-			if reconnectErr := sp.connect(ctx); reconnectErr != nil {
-				sp.mu.Unlock()
-				// If reconnection fails, continue with the original error
-				continue
-			}
-		}
-		sp.mu.Unlock()
-
-		// Exponential backoff
-		delay = time.Duration(float64(delay) * sp.retryMultiple)
-		if delay > sp.maxDelay {
-			delay = sp.maxDelay
-		}
 	}
 
-	return fmt.Errorf("operation failed after %d retries, last error: %w", sp.maxRetries, lastErr)
-}
-
-// Reconnect accepts an error and outputs a new sessions
-func (sp *SessionProxy) Reconnect(ctx context.Context, err error) (db.Session, error) {
-	if !sp.isNetworkError(err) {
-		return nil, err
-	}
-	sp.sess.Close()
-	err = sp.connect(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
+	return fmt.Errorf("reconnection failed after %d retries, last error: %w", sp.maxRetries, lastErr)
 }
 
 // Session returns the underlying session. Use With() for operations that need reconnection.

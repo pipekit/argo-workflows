@@ -16,7 +16,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
-	"github.com/argoproj/argo-workflows/v3/config"
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 
 	"github.com/argoproj/argo-workflows/v3/util/sqldb"
@@ -71,13 +70,13 @@ func setupMultipleLockManagers(t *testing.T, dbType sqldb.DBType, semaphoreSize 
 	require.NoError(t, err)
 
 	// Create two sync managers with the same database session
-	sessionProxy1 := sqldb.NewSessionProxyFromSession(info.SessionProxy.Session(), config.DBConfig{}, "", "")
+	sessionProxy1 := sqldb.NewSessionProxyFromSession(info.SessionProxy.Session(), nil, "", "")
 	syncMgr1 := createLockManager(ctx, sessionProxy1, &cfg, func(_ context.Context, _ string) (int, error) { return 2, nil }, func(key string) {}, WorkflowExistenceFunc)
 	require.NotNil(t, syncMgr1)
 	require.NotNil(t, syncMgr1.dbInfo.SessionProxy.Session())
 	// Second controller
 	cfg.ControllerName = "test2"
-	sessionProxy2 := sqldb.NewSessionProxyFromSession(info.SessionProxy.Session(), config.DBConfig{}, "", "")
+	sessionProxy2 := sqldb.NewSessionProxyFromSession(info.SessionProxy.Session(), nil, "", "")
 	syncMgr2 := createLockManager(ctx, sessionProxy2, &cfg, func(_ context.Context, _ string) (int, error) { return 2, nil }, func(key string) {}, WorkflowExistenceFunc)
 	require.NotNil(t, syncMgr2)
 	require.NotNil(t, syncMgr2.dbInfo.SessionProxy.Session())
