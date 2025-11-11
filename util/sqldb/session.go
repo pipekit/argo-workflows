@@ -105,9 +105,12 @@ func (sp *SessionProxy) Tx() *SessionProxy {
 }
 
 // TxWith runs a With transaction
-func (sp *SessionProxy) TxWith(ctx context.Context, fn func(db.Session) error, opts *sql.TxOptions) error {
-	return sp.Tx().With(ctx, func(s db.Session) error {
-		return s.TxContext(ctx, fn, opts)
+func (sp *SessionProxy) TxWith(ctx context.Context, fn func(*SessionProxy) error, opts *sql.TxOptions) error {
+	return sp.With(ctx, func(s db.Session) error {
+		return s.TxContext(ctx, func(sess db.Session) error {
+			newSp := SessionProxy{sp.kubectlConfig, sp.namespace, sp.dbConfig, sp.username, sp.password, sess, sync.RWMutex{}, sp.closed, sp.maxRetries, sp.baseDelay, sp.maxDelay, sp.retryMultiple, sp.insideTransaction}
+			return fn(newSp.Tx())
+		}, opts)
 	})
 }
 

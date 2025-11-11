@@ -112,8 +112,8 @@ func (r *workflowArchive) ArchiveWorkflow(ctx context.Context, wf *wfv1.Workflow
 	if r.dbType == sqldb.Postgres {
 		workflow = bytes.ReplaceAll(workflow, []byte("\\u0000"), []byte(postgresNullReplacement))
 	}
-	return r.sessionProxy.TxWith(ctx, func(s db.Session) error {
-		_, err := s.SQL().
+	return r.sessionProxy.TxWith(ctx, func(sp *sqldb.SessionProxy) error {
+		_, err := sp.Session().SQL().
 			DeleteFrom(archiveTableName).
 			Where(r.clusterManagedNamespaceAndInstanceID()).
 			And(db.Cond{"uid": wf.UID}).
@@ -121,7 +121,7 @@ func (r *workflowArchive) ArchiveWorkflow(ctx context.Context, wf *wfv1.Workflow
 		if err != nil {
 			return err
 		}
-		_, err = s.Collection(archiveTableName).
+		_, err = sp.Session().Collection(archiveTableName).
 			Insert(&archivedWorkflowRecord{
 				archivedWorkflowMetadata: archivedWorkflowMetadata{
 					ClusterName:       r.clusterName,
@@ -140,7 +140,7 @@ func (r *workflowArchive) ArchiveWorkflow(ctx context.Context, wf *wfv1.Workflow
 			return err
 		}
 
-		_, err = s.SQL().
+		_, err = sp.Session().SQL().
 			DeleteFrom(archiveLabelsTableName).
 			Where(db.Cond{"clustername": r.clusterName}).
 			And(db.Cond{"uid": wf.UID}).
@@ -150,7 +150,7 @@ func (r *workflowArchive) ArchiveWorkflow(ctx context.Context, wf *wfv1.Workflow
 		}
 		// insert the labels
 		for key, value := range wf.GetLabels() {
-			_, err := s.Collection(archiveLabelsTableName).
+			_, err := sp.Session().Collection(archiveLabelsTableName).
 				Insert(&archivedWorkflowLabelRecord{
 					ClusterName: r.clusterName,
 					UID:         string(wf.UID),

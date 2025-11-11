@@ -317,11 +317,10 @@ func (sm *Manager) TryAcquire(ctx context.Context, wf *wfv1.Workflow, nodeName s
 		var already bool
 		var msg string
 		var failedLockName string
-		err := sm.dbInfo.SessionProxy.TxWith(ctx, func(sess db.Session) error {
+		err := sm.dbInfo.SessionProxy.TxWith(ctx, func(sp *sqldb.SessionProxy) error {
 			sm.log.WithField("holderKey", holderKey).Info(ctx, "TryAcquire - starting transaction")
 			var err error
-			s := sqldb.NewSessionProxyFromSession(sess, nil, "", "")
-			tx := &transaction{s}
+			tx := &transaction{sp}
 			already, updated, msg, failedLockName, err = sm.tryAcquireImpl(ctx, wf, tx, holderKey, failedLockName, syncItems, lockKeys)
 			sm.log.WithField("holderKey", holderKey).Info(ctx, "TryAcquire - transaction completed")
 			return err
