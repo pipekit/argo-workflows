@@ -43,6 +43,9 @@ func newPersistence(ctx context.Context, kubeClient kubernetes.Interface, wcConf
 			Namespace:     Namespace,
 			DBConfig:      persistence.DBConfig,
 		})
+		if err != nil {
+			panic(err)
+		}
 		offloadNodeStatusRepo, err := persist.NewOffloadNodeStatusRepo(ctx, log, sessionProxy, persistence.GetClusterName(), tableName)
 		if err != nil {
 			panic(err)
