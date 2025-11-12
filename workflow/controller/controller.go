@@ -436,7 +436,7 @@ func (wfc *WorkflowController) createSynchronizationManager(ctx context.Context)
 	}
 
 	var err error
-	wfc.syncManager, err = sync.NewLockManager(ctx, wfc.kubeclientset, wfc.namespace, wfc.Config.Synchronization, getSyncLimit, nextWorkflow, isWFDeleted)
+	wfc.syncManager, err = sync.NewLockManager(ctx, wfc.kubeclientset, wfc.namespace, wfc.Config.Synchronization, getSyncLimit, nextWorkflow, isWFDeleted, true)
 
 	if err != nil {
 		logging.RequireLoggerFromContext(ctx).WithError(err).Error(ctx, "Failed to create lock manager")

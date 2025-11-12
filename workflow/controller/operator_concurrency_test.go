@@ -166,7 +166,7 @@ func TestSemaphoreTmplLevel(t *testing.T) {
 	defer cancel()
 	var err error
 	controller.syncManager, err = sync.NewLockManager(ctx, controller.kubeclientset, controller.namespace, nil, getSyncLimitFunc(ctx, controller.kubeclientset), func(key string) {
-	}, workflowExistenceFunc)
+	}, workflowExistenceFunc, false)
 	require.NoError(t, err)
 
 	var cm apiv1.ConfigMap
@@ -230,7 +230,7 @@ func TestSemaphoreScriptTmplLevel(t *testing.T) {
 	defer cancel()
 	var err error
 	controller.syncManager, err = sync.NewLockManager(ctx, controller.kubeclientset, controller.namespace, nil, getSyncLimitFunc(ctx, controller.kubeclientset), func(key string) {
-	}, workflowExistenceFunc)
+	}, workflowExistenceFunc, false)
 	require.NoError(t, err)
 
 	var cm apiv1.ConfigMap
@@ -293,7 +293,7 @@ func TestSemaphoreScriptConfigMapInDifferentNamespace(t *testing.T) {
 	ctx := logging.TestContext(t.Context())
 	var err error
 	controller.syncManager, err = sync.NewLockManager(ctx, controller.kubeclientset, controller.namespace, nil, getSyncLimitFunc(ctx, controller.kubeclientset), func(key string) {
-	}, workflowExistenceFunc)
+	}, workflowExistenceFunc, false)
 	require.NoError(t, err)
 
 	var cm apiv1.ConfigMap
@@ -358,7 +358,7 @@ func TestSemaphoreResourceTmplLevel(t *testing.T) {
 	ctx := logging.TestContext(t.Context())
 	var err error
 	controller.syncManager, err = sync.NewLockManager(ctx, controller.kubeclientset, controller.namespace, nil, getSyncLimitFunc(ctx, controller.kubeclientset), func(key string) {
-	}, workflowExistenceFunc)
+	}, workflowExistenceFunc, false)
 	require.NoError(t, err)
 
 	var cm apiv1.ConfigMap
@@ -423,7 +423,7 @@ func TestSemaphoreWithOutConfigMap(t *testing.T) {
 	ctx := logging.TestContext(t.Context())
 	var err error
 	controller.syncManager, err = sync.NewLockManager(ctx, controller.kubeclientset, controller.namespace, nil, getSyncLimitFunc(ctx, controller.kubeclientset), func(key string) {
-	}, workflowExistenceFunc)
+	}, workflowExistenceFunc, false)
 	require.NoError(t, err)
 
 	t.Run("SemaphoreRefWithOutConfigMap", func(t *testing.T) {
@@ -481,7 +481,7 @@ func TestMutexInDAG(t *testing.T) {
 	ctx := logging.TestContext(t.Context())
 	var err error
 	controller.syncManager, err = sync.NewLockManager(ctx, controller.kubeclientset, controller.namespace, nil, getSyncLimitFunc(ctx, controller.kubeclientset), func(key string) {
-	}, workflowExistenceFunc)
+	}, workflowExistenceFunc, false)
 	require.NoError(t, err)
 
 	t.Run("MutexWithDAG", func(t *testing.T) {
@@ -556,7 +556,7 @@ func TestMutexInDAGWithInterpolation(t *testing.T) {
 	ctx := logging.TestContext(t.Context())
 	var err error
 	controller.syncManager, err = sync.NewLockManager(ctx, controller.kubeclientset, controller.namespace, nil, getSyncLimitFunc(ctx, controller.kubeclientset), func(key string) {
-	}, workflowExistenceFunc)
+	}, workflowExistenceFunc, false)
 	require.NoError(t, err)
 	t.Run("InterpolatedMutexWithDAG", func(t *testing.T) {
 		wf := wfv1.MustUnmarshalWorkflow(DAGWithInterpolatedMutex)
@@ -622,7 +622,7 @@ func TestSynchronizationWithRetry(t *testing.T) {
 	ctx := logging.TestContext(t.Context())
 	var err error
 	controller.syncManager, err = sync.NewLockManager(ctx, controller.kubeclientset, controller.namespace, nil, getSyncLimitFunc(ctx, controller.kubeclientset), func(key string) {
-	}, workflowExistenceFunc)
+	}, workflowExistenceFunc, false)
 	require.NoError(t, err)
 
 	var cm apiv1.ConfigMap
@@ -834,7 +834,7 @@ func TestSynchronizationWithStep(t *testing.T) {
 	ctx := logging.TestContext(t.Context())
 	var err error
 	controller.syncManager, err = sync.NewLockManager(ctx, controller.kubeclientset, controller.namespace, nil, getSyncLimitFunc(ctx, controller.kubeclientset), func(key string) {
-	}, workflowExistenceFunc)
+	}, workflowExistenceFunc, false)
 	require.NoError(t, err)
 
 	var cm apiv1.ConfigMap
@@ -914,7 +914,7 @@ func TestSynchronizationWithStepRetry(t *testing.T) {
 	ctx := logging.TestContext(t.Context())
 	var err error
 	controller.syncManager, err = sync.NewLockManager(ctx, controller.kubeclientset, controller.namespace, nil, getSyncLimitFunc(ctx, controller.kubeclientset), func(key string) {
-	}, workflowExistenceFunc)
+	}, workflowExistenceFunc, false)
 	require.NoError(t, err)
 
 	var cm apiv1.ConfigMap
@@ -980,7 +980,7 @@ func TestSynchronizationForPendingShuttingdownWfs(t *testing.T) {
 	ctx := logging.TestContext(t.Context())
 	var err error
 	controller.syncManager, err = sync.NewLockManager(ctx, controller.kubeclientset, controller.namespace, nil, getSyncLimitFunc(ctx, controller.kubeclientset), func(key string) {
-	}, workflowExistenceFunc)
+	}, workflowExistenceFunc, false)
 	require.NoError(t, err)
 
 	t.Run("PendingShuttingdownTerminatingWf", func(t *testing.T) {

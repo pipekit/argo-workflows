@@ -116,7 +116,7 @@ func TestMutexLock(t *testing.T) {
 	syncLimitFunc := GetSyncLimitFunc(kube)
 	t.Run("InitializeSynchronization", func(t *testing.T) {
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wf := wfv1.MustUnmarshalWorkflow(mutexwfstatus)
@@ -131,7 +131,7 @@ func TestMutexLock(t *testing.T) {
 		var nextWorkflow string
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
 			nextWorkflow = key
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wf := wfv1.MustUnmarshalWorkflow(mutexWf)
@@ -214,7 +214,7 @@ func TestMutexLock(t *testing.T) {
 		var nextWorkflow string
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
 			nextWorkflow = key
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wf := wfv1.MustUnmarshalWorkflow(mutexWfNamespaced)
@@ -407,7 +407,7 @@ func TestMutexTmplLevel(t *testing.T) {
 		// var nextKey string
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
 			// nextKey = key
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wf := wfv1.MustUnmarshalWorkflow(mutexWfWithTmplLevel)

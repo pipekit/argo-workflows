@@ -44,7 +44,7 @@ func TestMultipleMutexLock(t *testing.T) {
 	syncLimitFunc := GetSyncLimitFunc(kube)
 	t.Run("MultipleMutex", func(t *testing.T) {
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {},
-			WorkflowExistenceFunc)
+			WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wfall := templatedWorkflow("all",
@@ -126,7 +126,7 @@ func TestMultipleMutexLock(t *testing.T) {
 	})
 	t.Run("MultipleMutexOrdering", func(t *testing.T) {
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {},
-			WorkflowExistenceFunc)
+			WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wfall := templatedWorkflow("all",
@@ -209,7 +209,7 @@ func TestMutexAndSemaphore(t *testing.T) {
 	syncLimitFunc := GetSyncLimitFunc(kube)
 	t.Run("MutexSemaphore", func(t *testing.T) {
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {},
-			WorkflowExistenceFunc)
+			WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wfmands1 := templatedWorkflow("mands1",
@@ -329,7 +329,7 @@ func TestPriority(t *testing.T) {
 	syncLimitFunc := GetSyncLimitFunc(kube)
 	t.Run("Priority", func(t *testing.T) {
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {},
-			WorkflowExistenceFunc)
+			WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wflow := templatedWorkflow("prioritylow",
@@ -408,7 +408,7 @@ func TestDuplicates(t *testing.T) {
 	syncLimitFunc := GetSyncLimitFunc(kube)
 	t.Run("Mutex", func(t *testing.T) {
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {},
-			WorkflowExistenceFunc)
+			WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wfdupmutex := templatedWorkflow("mutex",
@@ -421,7 +421,7 @@ func TestDuplicates(t *testing.T) {
 	})
 	t.Run("Semaphore", func(t *testing.T) {
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {},
-			WorkflowExistenceFunc)
+			WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wfdupsemaphore := templatedWorkflow("semaphore",

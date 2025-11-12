@@ -364,7 +364,7 @@ func TestSemaphoreWfLevel(t *testing.T) {
 	syncLimitFunc := GetSyncLimitFunc(kube)
 	t.Run("InitializeSynchronization", func(t *testing.T) {
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wf := wfv1.MustUnmarshalWorkflow(wfWithStatus)
@@ -377,7 +377,7 @@ func TestSemaphoreWfLevel(t *testing.T) {
 	})
 	t.Run("InitializeSynchronizationWithInvalid", func(t *testing.T) {
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wf := wfv1.MustUnmarshalWorkflow(wfWithStatus)
@@ -394,7 +394,7 @@ func TestSemaphoreWfLevel(t *testing.T) {
 		var nextKey string
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
 			nextKey = key
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wf := wfv1.MustUnmarshalWorkflow(wfWithSemaphore)
@@ -502,7 +502,7 @@ func TestSemaphoreWfLevel(t *testing.T) {
 
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
 			// nextKey = key
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		// Create two workflows that both need all semaphores
@@ -576,7 +576,7 @@ func TestResizeSemaphoreSize(t *testing.T) {
 	syncLimitFunc := GetSyncLimitFunc(kube)
 	t.Run("WfLevelAcquireAndRelease", func(t *testing.T) {
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wf := wfv1.MustUnmarshalWorkflow(wfWithSemaphore)
@@ -655,7 +655,7 @@ func TestSemaphoreTmplLevel(t *testing.T) {
 		// var nextKey string
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
 			// nextKey = key
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wf := wfv1.MustUnmarshalWorkflow(wfWithTmplSemaphore)
@@ -736,7 +736,7 @@ func TestSemaphoreSizeCache(t *testing.T) {
 		}
 
 		syncManager, err := NewLockManager(ctx, kube, "", &config, mock.getSyncLimit, func(key string) {
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wf := wfv1.MustUnmarshalWorkflow(wfWithSemaphore)
@@ -825,7 +825,7 @@ func TestSemaphoreSizeCache(t *testing.T) {
 		}
 
 		syncManager, err := NewLockManager(ctx, kube, "", &config, mock.getSyncLimit, func(key string) {
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wf := wfv1.MustUnmarshalWorkflow(wfWithTmplSemaphore)
@@ -922,7 +922,7 @@ func TestTriggerWFWithAvailableLock(t *testing.T) {
 		triggerCount := 0
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
 			triggerCount++
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		var wfs []wfv1.Workflow
@@ -963,7 +963,7 @@ func TestMutexWfLevel(t *testing.T) {
 		// var nextKey string
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
 			// nextKey = key
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wf := wfv1.MustUnmarshalWorkflow(wfWithMutex)
@@ -1008,7 +1008,7 @@ func TestMutexWfLevel(t *testing.T) {
 	t.Run("WorkflowLevelMutexAcquireAndReleaseWithMultipleMutex", func(t *testing.T) {
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
 			// nextKey = key
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		wf := wfv1.MustUnmarshalWorkflow(wfWithMutex)
@@ -1060,7 +1060,7 @@ func TestCheckWorkflowExistence(t *testing.T) {
 			// nextKey = key
 		}, func(s string) bool {
 			return strings.Contains(s, "test1")
-		})
+		}, false)
 		require.NoError(t, err)
 
 		wfMutex := wfv1.MustUnmarshalWorkflow(wfWithMutex)
@@ -1243,7 +1243,7 @@ status:
 
 	syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
 		// nextKey = key
-	}, WorkflowExistenceFunc)
+	}, WorkflowExistenceFunc, false)
 	require.NoError(t, err)
 
 	t.Run("InitializeMutex", func(t *testing.T) {
@@ -1509,7 +1509,7 @@ func TestMutexMigration(t *testing.T) {
 	syncLimitFunc := GetSyncLimitFunc(kube)
 
 	syncMgr, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
-	}, WorkflowExistenceFunc)
+	}, WorkflowExistenceFunc, false)
 	require.NoError(err)
 
 	wfMutex := wfv1.MustUnmarshalWorkflow(wfWithMutex)
@@ -1551,7 +1551,7 @@ func TestMutexMigration(t *testing.T) {
 	})
 
 	syncMgr, err = NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
-	}, WorkflowExistenceFunc)
+	}, WorkflowExistenceFunc, false)
 	require.NoError(err)
 
 	t.Run("RunMigrationTemplateLevel", func(t *testing.T) {
@@ -1726,7 +1726,7 @@ func TestUnconfiguredSemaphores(t *testing.T) {
 		// Setup with a fake k8s client but no ConfigMap created
 		syncLimitFunc := GetSyncLimitFunc(kube)
 		syncManager, err := NewLockManager(ctx, kube, "", nil, syncLimitFunc, func(key string) {
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		// Create a workflow with a semaphore referencing a non-existent ConfigMap
@@ -1778,7 +1778,7 @@ func TestUnconfiguredSemaphores(t *testing.T) {
 				}
 
 				syncManager, err := NewLockManager(ctx, kube, "", syncConfig, nil, func(key string) {
-				}, WorkflowExistenceFunc)
+				}, WorkflowExistenceFunc, false)
 				require.NoError(t, err)
 
 				// Create a workflow with a database semaphore
@@ -1802,7 +1802,7 @@ func TestUnconfiguredSemaphores(t *testing.T) {
 		syncConfig := &config.SyncConfig{}
 
 		syncManager, err := NewLockManager(ctx, kube, "", syncConfig, nil, func(key string) {
-		}, WorkflowExistenceFunc)
+		}, WorkflowExistenceFunc, false)
 		require.NoError(t, err)
 
 		// Create a workflow with a database semaphore

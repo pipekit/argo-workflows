@@ -8661,7 +8661,7 @@ func TestMutexWfPendingWithNoPod(t *testing.T) {
 	ctx := logging.TestContext(t.Context())
 	var err error
 	controller.syncManager, err = sync.NewLockManager(ctx, controller.kubeclientset, controller.namespace, nil, getSyncLimitFunc(ctx, controller.kubeclientset), func(key string) {
-	}, workflowExistenceFunc)
+	}, workflowExistenceFunc, false)
 	require.NoError(t, err)
 
 	// preempt lock
