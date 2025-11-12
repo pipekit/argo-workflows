@@ -47,9 +47,14 @@ const (
 
 // NewLockManager creates a new lock manager
 func NewLockManager(ctx context.Context, kubectlConfig kubernetes.Interface, namespace string, config *config.SyncConfig, getSyncLimit GetSyncLimit, nextWorkflow NextWorkflow, isWFDeleted IsWorkflowDeleted) (*Manager, error) {
-	sessionProxy, err := sqldb.NewSessionProxy(ctx, sqldb.SessionProxyConfig{KubectlConfig: kubectlConfig, Namespace: namespace, DBConfig: config.DBConfig})
-	if err != nil {
-		return nil, err
+
+	var sessionProxy *sqldb.SessionProxy
+	var err error
+	if config != nil {
+		sessionProxy, err = sqldb.NewSessionProxy(ctx, sqldb.SessionProxyConfig{KubectlConfig: kubectlConfig, Namespace: namespace, DBConfig: config.DBConfig})
+		if err != nil {
+			return nil, err
+		}
 	}
 	return createLockManager(ctx, sessionProxy, config, getSyncLimit, nextWorkflow, isWFDeleted), nil
 }
