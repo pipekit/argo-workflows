@@ -50,7 +50,6 @@ type SessionProxyConfig struct {
 	MaxRetries    int
 	BaseDelay     time.Duration
 	MaxDelay      time.Duration
-	AvoidConnect  bool
 }
 
 // NewSessionProxy creates a new SessionProxy with the given configuration
@@ -75,10 +74,6 @@ func NewSessionProxy(ctx context.Context, config SessionProxyConfig) (*SessionPr
 	}
 	if proxy.maxDelay == 0 {
 		proxy.maxDelay = 30 * time.Second
-	}
-
-	if config.AvoidConnect {
-		return proxy, nil
 	}
 
 	if err := proxy.connect(ctx); err != nil {
