@@ -38,7 +38,11 @@ func newPersistence(ctx context.Context, kubeClient kubernetes.Interface, wcConf
 		}
 		log := logging.RequireLoggerFromContext(ctx)
 		instanceIDService := instanceid.NewService(wcConfig.InstanceID)
-		sessionProxy := sqldb.NewSessionProxyFromSession(session, nil, "", "")
+		sessionProxy, err := sqldb.NewSessionProxy(ctx, sqldb.SessionProxyConfig{
+			KubectlConfig: kubeClient,
+			Namespace:     Namespace,
+			DBConfig:      persistence.DBConfig,
+		})
 		offloadNodeStatusRepo, err := persist.NewOffloadNodeStatusRepo(ctx, log, sessionProxy, persistence.GetClusterName(), tableName)
 		if err != nil {
 			panic(err)

@@ -45,13 +45,13 @@ const (
 	lockTypeMutex     lockTypeName = "mutex"
 )
 
-func NewLockManager(ctx context.Context, kubectlConfig kubernetes.Interface, namespace string, config *config.SyncConfig, getSyncLimit GetSyncLimit, nextWorkflow NextWorkflow, isWFDeleted IsWorkflowDeleted) *Manager {
-	dbSession := syncdb.DBSessionFromConfig(ctx, kubectlConfig, namespace, config)
-	var sessionProxy *sqldb.SessionProxy
-	if dbSession != nil {
-		sessionProxy = sqldb.NewSessionProxyFromSession(dbSession, nil, "", "")
+// NewLockManager creates a new lock manager
+func NewLockManager(ctx context.Context, kubectlConfig kubernetes.Interface, namespace string, config *config.SyncConfig, getSyncLimit GetSyncLimit, nextWorkflow NextWorkflow, isWFDeleted IsWorkflowDeleted) (*Manager, error) {
+	sessionProxy, err := sqldb.NewSessionProxy(ctx, sqldb.SessionProxyConfig{KubectlConfig: kubectlConfig, Namespace: namespace, DBConfig: config.DBConfig})
+	if err != nil {
+		return nil, err
 	}
-	return createLockManager(ctx, sessionProxy, config, getSyncLimit, nextWorkflow, isWFDeleted)
+	return createLockManager(ctx, sessionProxy, config, getSyncLimit, nextWorkflow, isWFDeleted), nil
 }
 
 func createLockManager(ctx context.Context, sessionProxy *sqldb.SessionProxy, config *config.SyncConfig, getSyncLimit GetSyncLimit, nextWorkflow NextWorkflow, isWFDeleted IsWorkflowDeleted) *Manager {

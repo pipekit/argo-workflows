@@ -76,7 +76,7 @@ func NewFakeDataCommand() *cobra.Command {
 			for i := 0; i < rows; i++ {
 				wf := randomizeWorkflow(wfTmpl, namespaces)
 				cluster := clusters[rand.Intn(len(clusters))]
-				sessionProxy := utilsqldb.NewSessionProxyFromSession(session, nil, "", "")
+				sessionProxy := utilsqldb.NewSessionProxyFromSession(session, nil, "", "").Tx()
 				wfArchive := sqldb.NewWorkflowArchive(sessionProxy, cluster, "", instanceIDService)
 				if err := wfArchive.ArchiveWorkflow(ctx, wf); err != nil {
 					return err

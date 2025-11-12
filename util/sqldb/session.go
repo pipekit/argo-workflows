@@ -97,19 +97,20 @@ func NewSessionProxyFromSession(sess db.Session, dbConfig *config.DBConfig, user
 	}
 }
 
-// Tx returns a transaction SessionProxy
+// Tx marks the sessionproxy as being part of a transaction.
+// This ensures we do not retry/reconnect
 func (sp *SessionProxy) Tx() *SessionProxy {
-	s := NewSessionProxyFromSession(sp.Session(), nil, "", "")
+	s := SessionProxy{sp.kubectlConfig, sp.namespace, sp.dbConfig, sp.username, sp.password, sp.Session(), sync.RWMutex{}, sp.closed, sp.maxRetries, sp.baseDelay, sp.maxDelay, sp.retryMultiple, sp.insideTransaction}
 	s.insideTransaction = true
-	return s
+	return &s
 }
 
 // TxWith runs a With transaction
 func (sp *SessionProxy) TxWith(ctx context.Context, fn func(*SessionProxy) error, opts *sql.TxOptions) error {
 	return sp.With(ctx, func(s db.Session) error {
 		return s.TxContext(ctx, func(sess db.Session) error {
-			newSp := SessionProxy{sp.kubectlConfig, sp.namespace, sp.dbConfig, sp.username, sp.password, sess, sync.RWMutex{}, sp.closed, sp.maxRetries, sp.baseDelay, sp.maxDelay, sp.retryMultiple, sp.insideTransaction}
-			return fn(newSp.Tx())
+			newSp := SessionProxy{sp.kubectlConfig, sp.namespace, sp.dbConfig, sp.username, sp.password, sess, sync.RWMutex{}, sp.closed, sp.maxRetries, sp.baseDelay, sp.maxDelay, sp.retryMultiple, true}
+			return fn(&newSp)
 		}, opts)
 	})
 }
@@ -205,7 +206,6 @@ func (sp *SessionProxy) With(ctx context.Context, fn func(db.Session) error) err
 	}
 	sp.mu.RUnlock()
 
-	// Get current session
 	sp.mu.RLock()
 	sess := sp.sess
 	sp.mu.RUnlock()
@@ -214,7 +214,6 @@ func (sp *SessionProxy) With(ctx context.Context, fn func(db.Session) error) err
 		return fmt.Errorf("no active session")
 	}
 
-	// Execute the operation
 	err := fn(sess)
 	if err == nil {
 		return nil
@@ -225,12 +224,10 @@ func (sp *SessionProxy) With(ctx context.Context, fn func(db.Session) error) err
 		return err
 	}
 
-	// Network error detected - try to reconnect once
 	if reconnectErr := sp.Reconnect(ctx); reconnectErr != nil {
 		return fmt.Errorf("operation failed and reconnection failed: %w", reconnectErr)
 	}
 
-	// Reconnection succeeded, retry the operation once more
 	sp.mu.RLock()
 	sess = sp.sess
 	sp.mu.RUnlock()
@@ -239,7 +236,6 @@ func (sp *SessionProxy) With(ctx context.Context, fn func(db.Session) error) err
 		return fmt.Errorf("no active session after reconnection")
 	}
 
-	// Retry the operation once after successful reconnection
 	if retryErr := fn(sess); retryErr != nil {
 		return fmt.Errorf("operation failed after reconnection: %w", retryErr)
 	}
