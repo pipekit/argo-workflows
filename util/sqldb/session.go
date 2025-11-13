@@ -245,41 +245,26 @@ func (sp *SessionProxy) With(ctx context.Context, fn func(db.Session) error) err
 
 // Reconnect performs reconnection with retry logic and exponential backoff
 func (sp *SessionProxy) Reconnect(ctx context.Context) error {
-	var lastErr error
 	sp.mu.Lock()
 	defer sp.mu.Unlock()
 
+	var err error
+
 	for attempt := 0; attempt <= sp.maxRetries; attempt++ {
 		// Perform the reconnection attempt
-		func() {
-			// Close the bad connection if it exists
-			if sp.sess != nil {
-				sp.sess.Close()
-			}
+		// Close the bad connection if it exists
+		if sp.sess != nil {
+			sp.sess.Close()
+			sp.closed = true
+		}
 
-			// Try to reconnect
-			if err := sp.connect(ctx); err != nil {
-				lastErr = err
-				return
-			}
-
-			// Test the connection with ping
-			if err := sp.sess.Ping(); err != nil {
-				lastErr = err
-				return
-			}
-
-			// Successfully reconnected
-			lastErr = nil
-		}()
-
-		// If reconnection succeeded, return success
-		if lastErr == nil {
+		err = sp.connect(ctx)
+		if err == nil {
 			return nil
 		}
 
 		// If this is the last attempt, don't wait
-		if attempt == sp.maxRetries || !sp.isNetworkError(lastErr) {
+		if attempt == sp.maxRetries || !sp.isNetworkError(err) {
 			break
 		}
 
@@ -295,7 +280,7 @@ func (sp *SessionProxy) Reconnect(ctx context.Context) error {
 		}
 	}
 
-	return fmt.Errorf("reconnection failed after %d retries, last error: %w", sp.maxRetries, lastErr)
+	return fmt.Errorf("reconnection failed after %d retries, last error: %w", sp.maxRetries, err)
 }
 
 // Session returns the underlying session. Use With() for operations that need reconnection.
@@ -323,11 +308,4 @@ func (sp *SessionProxy) Close() error {
 	}
 
 	return nil
-}
-
-// Ping tests the connection with automatic retry
-func (sp *SessionProxy) Ping(ctx context.Context) error {
-	return sp.With(ctx, func(sess db.Session) error {
-		return sess.Ping()
-	})
 }
