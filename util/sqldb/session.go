@@ -52,6 +52,22 @@ type SessionProxyConfig struct {
 	MaxDelay      time.Duration
 }
 
+func validateProxyParams(proxy *SessionProxy) error {
+	if proxy.maxRetries < 0 {
+		return fmt.Errorf("maxRetries cannot be less than 0")
+	}
+	if proxy.baseDelay < 0 {
+		return fmt.Errorf("baseDelay cannot be less than 0")
+	}
+	if proxy.maxDelay < 0 {
+		return fmt.Errorf("maxDelay cannot be less than 0")
+	}
+	if proxy.retryMultiple < 0 {
+		return fmt.Errorf("retryMultiple cannot be less than 0")
+	}
+	return nil
+}
+
 // NewSessionProxy creates a new SessionProxy with the given configuration
 func NewSessionProxy(ctx context.Context, config SessionProxyConfig) (*SessionProxy, error) {
 	proxy := &SessionProxy{
@@ -66,6 +82,18 @@ func NewSessionProxy(ctx context.Context, config SessionProxyConfig) (*SessionPr
 		retryMultiple: 2.0,
 	}
 
+	if config.DBConfig.DBReconnectConfig != nil {
+		reconnectConfig := config.DBConfig.DBReconnectConfig
+		proxy.maxRetries = reconnectConfig.MaxRetries
+		proxy.baseDelay = time.Duration(reconnectConfig.BaseDelaySeconds) * time.Second
+		proxy.maxDelay = time.Duration(reconnectConfig.MaxDelaySeconds) * time.Second
+		proxy.retryMultiple = reconnectConfig.RetryMultiple
+	}
+
+	if err := validateProxyParams(proxy); err != nil {
+		return nil, err
+	}
+
 	if proxy.maxRetries == 0 {
 		proxy.maxRetries = 5
 	}
@@ -74,6 +102,12 @@ func NewSessionProxy(ctx context.Context, config SessionProxyConfig) (*SessionPr
 	}
 	if proxy.maxDelay == 0 {
 		proxy.maxDelay = 30 * time.Second
+	}
+
+	// just trying to account for float funkiness
+	// a value between 0 and 1 is (almost) always non-sensical, but we allow it
+	if proxy.retryMultiple <= 0.000000001 {
+		proxy.retryMultiple = 1.0
 	}
 
 	if err := proxy.connect(ctx); err != nil {
