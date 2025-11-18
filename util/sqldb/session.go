@@ -14,6 +14,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/argoproj/argo-workflows/v3/config"
+	"github.com/argoproj/argo-workflows/v3/util/logging"
 )
 
 // SessionProxy is a wrapper for upperdb sessions that provides automatic reconnection
@@ -233,9 +234,11 @@ func (sp *SessionProxy) isNetworkError(err error) bool {
 
 // With executes with a db Session
 func (sp *SessionProxy) With(ctx context.Context, fn func(db.Session) error) error {
+	logger := logging.RequireLoggerFromContext(ctx)
 	sp.mu.RLock()
 	if sp.closed {
 		sp.mu.RUnlock()
+		logger.Warn(ctx, "session proxy is closed")
 		return fmt.Errorf("session proxy is closed")
 	}
 	sp.mu.RUnlock()
@@ -279,6 +282,7 @@ func (sp *SessionProxy) With(ctx context.Context, fn func(db.Session) error) err
 
 // Reconnect performs reconnection with retry logic and exponential backoff
 func (sp *SessionProxy) Reconnect(ctx context.Context) error {
+	logger := logging.RequireLoggerFromContext(ctx)
 	sp.mu.Lock()
 	defer sp.mu.Unlock()
 
@@ -294,8 +298,10 @@ func (sp *SessionProxy) Reconnect(ctx context.Context) error {
 
 		err = sp.connect(ctx)
 		if err == nil {
+			logger.WithField("attempt_number", attempt).Info(ctx, "connected to database")
 			return nil
 		}
+		logger.WithField("attempt_number", attempt).Warn(ctx, "failed to connect to database")
 
 		// If this is the last attempt, don't wait
 		if attempt == sp.maxRetries || !sp.isNetworkError(err) {
