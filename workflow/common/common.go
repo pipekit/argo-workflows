@@ -58,6 +58,9 @@ const (
 	// AnnotationKeyArtifactGCStrategy is listed as an annotation on the Artifact GC Pod to identify
 	// the strategy whose artifacts are being deleted
 	AnnotationKeyArtifactGCStrategy = workflow.WorkflowFullName + "/artifact-gc-strategy"
+	// AnnotationKeyPodGCStrategy is listed as an annotation on the Pod
+	// the strategy for the pod, in case the pod is orphaned from its workflow
+	AnnotationKeyPodGCStrategy = workflow.WorkflowFullName + "/pod-gc-strategy"
 
 	// LabelParallelismLimit is a label applied on namespace objects to control the per namespace parallelism.
 	LabelParallelismLimit = workflow.WorkflowFullName + "/parallelism-limit"
@@ -163,6 +166,8 @@ const (
 	EnvVarProgressFile = "ARGO_PROGRESS_FILE"
 	// EnvVarDefaultRequeueTime is the default requeue time for Workflow Informers. For more info, see rate_limiters.go
 	EnvVarDefaultRequeueTime = "DEFAULT_REQUEUE_TIME"
+	// EnvVarPodStatusCaptureFinalizer is used to prevent pod garbage collected before argo captures its exit status
+	EnvVarPodStatusCaptureFinalizer = "ARGO_POD_STATUS_CAPTURE_FINALIZER"
 	// EnvAgentTaskWorkers is the number of task workers for the agent pod
 	EnvAgentTaskWorkers = "ARGO_AGENT_TASK_WORKERS"
 	// EnvAgentPatchRate is the rate that the Argo Agent will patch the Workflow TaskSet
@@ -170,6 +175,9 @@ const (
 
 	// Finalizer to block deletion of the workflow if deletion of artifacts fail for some reason.
 	FinalizerArtifactGC = workflow.WorkflowFullName + "/artifact-gc"
+
+	// Finalizer blocks the deletion of pods until the controller captures their status.
+	FinalizerPodStatus = workflow.WorkflowFullName + "/status"
 
 	// Variables that are added to the scope during template execution and can be referenced using {{}} syntax
 

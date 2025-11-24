@@ -1,4 +1,4 @@
-package controller
+package pod
 
 import (
 	"fmt"
@@ -15,10 +15,12 @@ type (
 )
 
 const (
+	noAction            podCleanupAction = ""
 	deletePod           podCleanupAction = "deletePod"
 	labelPodCompleted   podCleanupAction = "labelPodCompleted"
 	terminateContainers podCleanupAction = "terminateContainers"
 	killContainers      podCleanupAction = "killContainers"
+	removeFinalizer     podCleanupAction = "removeFinalizer"
 )
 
 func newPodCleanupKey(namespace string, podName string, action podCleanupAction) podCleanupKey {
