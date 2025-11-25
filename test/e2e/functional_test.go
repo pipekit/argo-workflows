@@ -1452,3 +1452,35 @@ func (s *FunctionalSuite) TestWorkflowParallelismDAGFailFast() {
 			assert.Equal(t, wfv1.NodeSucceeded, status.Nodes.FindByDisplayName("task2").Phase)
 		})
 }
+
+// Exit handler ensure when failed steps ensure no crash and output parameter
+func (s *FunctionalSuite) TestWorkflowExitHandlerCrashEnsureNodeIsPresent() {
+	s.Given().
+		Workflow("@expectedfailures/exit-handler-fail-missing-output.yaml").
+		When().
+		SubmitWorkflow().
+		WaitForWorkflow(fixtures.ToBeRunning).
+		WaitForWorkflow(fixtures.ToBeFailed).
+		Then().
+		ExpectWorkflow(func(t *testing.T, metadata *v1.ObjectMeta, status *wfv1.WorkflowStatus) {
+			var hasExitNode bool
+			var exitNodeName string
+
+			for _, node := range status.Nodes {
+				if !node.IsExitNode() {
+					continue
+				}
+				hasExitNode = true
+				exitNodeName = node.DisplayName
+			}
+			assert.True(t, hasExitNode)
+			assert.NotEmpty(t, exitNodeName)
+
+			hookNode := status.Nodes.FindByDisplayName(exitNodeName)
+
+			require.NotNil(t, hookNode)
+			assert.NotNil(t, hookNode.Inputs)
+			require.Len(t, hookNode.Inputs.Parameters, 1)
+			assert.NotNil(t, hookNode.Inputs.Parameters[0].Value)
+		})
+}
