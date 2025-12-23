@@ -45,7 +45,7 @@ See https://argo-workflows.readthedocs.io/en/latest/argo-server/
 ```
       --argo-base-href string          Path to use with HTTP client due to Base HREF. Defaults to the ARGO_BASE_HREF environment variable.
       --argo-http1                     If true, use the HTTP client. Defaults to the ARGO_HTTP1 environment variable.
-  -s, --argo-server host:port          API server host:port. e.g. localhost:2746. Defaults to the ARGO_SERVER environment variable.
+  -s, --argo-server host:port          API server host:port. e.g. localhost:2746. Defaults to the ARGO_SERVER environment variable. (default "localhost:2746")
       --as string                      Username to impersonate for the operation
       --as-group stringArray           Group to impersonate for the operation, this flag can be repeated to specify multiple groups.
       --as-uid string                  UID to impersonate for the operation
@@ -61,7 +61,7 @@ See https://argo-workflows.readthedocs.io/en/latest/argo-server/
   -k, --insecure-skip-verify           If true, the Argo Server's certificate will not be checked for validity. This will make your HTTPS connections insecure. Defaults to the ARGO_INSECURE_SKIP_VERIFY environment variable.
       --instanceid string              submit with a specific controller's instance id label. Default to the ARGO_INSTANCEID environment variable.
       --kubeconfig string              Path to a kube config. Only required if out-of-cluster
-  -n, --namespace string               If present, the namespace scope for this CLI request
+  -n, --namespace string               If present, the namespace scope for this CLI request (default "")
       --password string                Password for basic authentication to the API server
       --proxy-url string               If provided, this URL will be used to connect via proxy
       --request-timeout string         The length of time to wait before giving up on a single server request. Non-zero values should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don't timeout requests. (default "0")

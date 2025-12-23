@@ -11,6 +11,7 @@ import (
 
 	"github.com/argoproj/argo-workflows/v3"
 	"github.com/argoproj/argo-workflows/v3/cmd/argo/commands/archive"
+	"github.com/argoproj/argo-workflows/v3/cmd/argo/commands/archivev2"
 	"github.com/argoproj/argo-workflows/v3/cmd/argo/commands/auth"
 	"github.com/argoproj/argo-workflows/v3/cmd/argo/commands/client"
 	"github.com/argoproj/argo-workflows/v3/cmd/argo/commands/clustertemplate"
@@ -116,6 +117,7 @@ If your server is behind an ingress with a path (running "argo server --base-hre
 	command.AddCommand(NewNodeCommand())
 	command.AddCommand(NewTerminateCommand())
 	command.AddCommand(archive.NewArchiveCommand())
+	command.AddCommand(archivev2.NewArchiveCommand())
 	command.AddCommand(NewVersionCommand())
 	command.AddCommand(template.NewTemplateCommand())
 	command.AddCommand(cron.NewCronWorkflowCommand())
