@@ -3,17 +3,20 @@
 get a workflow in the archive
 
 ```
-argo archive get UID [flags]
+argo archive get WORKFLOW [flags]
 ```
 
 ### Examples
 
 ```
-# Get information about an archived workflow by its UID:
-  argo archive get abc123-def456-ghi789-jkl012
+# Get information about an archived workflow by name:
+  argo archive get my-workflow
+
+# Get information about an archived workflow by UID (auto-detected):
+  argo archive get a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
 
 # Get information about an archived workflow in YAML format:
-  argo archive get abc123-def456-ghi789-jkl012 -o yaml
+  argo archive get my-workflow -o yaml
 
 ```
 
@@ -62,5 +65,5 @@ argo archive get UID [flags]
 
 ### SEE ALSO
 
-* [argo archive](argo_archive.md)	 - manage the workflow archive - deprecated, use `archivev2`
+* [argo archive](argo_archive.md)	 - manage the workflow archive
 

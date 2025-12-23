@@ -70,5 +70,5 @@ argo archive list [flags]
 
 ### SEE ALSO
 
-* [argo archive](argo_archive.md)	 - manage the workflow archive - deprecated, use `archivev2`
+* [argo archive](argo_archive.md)	 - manage the workflow archive
 

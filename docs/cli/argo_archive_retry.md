@@ -9,13 +9,17 @@ argo archive retry [WORKFLOW...] [flags]
 ### Examples
 
 ```
-# Retry a workflow:
+# Retry a workflow by name:
 
-  argo archive retry uid
+  argo archive retry my-workflow
+
+# Retry a workflow by UID (auto-detected):
+
+  argo archive retry a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
 
 # Retry multiple workflows:
 
-  argo archive retry uid another-uid
+  argo archive retry my-workflow another-workflow
 
 # Retry multiple workflows by label selector:
 
@@ -27,15 +31,15 @@ argo archive retry [WORKFLOW...] [flags]
 
 # Retry and wait for completion:
 
-  argo archive retry --wait uid
+  argo archive retry --wait my-workflow
 
 # Retry and watch until completion:
 
-  argo archive retry --watch uid
+  argo archive retry --watch my-workflow
 		
 # Retry and tail logs until completion:
 
-  argo archive retry --log uid
+  argo archive retry --log my-workflow
 
 ```
 
@@ -92,5 +96,5 @@ argo archive retry [WORKFLOW...] [flags]
 
 ### SEE ALSO
 
-* [argo archive](argo_archive.md)	 - manage the workflow archive - deprecated, use `archivev2`
+* [argo archive](argo_archive.md)	 - manage the workflow archive
 

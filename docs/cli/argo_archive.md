@@ -1,10 +1,6 @@
 ## argo archive
 
-manage the workflow archive - deprecated, use `archivev2`
-
-### Synopsis
-
-NOTE: `archive` command is deprecated in order for the archive commands to mirror non-archive commands, please use `archivev2`. 
+manage the workflow archive
 
 ```
 argo archive [flags]

@@ -105,8 +105,7 @@ argo [flags]
 
 ### SEE ALSO
 
-* [argo archive](argo_archive.md)	 - manage the workflow archive - deprecated, use `archivev2`
-* [argo archivev2](argo_archivev2.md)	 - manage the workflow archive
+* [argo archive](argo_archive.md)	 - manage the workflow archive
 * [argo auth](argo_auth.md)	 - manage authentication settings
 * [argo cluster-template](argo_cluster-template.md)	 - manipulate cluster workflow templates
 * [argo completion](argo_completion.md)	 - output shell completion code for the specified shell (bash, zsh or fish)

@@ -9,13 +9,17 @@ argo archive resubmit [WORKFLOW...] [flags]
 ### Examples
 
 ```
-# Resubmit a workflow:
+# Resubmit a workflow by name:
 
-  argo archive resubmit uid
+  argo archive resubmit my-workflow
+
+# Resubmit a workflow by UID (auto-detected):
+
+  argo archive resubmit a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
 
 # Resubmit multiple workflows:
 
-  argo archive resubmit uid another-uid
+  argo archive resubmit my-workflow another-workflow
 
 # Resubmit multiple workflows by label selector:
 
@@ -27,15 +31,15 @@ argo archive resubmit [WORKFLOW...] [flags]
 
 # Resubmit and wait for completion:
 
-  argo archive resubmit --wait uid
+  argo archive resubmit --wait my-workflow
 
 # Resubmit and watch until completion:
 
-  argo archive resubmit --watch uid
+  argo archive resubmit --watch my-workflow
 
 # Resubmit and tail logs until completion:
 
-  argo archive resubmit --log uid
+  argo archive resubmit --log my-workflow
 
 ```
 
@@ -92,5 +96,5 @@ argo archive resubmit [WORKFLOW...] [flags]
 
 ### SEE ALSO
 
-* [argo archive](argo_archive.md)	 - manage the workflow archive - deprecated, use `archivev2`
+* [argo archive](argo_archive.md)	 - manage the workflow archive
 

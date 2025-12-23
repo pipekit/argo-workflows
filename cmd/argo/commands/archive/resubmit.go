@@ -38,13 +38,17 @@ func NewResubmitCommand() *cobra.Command {
 	command := &cobra.Command{
 		Use:   "resubmit [WORKFLOW...]",
 		Short: "resubmit one or more workflows",
-		Example: `# Resubmit a workflow:
+		Example: `# Resubmit a workflow by name:
 
-  argo archive resubmit uid
+  argo archive resubmit my-workflow
+
+# Resubmit a workflow by UID (auto-detected):
+
+  argo archive resubmit a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
 
 # Resubmit multiple workflows:
 
-  argo archive resubmit uid another-uid
+  argo archive resubmit my-workflow another-workflow
 
 # Resubmit multiple workflows by label selector:
 
@@ -56,15 +60,15 @@ func NewResubmitCommand() *cobra.Command {
 
 # Resubmit and wait for completion:
 
-  argo archive resubmit --wait uid
+  argo archive resubmit --wait my-workflow
 
 # Resubmit and watch until completion:
 
-  argo archive resubmit --watch uid
+  argo archive resubmit --watch my-workflow
 
 # Resubmit and tail logs until completion:
 
-  argo archive resubmit --log uid
+  argo archive resubmit --log my-workflow
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flag("priority").Changed {
@@ -97,7 +101,7 @@ func NewResubmitCommand() *cobra.Command {
 	return command
 }
 
-// resubmitArchivedWorkflows resubmits workflows by given resubmitOpts or workflow names
+// resubmitArchivedWorkflows resubmits workflows by given resubmitOpts or workflow names/UIDs
 func resubmitArchivedWorkflows(ctx context.Context, archiveServiceClient workflowarchivepkg.ArchivedWorkflowServiceClient, serviceClient workflowpkg.WorkflowServiceClient, resubmitOpts resubmitOps, cliSubmitOpts common.CliSubmitOpts, args []string) error {
 	var (
 		wfs wfv1.Workflows
@@ -111,39 +115,58 @@ func resubmitArchivedWorkflows(ctx context.Context, archiveServiceClient workflo
 		}
 	}
 
-	for _, uid := range args {
-		wfs = append(wfs, wfv1.Workflow{
+	// Add workflows from args - auto-detect UID vs NAME
+	for _, identifier := range args {
+		wf := wfv1.Workflow{
 			ObjectMeta: metav1.ObjectMeta{
-				UID:       types.UID(uid),
 				Namespace: resubmitOpts.namespace,
 			},
-		})
+		}
+		if isUID(identifier) {
+			wf.UID = types.UID(identifier)
+		} else {
+			wf.Name = identifier
+		}
+		wfs = append(wfs, wf)
 	}
 
 	var lastResubmitted *wfv1.Workflow
-	resubmittedUids := make(map[string]bool)
+	resubmittedIdentifiers := make(map[string]bool)
 
 	for _, wf := range wfs {
-		if _, ok := resubmittedUids[string(wf.UID)]; ok {
+		// Use UID if available, otherwise use namespace/name for deduplication
+		var identifier string
+		if wf.UID != "" {
+			identifier = "uid:" + string(wf.UID)
+		} else {
+			identifier = "name:" + wf.Namespace + "/" + wf.Name
+		}
+
+		if _, ok := resubmittedIdentifiers[identifier]; ok {
 			// de-duplication in case there is an overlap between the selector and given workflow names
 			continue
 		}
-		resubmittedUids[string(wf.UID)] = true
+		resubmittedIdentifiers[identifier] = true
 
-		lastResubmitted, err = archiveServiceClient.ResubmitArchivedWorkflow(ctx, &workflowarchivepkg.ResubmitArchivedWorkflowRequest{
-			Uid:        string(wf.UID),
+		req := &workflowarchivepkg.ResubmitArchivedWorkflowRequest{
 			Namespace:  wf.Namespace,
-			Name:       wf.Name,
 			Memoized:   resubmitOpts.memoized,
 			Parameters: cliSubmitOpts.Parameters,
-		})
+		}
+		if wf.UID != "" {
+			req.Uid = string(wf.UID)
+		} else {
+			req.Name = wf.Name
+		}
+
+		lastResubmitted, err = archiveServiceClient.ResubmitArchivedWorkflow(ctx, req)
 		if err != nil {
 			return err
 		}
 		printWorkflow(lastResubmitted, cliSubmitOpts.Output.String())
 	}
 
-	if len(resubmittedUids) == 1 {
+	if len(resubmittedIdentifiers) == 1 {
 		// watch or wait when there is only one workflow retried
 		return common.WaitWatchOrLog(ctx, serviceClient, lastResubmitted.Namespace, []string{lastResubmitted.Name}, cliSubmitOpts)
 	}
