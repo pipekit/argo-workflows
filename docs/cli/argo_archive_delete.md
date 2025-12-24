@@ -24,6 +24,8 @@ argo archive delete WORKFLOW... [flags]
 
 ```
   -h, --help   help for delete
+      --name   force the argument to be treated as a name
+      --uid    force the argument to be treated as a UID
 ```
 
 ### Options inherited from parent commands

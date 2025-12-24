@@ -24,7 +24,9 @@ argo archive get WORKFLOW [flags]
 
 ```
   -h, --help            help for get
+      --name            force the argument to be treated as a name
   -o, --output string   Output format. One of: json|yaml|wide (default "wide")
+      --uid             force the argument to be treated as a UID
 ```
 
 ### Options inherited from parent commands

@@ -20,6 +20,8 @@ type resubmitOps struct {
 	namespace     string // --namespace
 	labelSelector string // --selector
 	fieldSelector string // --field-selector
+	forceName     bool   // --name
+	forceUID      bool   // --uid
 }
 
 // hasSelector returns true if the CLI arguments selects multiple workflows
@@ -98,6 +100,9 @@ func NewResubmitCommand() *cobra.Command {
 	command.Flags().BoolVar(&resubmitOpts.memoized, "memoized", false, "re-use successful steps & outputs from the previous run")
 	command.Flags().StringVarP(&resubmitOpts.labelSelector, "selector", "l", "", "Selector (label query) to filter on, not including uninitialized ones, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)")
 	command.Flags().StringVar(&resubmitOpts.fieldSelector, "field-selector", "", "Selector (field query) to filter on, supports '=', '==', and '!='.(e.g. --field-selector key1=value1,key2=value2). The server only supports a limited number of field queries per type.")
+	command.Flags().BoolVar(&resubmitOpts.forceName, "name", false, "force the argument to be treated as a name")
+	command.Flags().BoolVar(&resubmitOpts.forceUID, "uid", false, "force the argument to be treated as a UID")
+	command.MarkFlagsMutuallyExclusive("name", "uid")
 	return command
 }
 
@@ -122,7 +127,13 @@ func resubmitArchivedWorkflows(ctx context.Context, archiveServiceClient workflo
 				Namespace: resubmitOpts.namespace,
 			},
 		}
-		if isUID(identifier) {
+		isUID := isUID(identifier)
+		if resubmitOpts.forceUID {
+			isUID = true
+		} else if resubmitOpts.forceName {
+			isUID = false
+		}
+		if isUID {
 			wf.UID = types.UID(identifier)
 		} else {
 			wf.Name = identifier

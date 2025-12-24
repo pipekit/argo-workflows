@@ -16,10 +16,14 @@ import (
 )
 
 func NewGetCommand() *cobra.Command {
-	var output = common.EnumFlagValue{
-		AllowedValues: []string{"json", "yaml", "wide"},
-		Value:         "wide",
-	}
+	var (
+		output = common.EnumFlagValue{
+			AllowedValues: []string{"json", "yaml", "wide"},
+			Value:         "wide",
+		}
+		forceName bool
+		forceUID  bool
+	)
 	command := &cobra.Command{
 		Use:   "get WORKFLOW",
 		Short: "get a workflow in the archive",
@@ -46,7 +50,13 @@ func NewGetCommand() *cobra.Command {
 			}
 
 			var wf *wfv1.Workflow
-			if isUID(identifier) {
+			isUID := isUID(identifier)
+			if forceUID {
+				isUID = true
+			} else if forceName {
+				isUID = false
+			}
+			if isUID {
 				// Lookup by UID
 				wf, err = serviceClient.GetArchivedWorkflow(ctx, &workflowarchivepkg.GetArchivedWorkflowRequest{Uid: identifier})
 			} else {
@@ -65,6 +75,9 @@ func NewGetCommand() *cobra.Command {
 		},
 	}
 	command.Flags().VarP(&output, "output", "o", "Output format. "+output.Usage())
+	command.Flags().BoolVar(&forceName, "name", false, "force the argument to be treated as a name")
+	command.Flags().BoolVar(&forceUID, "uid", false, "force the argument to be treated as a UID")
+	command.MarkFlagsMutuallyExclusive("name", "uid")
 	return command
 }
 

@@ -23,6 +23,8 @@ type retryOps struct {
 	namespace         string // --namespace
 	labelSelector     string // --selector
 	fieldSelector     string // --field-selector
+	forceName         bool   // --name
+	forceUID          bool   // --uid
 }
 
 // hasSelector returns true if the CLI arguments selects multiple workflows
@@ -104,6 +106,9 @@ func NewRetryCommand() *cobra.Command {
 	command.Flags().StringVar(&retryOpts.nodeFieldSelector, "node-field-selector", "", "selector of nodes to reset, eg: --node-field-selector inputs.parameters.myparam.value=abc")
 	command.Flags().StringVarP(&retryOpts.labelSelector, "selector", "l", "", "Selector (label query) to filter on, not including uninitialized ones, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)")
 	command.Flags().StringVar(&retryOpts.fieldSelector, "field-selector", "", "Selector (field query) to filter on, supports '=', '==', and '!='.(e.g. --field-selector key1=value1,key2=value2). The server only supports a limited number of field queries per type.")
+	command.Flags().BoolVar(&retryOpts.forceName, "name", false, "force the argument to be treated as a name")
+	command.Flags().BoolVar(&retryOpts.forceUID, "uid", false, "force the argument to be treated as a UID")
+	command.MarkFlagsMutuallyExclusive("name", "uid")
 	return command
 }
 
@@ -128,7 +133,13 @@ func retryArchivedWorkflows(ctx context.Context, archiveServiceClient workflowar
 				Namespace: retryOpts.namespace,
 			},
 		}
-		if isUID(identifier) {
+		isUID := isUID(identifier)
+		if retryOpts.forceUID {
+			isUID = true
+		} else if retryOpts.forceName {
+			isUID = false
+		}
+		if isUID {
 			wf.UID = types.UID(identifier)
 		} else {
 			wf.Name = identifier

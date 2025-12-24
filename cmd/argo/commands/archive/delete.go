@@ -10,6 +10,10 @@ import (
 )
 
 func NewDeleteCommand() *cobra.Command {
+	var (
+		forceName bool
+		forceUID  bool
+	)
 	command := &cobra.Command{
 		Use:   "delete WORKFLOW...",
 		Short: "delete a workflow in the archive",
@@ -34,7 +38,13 @@ func NewDeleteCommand() *cobra.Command {
 			namespace := client.Namespace(ctx)
 			for _, identifier := range args {
 				var req *workflowarchivepkg.DeleteArchivedWorkflowRequest
-				if isUID(identifier) {
+				isUID := isUID(identifier)
+				if forceUID {
+					isUID = true
+				} else if forceName {
+					isUID = false
+				}
+				if isUID {
 					req = &workflowarchivepkg.DeleteArchivedWorkflowRequest{Uid: identifier}
 				} else {
 					req = &workflowarchivepkg.DeleteArchivedWorkflowRequest{
@@ -50,5 +60,8 @@ func NewDeleteCommand() *cobra.Command {
 			return nil
 		},
 	}
+	command.Flags().BoolVar(&forceName, "name", false, "force the argument to be treated as a name")
+	command.Flags().BoolVar(&forceUID, "uid", false, "force the argument to be treated as a UID")
+	command.MarkFlagsMutuallyExclusive("name", "uid")
 	return command
 }

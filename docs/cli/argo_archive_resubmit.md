@@ -50,10 +50,12 @@ argo archive resubmit [WORKFLOW...] [flags]
   -h, --help                    help for resubmit
       --log                     log the workflow until it completes
       --memoized                re-use successful steps & outputs from the previous run
+      --name                    force the argument to be treated as a name
   -o, --output string           Output format. One of: name|json|yaml|wide
   -p, --parameter stringArray   input parameter to override on the original workflow spec
       --priority int32          workflow priority
   -l, --selector string         Selector (label query) to filter on, not including uninitialized ones, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
+      --uid                     force the argument to be treated as a UID
   -w, --wait                    wait for the workflow to complete, only works when a single workflow is resubmitted
       --watch                   watch the workflow until it completes, only works when a single workflow is resubmitted
 ```
