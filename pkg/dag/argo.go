@@ -657,19 +657,22 @@ func (e *DAGEvaluator) EvaluateTask(ctx context.Context, taskName Key) Evaluatio
 	// Check if task already has a node
 	node := e.Store.GetNode(taskName)
 	if node != nil {
-		// Task already exists
+		// Task node already exists - it has already been initialized.
+		// We should NOT return ShouldRun=true because that would cause
+		// the controller to try to initialize it again, causing a panic.
+		// This matches the behavior of the legacy evaluateDependsLogicLegacy
+		// which returns (true, true, nil) when node != nil.
+		result.ShouldRun = false
+
 		if node.Fulfilled() {
-			result.ShouldRun = false
 			if node.Phase == wfv1.NodeOmitted {
 				result.Skipped = true
 				result.SkipReason = node.Message
 			}
-			return result
 		}
-		if node.Phase == wfv1.NodeRunning {
-			result.ShouldRun = false // Already running
-			return result
-		}
+		// For any existing node (Pending, Running, Succeeded, Failed, etc.),
+		// we don't need to re-initialize or re-run it.
+		return result
 	}
 
 	// Evaluate depends logic

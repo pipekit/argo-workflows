@@ -10,6 +10,7 @@ import (
 
 	"github.com/argoproj/argo-workflows/v3/errors"
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	"github.com/argoproj/argo-workflows/v3/pkg/dag"
 	"github.com/argoproj/argo-workflows/v3/util/expr/argoexpr"
 	"github.com/argoproj/argo-workflows/v3/util/logging"
 	"github.com/argoproj/argo-workflows/v3/util/template"
@@ -58,6 +59,10 @@ type dagContext struct {
 
 	// used for logging in the dag
 	log logging.Logger
+
+	// evaluator is the Build Systems à la Carte based DAG evaluator.
+	// It provides a principled approach to dependency evaluation and scheduling.
+	evaluator *dag.DAGEvaluator
 }
 
 func (d *dagContext) GetTaskDependencies(ctx context.Context, taskName string) []string {
@@ -257,6 +262,9 @@ func (woc *wfOperationCtx) executeDAG(ctx context.Context, nodeName string, tmpl
 		dependsLogic:   make(map[string]string),
 		log:            woc.log,
 	}
+
+	// Initialize the Build Systems à la Carte evaluator for principled dependency evaluation
+	dagCtx.evaluator = dag.NewDAGEvaluator(woc.wf, tmpl, node.ID, nodeName)
 
 	// Identify our target tasks. If user did not specify any, then we choose all tasks which have
 	// no dependants.
@@ -866,7 +874,45 @@ type TaskResults struct {
 
 // evaluateDependsLogic returns whether a node should execute and proceed. proceed means that all of its dependencies are
 // completed and execute means that given the results of its dependencies, this node should execute.
+//
+// When the DAGEvaluator is available, this method delegates to the evaluator's EvaluateTask method,
+// which implements the Build Systems à la Carte framework for principled dependency evaluation.
+// This provides a clean separation between the scheduling algorithm and the dependency resolution logic.
 func (d *dagContext) evaluateDependsLogic(ctx context.Context, taskName string) (bool, bool, error) {
+	// If evaluator is available, delegate to it for principled dependency evaluation
+	if d.evaluator != nil {
+		// CRITICAL: Check if node already exists FIRST, before calling the evaluator.
+		// This matches the legacy behavior where we return (true, true, nil) when node exists.
+		// Returning execute=true prevents the caller from trying to re-initialize the node,
+		// which would cause a "node already initialized" panic.
+		node := d.getTaskNode(ctx, taskName)
+		if node != nil {
+			return true, true, nil
+		}
+
+		result := d.evaluator.EvaluateTask(ctx, taskName)
+
+		if result.Error != nil {
+			return false, false, result.Error
+		}
+
+		// proceed is true if all dependencies are complete (not suspended)
+		proceed := !result.Suspended
+
+		// execute is true if the task should run and is not skipped
+		execute := result.ShouldRun && !result.Skipped
+
+		return execute, proceed, nil
+	}
+
+	// Fallback: Use the original evaluation logic for backwards compatibility
+	// This path is used when the evaluator is nil (e.g., during testing or edge cases)
+	return d.evaluateDependsLogicLegacy(ctx, taskName)
+}
+
+// evaluateDependsLogicLegacy is the original implementation of evaluateDependsLogic.
+// It is preserved for backwards compatibility and used as a fallback when the evaluator is not available.
+func (d *dagContext) evaluateDependsLogicLegacy(ctx context.Context, taskName string) (bool, bool, error) {
 	node := d.getTaskNode(ctx, taskName)
 	if node != nil {
 		return true, true, nil
