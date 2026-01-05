@@ -225,6 +225,13 @@ func (s *SuspendingScheduler[K, V]) fetchDependency(_ context.Context, depKey K)
 		return zero, NewSuspendErrorWithReason(Key(keyToString(depKey)), "dependency succeeded but value not found")
 
 	case TaskStateFailed, TaskStateError:
+		// Dependency failed. In some systems (like Argo), we still need the value
+		// to evaluate "on exit" or "continue on fail" logic.
+		// If value exists, return it.
+		value, found := s.Store.GetValue(depKey)
+		if found {
+			return value, nil
+		}
 		// Dependency failed, propagate the failure
 		return zero, NewDependencyError(
 			"", // Current task key is not known in this context
@@ -311,14 +318,29 @@ func (s *SuspendingScheduler[K, V]) executeWithRetry(
 
 		// Check if this is a suspension
 		if se, ok := IsSuspendError(err); ok {
+			// Check for self-suspension (waiting for self execution)
+			if se.WaitingFor == Key(keyToString(target)) {
+				// Record waiting state
+				s.mu.Lock()
+				s.waiting[target] = []K{target}
+				s.mu.Unlock()
+				// Propagate suspension
+				return zero, err
+			}
+
 			// Task suspended waiting for a dependency
 			waitingOn = suspendedDeps
 			if len(waitingOn) == 0 {
 				// Add the dependency from the suspend error
-				for _, k := range s.Store.ListKeys() {
-					if keyToString(k) == se.WaitingFor {
-						waitingOn = append(waitingOn, k)
-						break
+				// Try to cast directly if K is string-compatible (Argo case)
+				if key, ok := any(se.WaitingFor).(K); ok {
+					waitingOn = append(waitingOn, key)
+				} else {
+					for _, k := range s.Store.ListKeys() {
+						if keyToString(k) == se.WaitingFor {
+							waitingOn = append(waitingOn, k)
+							break
+						}
 					}
 				}
 			}
@@ -400,10 +422,15 @@ func (s *SuspendingScheduler[K, V]) BatchBuild(ctx context.Context, targets []K)
 					result.WaitingOn = waiting
 				} else {
 					// Add the key from suspend error
-					for _, k := range s.Store.ListKeys() {
-						if keyToString(k) == se.WaitingFor {
-							result.WaitingOn = append(result.WaitingOn, k)
-							break
+					// Try to cast directly if K is string-compatible (Argo case)
+					if key, ok := any(se.WaitingFor).(K); ok {
+						result.WaitingOn = append(result.WaitingOn, key)
+					} else {
+						for _, k := range s.Store.ListKeys() {
+							if keyToString(k) == se.WaitingFor {
+								result.WaitingOn = append(result.WaitingOn, k)
+								break
+							}
 						}
 					}
 				}

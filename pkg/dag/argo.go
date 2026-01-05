@@ -1,6 +1,3 @@
-// Package dag implements the Build Systems à la Carte framework for DAG dependency evaluation.
-// This file provides Argo Workflows integration adapters that bridge the abstract framework
-// to Argo Workflows' concrete types.
 package dag
 
 import (
@@ -13,248 +10,10 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"strconv"
-	"encoding/json"
-
-	"k8s.io/apimachinery/pkg/util/intstr"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/argoproj/argo-workflows/v3/util/expr/argoexpr"
-	"github.com/argoproj/argo-workflows/v3/errors"
 )
-
-// expandTask expands a single DAG task containing withItems, withParams, withSequence into multiple parallel tasks
-// We want to be lazy with expanding. Unfortunately this is not quite possible as the When field might rely on
-// expansion to work with the shouldExecute function. To address this we apply a trick, we try to expand, if we fail, we then
-// check shouldExecute, if shouldExecute returns false, we continue on as normal else error out
-func (e *DAGEvaluator) ExpandTask(ctx context.Context, task wfv1.DAGTask, scope map[string]string, substitutor Substitutor) ([]wfv1.DAGTask, error) {
-	var err error
-	var items []wfv1.Item
-	if len(task.WithItems) > 0 {
-		items = task.WithItems
-	} else if task.WithParam != "" {
-		resolvedParam, err := substitutor.Substitute(task.WithParam, scope)
-		if err != nil {
-			return nil, err
-		}
-		err = json.Unmarshal([]byte(resolvedParam), &items)
-		if err != nil {
-			mustExec, mustExecErr := shouldExecute(task.When)
-			if mustExecErr != nil || mustExec {
-				return nil, errors.Errorf(errors.CodeBadRequest, "withParam value could not be parsed as a JSON list: %s: %v", strings.TrimSpace(resolvedParam), err)
-			}
-		}
-	} else if task.WithSequence != nil {
-		items, err = expandSequence(task.WithSequence)
-		if err != nil {
-			mustExec, mustExecErr := shouldExecute(task.When)
-			if mustExecErr != nil || mustExec {
-				return nil, err
-			}
-		}
-	} else {
-		return []wfv1.DAGTask{task}, nil
-	}
-
-	// these fields can be very large (>100m) and marshalling 10k x 100m = 6GB of memory used and
-	// very poor performance, so we just nil them out
-	task.WithItems = nil
-	task.WithParam = ""
-	task.WithSequence = nil
-
-	taskBytes, err := json.Marshal(task)
-	if err != nil {
-		return nil, errors.InternalWrapError(err)
-	}
-
-	expandedTasks := make([]wfv1.DAGTask, 0)
-	for i, item := range items {
-		var newTask wfv1.DAGTask
-		newTaskName, err := processItem(ctx, taskBytes, task.Name, i, item, &newTask, task.When, scope, substitutor)
-		if err != nil {
-			return nil, err
-		}
-		if newTaskName == "" {
-			continue
-		}
-		newTask.Name = newTaskName
-		newTask.Template = task.Template
-		expandedTasks = append(expandedTasks, newTask)
-	}
-	return expandedTasks, nil
-}
-
-func shouldExecute(when string) (bool, error) {
-	if when == "" {
-		return true, nil
-	}
-	return argoexpr.EvalBool(when, nil)
-}
-
-func expandSequence(seq *wfv1.Sequence) ([]wfv1.Item, error) {
-	if seq == nil {
-		return nil, nil
-	}
-
-	var start, end, count int64
-	var err error
-
-	if seq.Start != nil {
-		if seq.Start.Type == intstr.Int {
-			start = int64(seq.Start.IntValue())
-		} else {
-			start, err = strconv.ParseInt(seq.Start.String(), 10, 64)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse sequence start: %w", err)
-			}
-		}
-	}
-
-	if seq.End != nil {
-		if seq.End.Type == intstr.Int {
-			end = int64(seq.End.IntValue())
-		} else {
-			end, err = strconv.ParseInt(seq.End.String(), 10, 64)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse sequence end: %w", err)
-			}
-		}
-	} else {
-		return nil, nil
-	}
-
-	if start > end {
-		return nil, nil
-	}
-
-	numElements := end - start + 1
-
-	if seq.Count != nil {
-		if seq.Count.Type == intstr.Int {
-			count = int64(seq.Count.IntValue())
-		} else {
-			count, err = strconv.ParseInt(seq.Count.String(), 10, 64)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse sequence count: %w", err)
-			}
-		}
-		if count < numElements {
-			numElements = count
-		}
-	}
-
-	var items []wfv1.Item
-	for i := int64(0); i < numElements; i++ {
-		val := start + i
-		var raw json.RawMessage
-		var err error
-		if seq.Format != "" {
-			strVal := fmt.Sprintf(seq.Format, val)
-			raw, err = json.Marshal(strVal)
-		} else {
-			raw, err = json.Marshal(val)
-		}
-		if err != nil {
-			return nil, err
-		}
-		items = append(items, wfv1.Item{
-			Value: raw,
-		})
-	}
-
-	return items, nil
-}
-
-func processItem(ctx context.Context, taskBytes []byte, taskName string, i int, item wfv1.Item, newTask *wfv1.DAGTask, when string, globalScope map[string]string, substitutor Substitutor) (string, error) {
-	var newTaskName string
-
-	err := json.Unmarshal(taskBytes, newTask)
-	if err != nil {
-		return "", errors.InternalWrapError(err)
-	}
-
-	if substitutor != nil {
-		substScope := make(map[string]string)
-		for k, v := range globalScope {
-			substScope[k] = v
-		}
-					var raw interface{}
-					err := json.Unmarshal(item.Value, &raw)
-					if err != nil {
-						// fallback to just the raw value
-						substScope["item"] = string(item.Value)
-					} else {
-						switch v := raw.(type) {
-						case string:
-							substScope["item"] = v
-						case float64:
-							substScope["item"] = strconv.FormatFloat(v, 'f', -1, 64)
-						case bool:
-							substScope["item"] = strconv.FormatBool(v)
-						default:
-							// For lists and maps, we use the raw JSON
-							substScope["item"] = string(item.Value)
-						}
-					}
-					substScope["index"] = strconv.Itoa(i)		// Marshal the new task, substitute, and unmarshal back
-		taskJSON, err := json.Marshal(newTask)
-		if err != nil {
-			return "", errors.InternalWrapError(err)
-		}
-		substituted, err := substitutor.Substitute(string(taskJSON), substScope)
-		if err != nil {
-			return "", err
-		}
-		err = json.Unmarshal([]byte(substituted), newTask)
-		if err != nil {
-			return "", errors.InternalWrapError(err)
-		}
-	}
-
-	if newTask.Name != "" && newTask.Name != taskName {
-		newTaskName = newTask.Name
-	} else {
-		var itemStr string
-		var raw interface{}
-		err := json.Unmarshal(item.Value, &raw)
-		if err != nil {
-			itemStr = string(item.Value)
-		} else {
-			switch v := raw.(type) {
-			case string:
-				itemStr = v
-			case float64:
-				itemStr = strconv.FormatFloat(v, 'f', -1, 64)
-			case bool:
-				itemStr = strconv.FormatBool(v)
-			default:
-				itemStr = string(item.Value)
-			}
-		}
-		if item.Value != nil {
-			newTaskName = fmt.Sprintf("%s(%d:%s)", taskName, i, itemStr)
-		} else {
-			newTaskName = fmt.Sprintf("%s(%d)", taskName, i)
-		}
-	}
-
-	// 'when' clause would also need substitution
-	// We need to substitute when before evaluation
-	if newTask.When != "" {
-		when = newTask.When
-	}
-	proceed, err := shouldExecute(when)
-	if err != nil {
-		return "", err
-	}
-	if !proceed {
-		return "", nil
-	}
-
-	return newTaskName, nil
-}
-
-
 
 // NodeValue wraps an Argo node status as a Value in the Build Systems framework.
 // This adapter allows workflow node outputs to be used with the generic Store and Scheduler.
@@ -878,7 +637,11 @@ func NewDAGEvaluator(wf *wfv1.Workflow, tmpl *wfv1.Template, boundaryID, boundar
 			return store.GetState(key)
 		},
 		func(ctx context.Context, key Key, fetch Fetch[Key, NodeValue]) (bool, bool, error) {
-			return evaluator.evaluateDependsLogic(ctx, key)
+			should, err := evaluator.evaluateDependsLogic(ctx, key)
+			if err != nil {
+				return false, false, err
+			}
+			return should, true, nil
 		},
 	)
 
@@ -901,8 +664,51 @@ func NewDAGEvaluator(wf *wfv1.Workflow, tmpl *wfv1.Template, boundaryID, boundar
 func (e *DAGEvaluator) EvaluateDAG(ctx context.Context, targets []Key) ([]EvaluationResult, error) {
 	results := make([]EvaluationResult, 0, len(targets))
 
-	for _, target := range targets {
-		result := e.EvaluateTask(ctx, target)
+	// Batch build all targets
+	buildResults := e.Scheduler.BatchBuild(ctx, targets)
+
+	for i, buildResult := range buildResults {
+		// Map BuildResult to EvaluationResult
+		result := EvaluationResult{
+			TaskName:     targets[i],
+			CurrentState: buildResult.State,
+		}
+
+		if buildResult.Value.NodeStatus != nil {
+			// Task already has a value (node exists)
+			if buildResult.Value.IsOmitted() {
+				result.Skipped = true
+				result.SkipReason = buildResult.Value.NodeStatus.Message
+			}
+			// Already completed or running
+			results = append(results, result)
+			continue
+		}
+
+		if buildResult.Suspended {
+			// Suspended - check if waiting on self (should run) or others
+			waitingForSelf := false
+			for _, waitKey := range buildResult.WaitingOn {
+				if waitKey == targets[i] {
+					waitingForSelf = true
+					break
+				}
+			}
+
+			if waitingForSelf {
+				result.ShouldRun = true
+			} else {
+				result.Suspended = true
+				result.WaitingOn = buildResult.WaitingOn
+			}
+		} else if buildResult.Error != nil {
+			result.Error = buildResult.Error
+		} else {
+			// No error, no value, not suspended -> Skipped/Omitted by logic
+			result.Skipped = true
+			result.SkipReason = "depends condition not met"
+		}
+
 		results = append(results, result)
 	}
 
@@ -911,73 +717,21 @@ func (e *DAGEvaluator) EvaluateDAG(ctx context.Context, targets []Key) ([]Evalua
 
 // EvaluateTask evaluates a single task and returns its evaluation result.
 func (e *DAGEvaluator) EvaluateTask(ctx context.Context, taskName string) EvaluationResult {
-	result := EvaluationResult{
-		TaskName: taskName,
+	results, _ := e.EvaluateDAG(ctx, []Key{taskName})
+	if len(results) > 0 {
+		return results[0]
 	}
-
-	node := e.Store.GetNode(taskName)
-	if node != nil {
-		// Task node already exists - it has already been initialized.
-		// We should NOT return ShouldRun=true because that would cause
-		// the controller to try to initialize it again, causing a panic.
-		// This matches the behavior of the legacy evaluateDependsLogicLegacy
-		// which returns (true, true, nil) when node != nil.
-		result.ShouldRun = false
-
-		if node.Fulfilled() {
-			if node.Phase == wfv1.NodeOmitted {
-				result.Skipped = true
-				result.SkipReason = node.Message
-			}
-		}
-		// For any existing node (Pending, Running, Succeeded, Failed, etc.),
-		// we don't need to re-initialize or re-run it.
-		return result
-	}
-
-	// Evaluate depends logic
-	shouldExecute, canProceed, err := e.evaluateDependsLogic(ctx, taskName)
-	if err != nil {
-		result.Error = err
-		return result
-	}
-
-	if !canProceed {
-		// Dependencies not ready
-		result.Suspended = true
-		deps, _ := e.Tasks.GetDependencies(ctx, taskName)
-		for _, dep := range deps {
-			depNode := e.Store.GetNode(dep)
-			if depNode == nil || !depNode.Fulfilled() {
-				result.WaitingOn = append(result.WaitingOn, dep)
-			}
-		}
-		return result
-	}
-
-	if !shouldExecute {
-		// Depends logic evaluated to false - task should be omitted
-		result.Skipped = true
-		result.SkipReason = "depends condition not met"
-		return result
-	}
-
-	// Task should be executed
-	result.ShouldRun = true
-	return result
+	return EvaluationResult{TaskName: taskName, Error: fmt.Errorf("evaluation failed")}
 }
 
 // evaluateDependsLogic evaluates the depends expression for a task.
 // Returns:
 //   - shouldExecute: true if the task should execute based on depends logic
-//   - canProceed: true if all dependencies are in a terminal state
-//   - err: error during evaluation
-//
-// This mirrors dagContext.evaluateDependsLogic from workflow/controller/dag.go.
-func (e *DAGEvaluator) evaluateDependsLogic(ctx context.Context, taskName string) (bool, bool, error) {
+//   - err: error if dependencies are not fulfilled (SuspendError) or evaluation fails
+func (e *DAGEvaluator) evaluateDependsLogic(ctx context.Context, taskName string) (bool, error) {
 	node := e.Store.GetNode(taskName)
 	if node != nil && node.Fulfilled() {
-		return true, true, nil
+		return true, nil
 	}
 
 	evalScope := make(map[string]TaskResult)
@@ -987,20 +741,19 @@ func (e *DAGEvaluator) evaluateDependsLogic(ctx context.Context, taskName string
 		depNode := e.Store.GetNode(depName)
 
 		if depNode == nil {
-			return false, false, nil
+			return false, NewSuspendErrorWithReason(depName, "dependency does not exist")
 		}
 		if depNode.IsDaemoned() {
-			return true, true, nil
-		}
-
-		// If the dependency doesn't exist or isn't fulfilled, we can't proceed
-		if !depNode.Fulfilled() {
-			return false, false, nil
+			// Daemoned nodes are considered fulfilled for dependency purposes if they are not pending
+			// But wait, IsDaemoned() check in NodeValue logic includes IsDaemoned && !Pending
+			// proceed to logic evaluation
+		} else if !depNode.Fulfilled() {
+			return false, NewSuspendErrorWithReason(depName, "dependency not fulfilled")
 		}
 
 		// Check hooks completion (if workflow is available)
 		if e.Workflow != nil && !checkAllHooksFulfilled(depNode, e.Workflow.Status.Nodes) {
-			return false, false, nil
+			return false, NewSuspendErrorWithReason(depName, "dependency hooks not fulfilled")
 		}
 
 		// Normalize task name for expression evaluation
@@ -1044,15 +797,15 @@ func (e *DAGEvaluator) evaluateDependsLogic(ctx context.Context, taskName string
 
 	if evalLogic == "" {
 		// No depends expression means always execute (if no dependencies or all are satisfied)
-		return true, true, nil
+		return true, nil
 	}
 
 	// Evaluate the expression
 	result, err := argoexpr.EvalBool(evalLogic, evalScope)
 	if err != nil {
-		return false, false, fmt.Errorf("unable to evaluate expression '%s': %s", evalLogic, err)
+		return false, fmt.Errorf("unable to evaluate expression '%s': %s", evalLogic, err)
 	}
-	return result, true, nil
+	return result, nil
 }
 
 // FindLeafTaskNames finds tasks that no other tasks depend on.
