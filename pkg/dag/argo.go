@@ -13,10 +13,248 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"strconv"
+	"encoding/json"
+
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/argoproj/argo-workflows/v3/util/expr/argoexpr"
+	"github.com/argoproj/argo-workflows/v3/errors"
 )
+
+// expandTask expands a single DAG task containing withItems, withParams, withSequence into multiple parallel tasks
+// We want to be lazy with expanding. Unfortunately this is not quite possible as the When field might rely on
+// expansion to work with the shouldExecute function. To address this we apply a trick, we try to expand, if we fail, we then
+// check shouldExecute, if shouldExecute returns false, we continue on as normal else error out
+func (e *DAGEvaluator) ExpandTask(ctx context.Context, task wfv1.DAGTask, scope map[string]string, substitutor Substitutor) ([]wfv1.DAGTask, error) {
+	var err error
+	var items []wfv1.Item
+	if len(task.WithItems) > 0 {
+		items = task.WithItems
+	} else if task.WithParam != "" {
+		resolvedParam, err := substitutor.Substitute(task.WithParam, scope)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal([]byte(resolvedParam), &items)
+		if err != nil {
+			mustExec, mustExecErr := shouldExecute(task.When)
+			if mustExecErr != nil || mustExec {
+				return nil, errors.Errorf(errors.CodeBadRequest, "withParam value could not be parsed as a JSON list: %s: %v", strings.TrimSpace(resolvedParam), err)
+			}
+		}
+	} else if task.WithSequence != nil {
+		items, err = expandSequence(task.WithSequence)
+		if err != nil {
+			mustExec, mustExecErr := shouldExecute(task.When)
+			if mustExecErr != nil || mustExec {
+				return nil, err
+			}
+		}
+	} else {
+		return []wfv1.DAGTask{task}, nil
+	}
+
+	// these fields can be very large (>100m) and marshalling 10k x 100m = 6GB of memory used and
+	// very poor performance, so we just nil them out
+	task.WithItems = nil
+	task.WithParam = ""
+	task.WithSequence = nil
+
+	taskBytes, err := json.Marshal(task)
+	if err != nil {
+		return nil, errors.InternalWrapError(err)
+	}
+
+	expandedTasks := make([]wfv1.DAGTask, 0)
+	for i, item := range items {
+		var newTask wfv1.DAGTask
+		newTaskName, err := processItem(ctx, taskBytes, task.Name, i, item, &newTask, task.When, scope, substitutor)
+		if err != nil {
+			return nil, err
+		}
+		if newTaskName == "" {
+			continue
+		}
+		newTask.Name = newTaskName
+		newTask.Template = task.Template
+		expandedTasks = append(expandedTasks, newTask)
+	}
+	return expandedTasks, nil
+}
+
+func shouldExecute(when string) (bool, error) {
+	if when == "" {
+		return true, nil
+	}
+	return argoexpr.EvalBool(when, nil)
+}
+
+func expandSequence(seq *wfv1.Sequence) ([]wfv1.Item, error) {
+	if seq == nil {
+		return nil, nil
+	}
+
+	var start, end, count int64
+	var err error
+
+	if seq.Start != nil {
+		if seq.Start.Type == intstr.Int {
+			start = int64(seq.Start.IntValue())
+		} else {
+			start, err = strconv.ParseInt(seq.Start.String(), 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse sequence start: %w", err)
+			}
+		}
+	}
+
+	if seq.End != nil {
+		if seq.End.Type == intstr.Int {
+			end = int64(seq.End.IntValue())
+		} else {
+			end, err = strconv.ParseInt(seq.End.String(), 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse sequence end: %w", err)
+			}
+		}
+	} else {
+		return nil, nil
+	}
+
+	if start > end {
+		return nil, nil
+	}
+
+	numElements := end - start + 1
+
+	if seq.Count != nil {
+		if seq.Count.Type == intstr.Int {
+			count = int64(seq.Count.IntValue())
+		} else {
+			count, err = strconv.ParseInt(seq.Count.String(), 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse sequence count: %w", err)
+			}
+		}
+		if count < numElements {
+			numElements = count
+		}
+	}
+
+	var items []wfv1.Item
+	for i := int64(0); i < numElements; i++ {
+		val := start + i
+		var raw json.RawMessage
+		var err error
+		if seq.Format != "" {
+			strVal := fmt.Sprintf(seq.Format, val)
+			raw, err = json.Marshal(strVal)
+		} else {
+			raw, err = json.Marshal(val)
+		}
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, wfv1.Item{
+			Value: raw,
+		})
+	}
+
+	return items, nil
+}
+
+func processItem(ctx context.Context, taskBytes []byte, taskName string, i int, item wfv1.Item, newTask *wfv1.DAGTask, when string, globalScope map[string]string, substitutor Substitutor) (string, error) {
+	var newTaskName string
+
+	err := json.Unmarshal(taskBytes, newTask)
+	if err != nil {
+		return "", errors.InternalWrapError(err)
+	}
+
+	if substitutor != nil {
+		substScope := make(map[string]string)
+		for k, v := range globalScope {
+			substScope[k] = v
+		}
+					var raw interface{}
+					err := json.Unmarshal(item.Value, &raw)
+					if err != nil {
+						// fallback to just the raw value
+						substScope["item"] = string(item.Value)
+					} else {
+						switch v := raw.(type) {
+						case string:
+							substScope["item"] = v
+						case float64:
+							substScope["item"] = strconv.FormatFloat(v, 'f', -1, 64)
+						case bool:
+							substScope["item"] = strconv.FormatBool(v)
+						default:
+							// For lists and maps, we use the raw JSON
+							substScope["item"] = string(item.Value)
+						}
+					}
+					substScope["index"] = strconv.Itoa(i)		// Marshal the new task, substitute, and unmarshal back
+		taskJSON, err := json.Marshal(newTask)
+		if err != nil {
+			return "", errors.InternalWrapError(err)
+		}
+		substituted, err := substitutor.Substitute(string(taskJSON), substScope)
+		if err != nil {
+			return "", err
+		}
+		err = json.Unmarshal([]byte(substituted), newTask)
+		if err != nil {
+			return "", errors.InternalWrapError(err)
+		}
+	}
+
+	if newTask.Name != "" && newTask.Name != taskName {
+		newTaskName = newTask.Name
+	} else {
+		var itemStr string
+		var raw interface{}
+		err := json.Unmarshal(item.Value, &raw)
+		if err != nil {
+			itemStr = string(item.Value)
+		} else {
+			switch v := raw.(type) {
+			case string:
+				itemStr = v
+			case float64:
+				itemStr = strconv.FormatFloat(v, 'f', -1, 64)
+			case bool:
+				itemStr = strconv.FormatBool(v)
+			default:
+				itemStr = string(item.Value)
+			}
+		}
+		if item.Value != nil {
+			newTaskName = fmt.Sprintf("%s(%d:%s)", taskName, i, itemStr)
+		} else {
+			newTaskName = fmt.Sprintf("%s(%d)", taskName, i)
+		}
+	}
+
+	// 'when' clause would also need substitution
+	// We need to substitute when before evaluation
+	if newTask.When != "" {
+		when = newTask.When
+	}
+	proceed, err := shouldExecute(when)
+	if err != nil {
+		return "", err
+	}
+	if !proceed {
+		return "", nil
+	}
+
+	return newTaskName, nil
+}
+
+
 
 // NodeValue wraps an Argo node status as a Value in the Build Systems framework.
 // This adapter allows workflow node outputs to be used with the generic Store and Scheduler.
@@ -162,6 +400,9 @@ func NewWorkflowStore(wf *wfv1.Workflow, boundaryID, boundaryName string) *Workf
 
 // taskNodeName computes the node name for a task (same as dagContext.taskNodeName).
 func (s *WorkflowStore) taskNodeName(taskName string) string {
+	if strings.HasPrefix(taskName, "[") {
+		return fmt.Sprintf("%s%s", s.BoundaryName, taskName)
+	}
 	return fmt.Sprintf("%s.%s", s.BoundaryName, taskName)
 }
 
@@ -391,8 +632,8 @@ func (w *WorkflowTasks) GetTask(key Key) (*Task[Key, NodeValue], bool) {
 
 // regex patterns for dependency parsing (same as in workflow/common/ancestry.go)
 var (
-	taskNameRegex   = regexp.MustCompile(`([a-zA-Z0-9][-a-zA-Z0-9]*?\.[A-Z][a-zA-Z]+)|([a-zA-Z0-9][-a-zA-Z0-9]*)`)
-	taskResultRegex = regexp.MustCompile(`([a-zA-Z0-9][-a-zA-Z0-9]*?\.[A-Z][a-zA-Z]+)`)
+	taskNameRegex   = regexp.MustCompile(`([a-zA-Z0-9\[\]\.\-_]+?\.[A-Z][a-zA-Z]+)|([a-zA-Z0-9\[\]\.\-_]+)`)
+	taskResultRegex = regexp.MustCompile(`([a-zA-Z0-9\[\]\.\-_]+?\.[A-Z][a-zA-Z]+)`)
 )
 
 // GetDependencies returns the dependencies for a task.
@@ -405,7 +646,6 @@ func (w *WorkflowTasks) GetDependencies(ctx context.Context, key Key) ([]Key, er
 	}
 	w.mu.RUnlock()
 
-	// Resolve dependencies
 	w.resolveDependencies(ctx, key)
 
 	w.mu.RLock()
@@ -433,6 +673,12 @@ func (w *WorkflowTasks) GetDependsLogic(ctx context.Context, taskName string) st
 	return logic
 }
 
+// normalizeTaskName normalizes a task name to be a valid identifier in expressions.
+func normalizeTaskName(name string) string {
+	r := strings.NewReplacer("-", "_", ".", "_", "[", "_", "]", "_")
+	return r.Replace(name)
+}
+
 // resolveDependencies computes and caches dependencies for a task.
 // This mirrors common.GetTaskDependencies but is self-contained to avoid import cycles.
 func (w *WorkflowTasks) resolveDependencies(_ context.Context, taskName string) {
@@ -444,42 +690,57 @@ func (w *WorkflowTasks) resolveDependencies(_ context.Context, taskName string) 
 	depends := w.getTaskDependsLogic(task)
 	matches := taskNameRegex.FindAllStringSubmatchIndex(depends, -1)
 
-	type expansionMatch struct {
-		taskName string
-		start    int
-		end      int
+	type replacement struct {
+		start int
+		end   int
+		text  string
 	}
 
-	var expansionMatches []expansionMatch
+	var replacements []replacement
 	dependencySet := make(map[string]bool)
 
 	for _, matchGroup := range matches {
 		// Matched taskName.TaskResult
 		if matchGroup[2] != -1 {
 			match := depends[matchGroup[2]:matchGroup[3]]
-			split := strings.Split(match, ".")
-			dependencySet[split[0]] = true
+			// Split by the LAST dot to separate task name from result
+			lastDot := strings.LastIndex(match, ".")
+			if lastDot != -1 {
+				taskName := match[:lastDot]
+				result := match[lastDot+1:]
+				dependencySet[taskName] = true
+
+				normalized := normalizeTaskName(taskName)
+				if normalized != taskName {
+					replacements = append(replacements, replacement{
+						start: matchGroup[2],
+						end:   matchGroup[3],
+						text:  fmt.Sprintf("%s.%s", normalized, result),
+					})
+				}
+			}
 		} else if matchGroup[4] != -1 {
 			// Matched plain taskName
 			match := depends[matchGroup[4]:matchGroup[5]]
 			dependencySet[match] = true
-			expansionMatches = append(expansionMatches, expansionMatch{
-				taskName: match,
-				start:    matchGroup[4],
-				end:      matchGroup[5],
+
+			depTask := w.taskMap[match]
+			replacements = append(replacements, replacement{
+				start: matchGroup[4],
+				end:   matchGroup[5],
+				text:  w.expandDependency(match, depTask),
 			})
 		}
 	}
 
-	// Expand bare task names to full depends expressions
-	if len(expansionMatches) > 0 {
+	// Apply replacements
+	if len(replacements) > 0 {
 		// Sort in descending order by start position to replace from end to start
-		sort.Slice(expansionMatches, func(i, j int) bool {
-			return expansionMatches[i].start > expansionMatches[j].start
+		sort.Slice(replacements, func(i, j int) bool {
+			return replacements[i].start > replacements[j].start
 		})
-		for _, match := range expansionMatches {
-			depTask := w.taskMap[match.taskName]
-			depends = depends[:match.start] + w.expandDependency(match.taskName, depTask) + depends[match.end:]
+		for _, r := range replacements {
+			depends = depends[:r.start] + r.text + depends[r.end:]
 		}
 	}
 
@@ -512,7 +773,8 @@ func (w *WorkflowTasks) getTaskDependsLogic(task *wfv1.DAGTask) string {
 
 // expandDependency expands a bare task name to a full depends expression.
 func (w *WorkflowTasks) expandDependency(depName string, depTask *wfv1.DAGTask) string {
-	resultForTask := func(result string) string { return fmt.Sprintf("%s.%s", depName, result) }
+	normalizedName := normalizeTaskName(depName)
+	resultForTask := func(result string) string { return fmt.Sprintf("%s.%s", normalizedName, result) }
 
 	taskDepends := []string{
 		resultForTask("Succeeded"),
@@ -648,13 +910,11 @@ func (e *DAGEvaluator) EvaluateDAG(ctx context.Context, targets []Key) ([]Evalua
 }
 
 // EvaluateTask evaluates a single task and returns its evaluation result.
-func (e *DAGEvaluator) EvaluateTask(ctx context.Context, taskName Key) EvaluationResult {
+func (e *DAGEvaluator) EvaluateTask(ctx context.Context, taskName string) EvaluationResult {
 	result := EvaluationResult{
-		TaskName:     taskName,
-		CurrentState: e.Store.GetState(taskName),
+		TaskName: taskName,
 	}
 
-	// Check if task already has a node
 	node := e.Store.GetNode(taskName)
 	if node != nil {
 		// Task node already exists - it has already been initialized.
@@ -726,8 +986,15 @@ func (e *DAGEvaluator) evaluateDependsLogic(ctx context.Context, taskName string
 	for _, depName := range deps {
 		depNode := e.Store.GetNode(depName)
 
+		if depNode == nil {
+			return false, false, nil
+		}
+		if depNode.IsDaemoned() {
+			return true, true, nil
+		}
+
 		// If the dependency doesn't exist or isn't fulfilled, we can't proceed
-		if depNode == nil || !depNode.Fulfilled() {
+		if !depNode.Fulfilled() {
 			return false, false, nil
 		}
 
@@ -736,8 +1003,8 @@ func (e *DAGEvaluator) evaluateDependsLogic(ctx context.Context, taskName string
 			return false, false, nil
 		}
 
-		// Normalize task name for expression evaluation (replace - with _)
-		evalTaskName := strings.ReplaceAll(depName, "-", "_")
+		// Normalize task name for expression evaluation
+		evalTaskName := normalizeTaskName(depName)
 		if _, ok := evalScope[evalTaskName]; ok {
 			continue
 		}
@@ -781,12 +1048,11 @@ func (e *DAGEvaluator) evaluateDependsLogic(ctx context.Context, taskName string
 	}
 
 	// Evaluate the expression
-	execute, err := argoexpr.EvalBool(evalLogic, evalScope)
+	result, err := argoexpr.EvalBool(evalLogic, evalScope)
 	if err != nil {
-		return false, false, fmt.Errorf("unable to evaluate expression '%s': %w", evalLogic, err)
+		return false, false, fmt.Errorf("unable to evaluate expression '%s': %s", evalLogic, err)
 	}
-
-	return execute, true, nil
+	return result, true, nil
 }
 
 // FindLeafTaskNames finds tasks that no other tasks depend on.
@@ -865,17 +1131,19 @@ func (e *DAGEvaluator) EvaluateAll(ctx context.Context) map[string]EvaluationRes
 //   - All its dependencies are fulfilled
 //   - Its depends expression evaluates to true
 func (e *DAGEvaluator) GetReadyTasks(ctx context.Context) []string {
-	ready := make([]string, 0)
+	var readyTasks []string
+	for _, task := range e.Tasks.Tasks {
+		// Only consider tasks that haven't started yet
+		if e.Store.GetNode(task.Name) != nil {
+			continue
+		}
 
-	for _, taskName := range e.Tasks.TaskNames() {
-		result := e.EvaluateTask(ctx, taskName)
-		if result.ShouldRun && !result.Suspended && result.Error == nil {
-			ready = append(ready, taskName)
+		result := e.EvaluateTask(ctx, task.Name)
+		if result.Error == nil && result.ShouldRun && !result.Suspended {
+			readyTasks = append(readyTasks, task.Name)
 		}
 	}
-
-	sort.Strings(ready)
-	return ready
+	return readyTasks
 }
 
 // GetWaitingTasks returns all tasks that are waiting for dependencies.

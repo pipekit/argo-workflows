@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	"github.com/argoproj/argo-workflows/v3/pkg/dag"
 	"github.com/argoproj/argo-workflows/v3/util/logging"
 	"github.com/argoproj/argo-workflows/v3/workflow/common"
 )
@@ -143,15 +144,24 @@ spec:
           parameters:
           - name: message
             value: "{{item}}"
-        withParam: "[1234, \"foo\\tbar\", true, []]"
+        withParam: "[1234, \"foo\tbar\", true, []]"
 `
 
 func TestExpandStepGroupWithParam(t *testing.T) {
 	ctx := logging.TestContext(t.Context())
 	wf := wfv1.MustUnmarshalWorkflow(stepsWithParam)
 	woc := newWoc(ctx, *wf)
+	tmpl := wf.Spec.Templates[0]
+	step := tmpl.Steps[0].Steps[0]
+	dagTask := &wfv1.DAGTask{
+		Name:      step.Name,
+		Template:  step.Template,
+		Arguments: step.Arguments,
+		WithParam: step.WithParam,
+	}
 
-	expanded, err := woc.expandStepGroup(ctx, "[0]", wf.Spec.Templates[0].Steps[0].Steps, &stepsContext{scope: createScope(&wf.Spec.Templates[0])})
+	evaluator := dag.NewDAGEvaluator(wf, &tmpl, "test", "test")
+	expanded, err := evaluator.ExpandTask(ctx, *dagTask, make(map[string]string), woc)
 	require.NoError(t, err)
 	require.Len(t, expanded, 4)
 
@@ -164,7 +174,7 @@ func TestExpandStepGroupWithParam(t *testing.T) {
 			Parameter: "1234",
 		},
 		{
-			Name:      `use-with-param(1:foo\tbar)`,
+			Name:      "use-with-param(1:foo\tbar)",
 			Parameter: "foo\tbar",
 		},
 		{
@@ -208,12 +218,21 @@ func TestExpandStepGroupWithItems(t *testing.T) {
 	ctx := logging.TestContext(t.Context())
 	wf := wfv1.MustUnmarshalWorkflow(stepsWithItems)
 	woc := newWoc(ctx, *wf)
+	tmpl := wf.Spec.Templates[0]
+	step := tmpl.Steps[0].Steps[0]
+	dagTask := &wfv1.DAGTask{
+		Name:      step.Name,
+		Template:  step.Template,
+		Arguments: step.Arguments,
+		WithItems: step.WithItems,
+	}
 
-	expanded, err := woc.expandStepGroup(ctx, "[0]", wf.Spec.Templates[0].Steps[0].Steps, &stepsContext{scope: createScope(&wf.Spec.Templates[0])})
+	evaluator := dag.NewDAGEvaluator(wf, &tmpl, "test", "test")
+	expanded, err := evaluator.ExpandTask(ctx, *dagTask, make(map[string]string), woc)
 	require.NoError(t, err)
 	require.Len(t, expanded, 1)
 
-	assert.Equal(t, `Hello"Argo`, expanded[0].Arguments.Parameters[0].Value.String())
+	assert.Equal(t, "Hello\"Argo", expanded[0].Arguments.Parameters[0].Value.String())
 }
 
 func TestResourceDurationMetric(t *testing.T) {
@@ -292,7 +311,7 @@ spec:
     name: plan
     outputs: {}
     steps:
-    - -
+    - - 
         name: create-artifact
         template: artifact-creation
         when: "false"

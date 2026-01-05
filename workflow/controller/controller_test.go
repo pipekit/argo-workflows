@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -547,7 +548,9 @@ func makePodsPhase(ctx context.Context, woc *wfOperationCtx, phase apiv1.PodPhas
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("DEBUG: makePodsPhase: found %d pods\n", len(pods.Items))
 	for _, pod := range pods.Items {
+		fmt.Printf("DEBUG: makePodsPhase: pod=%s phase=%s target=%s\n", pod.Name, pod.Status.Phase, phase)
 		if pod.Status.Phase != phase {
 			pod.Status.Phase = phase
 			if phase == apiv1.PodFailed {
@@ -566,6 +569,7 @@ func makePodsPhase(ctx context.Context, woc *wfOperationCtx, phase apiv1.PodPhas
 			}
 			if phase == apiv1.PodSucceeded {
 				nodeID := woc.nodeID(&pod)
+				fmt.Printf("DEBUG: makePodsPhase: marking node %s complete\n", nodeID)
 				woc.wf.Status.MarkTaskResultComplete(ctx, nodeID)
 			}
 		}

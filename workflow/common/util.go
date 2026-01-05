@@ -159,7 +159,7 @@ func substituteAndGetConfigMapValue(ctx context.Context, inParam *wfv1.Parameter
 // * parameters in the template from the arguments
 // * global parameters (e.g. {{workflow.parameters.XX}}, {{workflow.name}}, {{workflow.status}})
 // * local parameters (e.g. {{pod.name}})
-func ProcessArgs(ctx context.Context, tmpl *wfv1.Template, args wfv1.ArgumentsProvider, globalParams, localParams Parameters, validateOnly bool, namespace string, configMapStore ConfigMapStore) (*wfv1.Template, error) {
+func ProcessArgs(ctx context.Context, tmpl *wfv1.Template, args wfv1.ArgumentsProvider, globalParams, localParams Parameters, validateOnly, allowUnresolved bool, namespace string, configMapStore ConfigMapStore) (*wfv1.Template, error) {
 	// For each input parameter:
 	// 1) check if was supplied as argument. if so use the supplied value from arg
 	// 2) if not, use default value.
@@ -205,7 +205,7 @@ func ProcessArgs(ctx context.Context, tmpl *wfv1.Template, args wfv1.ArgumentsPr
 		}
 	}
 
-	return SubstituteParams(ctx, newTmpl, globalParams, localParams)
+	return SubstituteParams(ctx, newTmpl, globalParams, localParams, allowUnresolved)
 }
 
 // substituteConfigMapKeyRefParam performs template substitution for ConfigMapKeyRef
@@ -222,20 +222,24 @@ func substituteConfigMapKeyRefParam(ctx context.Context, in string, replaceMap m
 }
 
 // SubstituteParams returns a new copy of the template with global, pod, and input parameters substituted
-func SubstituteParams(ctx context.Context, tmpl *wfv1.Template, globalParams, localParams Parameters) (*wfv1.Template, error) {
+func SubstituteParams(ctx context.Context, tmpl *wfv1.Template, globalParams, localParams Parameters, allowUnresolved bool) (*wfv1.Template, error) {
 	tmplBytes, err := json.Marshal(tmpl)
 	if err != nil {
 		return nil, errors.InternalWrapError(err)
 	}
 	// First replace globals & locals, then replace inputs because globals could be referenced in the inputs
 	replaceMap := globalParams.Merge(localParams)
+	log := logging.RequireLoggerFromContext(ctx)
+	log.Info(ctx, "SubstituteParams: starting first pass")
 	globalReplacedTmplStr, err := template.Replace(ctx, string(tmplBytes), replaceMap, true)
 	if err != nil {
+		log.WithError(err).Info(ctx, "SubstituteParams: first pass failed")
 		return nil, err
 	}
 	var globalReplacedTmpl wfv1.Template
 	err = json.Unmarshal([]byte(globalReplacedTmplStr), &globalReplacedTmpl)
 	if err != nil {
+		log.WithError(err).Info(ctx, "SubstituteParams: unmarshal after first pass failed")
 		return nil, errors.InternalWrapError(err)
 	}
 	// Now replace the rest of substitutions (the ones that can be made) in the template
@@ -268,8 +272,10 @@ func SubstituteParams(ctx context.Context, tmpl *wfv1.Template, globalParams, lo
 		}
 	}
 
+	log.Info(ctx, "SubstituteParams: starting second pass")
 	s, err := template.Replace(ctx, globalReplacedTmplStr, replaceMap, true)
 	if err != nil {
+		log.WithError(err).Info(ctx, "SubstituteParams: second pass failed")
 		return nil, err
 	}
 	var newTmpl wfv1.Template

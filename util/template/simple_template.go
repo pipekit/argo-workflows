@@ -33,6 +33,8 @@ func simpleReplace(ctx context.Context, w io.Writer, tag string, replaceMap map[
 			logger.WithError(errors.InternalError("unresolved")).Debug(ctx, "unresolved is allowed")
 			return fmt.Fprintf(w, "{{%s}}", tag)
 		}
+		log := logging.RequireLoggerFromContext(ctx)
+		log.Info(ctx, fmt.Sprintf("simpleReplace failure: tag=%s allowUnresolved=%v", tag, allowUnresolved))
 		return 0, errors.Errorf(errors.CodeBadRequest, "failed to resolve {{%s}}", tag)
 	}
 

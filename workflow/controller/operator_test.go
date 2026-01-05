@@ -30,6 +30,7 @@ import (
 
 	"github.com/argoproj/argo-workflows/v3/config"
 	"github.com/argoproj/argo-workflows/v3/pkg/apis/workflow"
+	"github.com/argoproj/argo-workflows/v3/pkg/dag"
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	intstrutil "github.com/argoproj/argo-workflows/v3/util/intstr"
 	"github.com/argoproj/argo-workflows/v3/util/logging"
@@ -2688,9 +2689,17 @@ func TestExpandWithItems(t *testing.T) {
 	wf, err := wfcset.Create(ctx, wf, metav1.CreateOptions{})
 	require.NoError(t, err)
 	woc := newWorkflowOperationCtx(ctx, wf, controller)
-	newSteps, err := woc.expandStep(ctx, wf.Spec.Templates[0].Steps[0].Steps[0], &wfScope{})
+	step := wf.Spec.Templates[0].Steps[0].Steps[0]
+	dagTask := wfv1.DAGTask{
+		Name:      step.Name,
+		Template:  step.Template,
+		Arguments: step.Arguments,
+		WithItems: step.WithItems,
+	}
+	dagEvaluator := dag.NewDAGEvaluator(woc.wf, &woc.wf.Spec.Templates[0], woc.wf.ObjectMeta.Name, woc.wf.ObjectMeta.Name)
+	expandedTasks, err := dagEvaluator.ExpandTask(ctx, dagTask, woc.globalParams, woc)
 	require.NoError(t, err)
-	assert.Len(t, newSteps, 5)
+	assert.Len(t, expandedTasks, 5)
 	woc.operate(ctx)
 	pods, err := listPods(ctx, woc)
 	require.NoError(t, err)
@@ -2738,10 +2747,18 @@ func TestExpandWithItemsMap(t *testing.T) {
 	wf, err := wfcset.Create(ctx, wf, metav1.CreateOptions{})
 	require.NoError(t, err)
 	woc := newWorkflowOperationCtx(ctx, wf, controller)
-	newSteps, err := woc.expandStep(ctx, wf.Spec.Templates[0].Steps[0].Steps[0], &wfScope{})
+	step := wf.Spec.Templates[0].Steps[0].Steps[0]
+	dagTask := wfv1.DAGTask{
+		Name:      step.Name,
+		Template:  step.Template,
+		Arguments: step.Arguments,
+		WithItems: step.WithItems,
+	}
+	dagEvaluator := dag.NewDAGEvaluator(woc.wf, &woc.wf.Spec.Templates[0], woc.wf.ObjectMeta.Name, woc.wf.ObjectMeta.Name)
+	expandedTasks, err := dagEvaluator.ExpandTask(ctx, dagTask, woc.globalParams, woc)
 	require.NoError(t, err)
-	assert.Len(t, newSteps, 3)
-	assert.Equal(t, "debian 9.1 JSON({\"os\":\"debian\",\"version\":9.1})", newSteps[0].Arguments.Parameters[0].Value.String())
+	assert.Len(t, expandedTasks, 3)
+	assert.Equal(t, "debian 9.1 JSON({\"os\":\"debian\",\"version\":9.1})", expandedTasks[0].Arguments.Parameters[0].Value.String())
 }
 
 var suspendTemplate = `

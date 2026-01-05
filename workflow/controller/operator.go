@@ -953,6 +953,11 @@ func (woc *wfOperationCtx) reapplyUpdate(ctx context.Context, wfClient v1alpha1.
 	}
 }
 
+func (woc *wfOperationCtx) Substitute(text string, scope map[string]string) (string, error) {
+	return template.Replace(context.Background(), text, scope, true)
+}
+
+
 // requeue this workflow onto the workqueue for later processing
 func (woc *wfOperationCtx) requeueAfter(afterDuration time.Duration) {
 	key, _ := cache.MetaNamespaceKeyFunc(woc.wf)
@@ -1382,6 +1387,7 @@ func (woc *wfOperationCtx) printPodSpecLog(ctx context.Context, pod *apiv1.Pod, 
 // assessNodeStatus compares the current state of a pod with its corresponding node
 // and returns the new node status if something changed
 func (woc *wfOperationCtx) assessNodeStatus(ctx context.Context, pod *apiv1.Pod, old *wfv1.NodeStatus) *wfv1.NodeStatus {
+	fmt.Printf("DEBUG: assessNodeStatus: node=%s pod=%s podPhase=%s\n", old.Name, pod.Name, pod.Status.Phase)
 	updated := old.DeepCopy()
 	tmpl, err := woc.GetNodeTemplate(ctx, old)
 	if err != nil {
@@ -2055,15 +2061,18 @@ func buildRetryStrategyLocalScope(node *wfv1.NodeStatus, nodes wfv1.Nodes) map[s
 }
 
 type executeTemplateOpts struct {
-	// boundaryID is an ID for node grouping
+	// boundaryID is the node ID of the boundary which all children of this template execution will have
 	boundaryID string
-	// onExitTemplate signifies that executeTemplate was called as part of an onExit handler.
-	// Necessary for graceful shutdowns
+	// onExitTemplate is a flag to indicate that this template is part of an onExit handler
 	onExitTemplate bool
-	// activeDeadlineSeconds is a deadline to set to any pods executed. This is necessary for pods to inherit backoff.maxDuration
-	executionDeadline time.Time
-	// nodeFlag tracks node information such as hook or retry
+	// nodeFlag holds the node flag of the created node
 	nodeFlag *wfv1.NodeFlag
+	// executionDeadline is the deadline for the execution of the template
+	executionDeadline time.Time
+	// scope holds the scope of the template
+	scope *wfScope
+	// scopePrefix is the prefix of the scope
+	scopePrefix string
 }
 
 // executeTemplate executes the template with the given arguments and returns the created NodeStatus
@@ -2135,7 +2144,7 @@ func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string,
 	localParams["node.name"] = nodeName
 
 	// Inputs has been processed with arguments already, so pass empty arguments.
-	processedTmpl, err := common.ProcessArgs(ctx, resolvedTmpl, &args, woc.globalParams, localParams, false, woc.wf.Namespace, woc.controller.configMapInformer.GetIndexer())
+	processedTmpl, err := common.ProcessArgs(ctx, resolvedTmpl, &args, woc.globalParams, localParams, false, opts.onExitTemplate, woc.wf.Namespace, woc.controller.configMapInformer.GetIndexer())
 	if err != nil {
 		return woc.initializeNodeOrMarkError(ctx, node, nodeName, templateScope, orgTmpl, opts.boundaryID, opts.nodeFlag, err), err
 	}
@@ -2388,7 +2397,7 @@ func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string,
 		localParams[common.LocalVarRetriesLastDuration] = lastRetryDuration
 		localParams[common.LocalVarRetriesLastStatus] = lastRetryStatus
 		localParams[common.LocalVarRetriesLastMessage] = lastRetryMessage
-		processedTmpl, err = common.SubstituteParams(ctx, processedTmpl, woc.globalParams, localParams)
+		processedTmpl, err = common.SubstituteParams(ctx, processedTmpl, woc.globalParams, localParams, opts.onExitTemplate)
 		if errorsutil.IsTransientErr(ctx, err) {
 			return node, err
 		}
