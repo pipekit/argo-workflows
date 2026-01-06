@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	genericdag "github.com/argoproj/argo-workflows/v3/pkg/dag"
 	"github.com/argoproj/argo-workflows/v3/util/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -58,7 +59,7 @@ func createDAGTemplate(tasks []wfv1.DAGTask) *wfv1.Template {
 func TestNodeValue_Hash(t *testing.T) {
 	t.Run("nil node returns empty hash", func(t *testing.T) {
 		nv := NodeValue{NodeStatus: nil}
-		assert.Equal(t, Hash(""), nv.Hash())
+		assert.Equal(t, genericdag.Hash(""), nv.Hash())
 	})
 
 	t.Run("hash includes phase", func(t *testing.T) {
@@ -193,16 +194,16 @@ func TestNodeValue_StateChecks(t *testing.T) {
 func TestPhaseToTaskState(t *testing.T) {
 	testCases := []struct {
 		phase wfv1.NodePhase
-		state TaskState
+		state genericdag.TaskState
 	}{
-		{wfv1.NodePending, TaskStatePending},
-		{wfv1.NodeRunning, TaskStateRunning},
-		{wfv1.NodeSucceeded, TaskStateSucceeded},
-		{wfv1.NodeFailed, TaskStateFailed},
-		{wfv1.NodeError, TaskStateError},
-		{wfv1.NodeSkipped, TaskStateSkipped},
-		{wfv1.NodeOmitted, TaskStateOmitted},
-		{"unknown", TaskStatePending}, // Unknown phases default to pending
+		{wfv1.NodePending, genericdag.TaskStatePending},
+		{wfv1.NodeRunning, genericdag.TaskStateRunning},
+		{wfv1.NodeSucceeded, genericdag.TaskStateSucceeded},
+		{wfv1.NodeFailed, genericdag.TaskStateFailed},
+		{wfv1.NodeError, genericdag.TaskStateError},
+		{wfv1.NodeSkipped, genericdag.TaskStateSkipped},
+		{wfv1.NodeOmitted, genericdag.TaskStateOmitted},
+		{"unknown", genericdag.TaskStatePending}, // Unknown phases default to pending
 	}
 
 	for _, tc := range testCases {
@@ -215,17 +216,17 @@ func TestPhaseToTaskState(t *testing.T) {
 
 func TestTaskStateToPhase(t *testing.T) {
 	testCases := []struct {
-		state TaskState
+		state genericdag.TaskState
 		phase wfv1.NodePhase
 	}{
-		{TaskStatePending, wfv1.NodePending},
-		{TaskStateRunning, wfv1.NodeRunning},
-		{TaskStateSucceeded, wfv1.NodeSucceeded},
-		{TaskStateFailed, wfv1.NodeFailed},
-		{TaskStateError, wfv1.NodeError},
-		{TaskStateSkipped, wfv1.NodeSkipped},
-		{TaskStateOmitted, wfv1.NodeOmitted},
-		{TaskState(999), wfv1.NodePending}, // Unknown states default to pending
+		{genericdag.TaskStatePending, wfv1.NodePending},
+		{genericdag.TaskStateRunning, wfv1.NodeRunning},
+		{genericdag.TaskStateSucceeded, wfv1.NodeSucceeded},
+		{genericdag.TaskStateFailed, wfv1.NodeFailed},
+		{genericdag.TaskStateError, wfv1.NodeError},
+		{genericdag.TaskStateSkipped, wfv1.NodeSkipped},
+		{genericdag.TaskStateOmitted, wfv1.NodeOmitted},
+		{genericdag.TaskState(999), wfv1.NodePending}, // Unknown states default to pending
 	}
 
 	for _, tc := range testCases {
@@ -258,7 +259,7 @@ func TestWorkflowStore_GetSetValue(t *testing.T) {
 		addNodeToWorkflow(wf, "dag.taskA", "", wfv1.NodeSucceeded)
 
 		// Retrieve via GetValue
-		value, ok := store.GetValue("taskA")
+		value, ok := store.GetValue(context.Background(), "taskA")
 		assert.True(t, ok)
 		assert.Equal(t, wfv1.NodeSucceeded, value.Phase())
 	})
@@ -267,7 +268,7 @@ func TestWorkflowStore_GetSetValue(t *testing.T) {
 		wf := newTestWorkflow("test-wf")
 		store := NewWorkflowStore(wf, "", "dag")
 
-		_, ok := store.GetValue("nonexistent")
+		_, ok := store.GetValue(context.Background(), "nonexistent")
 		assert.False(t, ok)
 	})
 }
@@ -280,16 +281,16 @@ func TestWorkflowStore_GetState(t *testing.T) {
 		// Add node directly to workflow
 		addNodeToWorkflow(wf, "dag.taskA", "", wfv1.NodeSucceeded)
 
-		state := store.GetState("taskA")
-		assert.Equal(t, TaskStateSucceeded, state)
+		state := store.GetState(context.Background(), "taskA")
+		assert.Equal(t, genericdag.TaskStateSucceeded, state)
 	})
 
 	t.Run("returns pending for nonexistent node", func(t *testing.T) {
 		wf := newTestWorkflow("test-wf")
 		store := NewWorkflowStore(wf, "", "dag")
 
-		state := store.GetState("nonexistent")
-		assert.Equal(t, TaskStatePending, state)
+		state := store.GetState(context.Background(), "nonexistent")
+		assert.Equal(t, genericdag.TaskStatePending, state)
 	})
 }
 
@@ -309,10 +310,10 @@ func TestWorkflowStore_ListKeys(t *testing.T) {
 		wf.Status.Nodes.Set(testCtx(), node1.ID, *node1)
 		wf.Status.Nodes.Set(testCtx(), node2.ID, *node2)
 
-		keys := store.ListKeys()
+		keys := store.ListKeys(context.Background())
 
-		assert.Contains(t, keys, Key("taskA"))
-		assert.Contains(t, keys, Key("taskB"))
+		assert.Contains(t, keys, genericdag.Key("taskA"))
+		assert.Contains(t, keys, genericdag.Key("taskB"))
 	})
 
 	t.Run("filters out expanded task names", func(t *testing.T) {
@@ -330,9 +331,9 @@ func TestWorkflowStore_ListKeys(t *testing.T) {
 		node2.BoundaryID = boundaryID
 		wf.Status.Nodes.Set(testCtx(), node2.ID, *node2)
 
-		keys := store.ListKeys()
+		keys := store.ListKeys(context.Background())
 
-		assert.Contains(t, keys, Key("taskA"))
+		assert.Contains(t, keys, genericdag.Key("taskA"))
 		// Should not contain expanded task
 		for _, key := range keys {
 			assert.NotContains(t, string(key), "(")
@@ -363,6 +364,14 @@ func TestWorkflowStore_GetNode(t *testing.T) {
 
 // --- Tests for WorkflowTasks ---
 
+func toTasks(dagTasks []wfv1.DAGTask) []Task {
+	tasks := make([]Task, len(dagTasks))
+	for i := range dagTasks {
+		tasks[i] = &DAGTask{&dagTasks[i]}
+	}
+	return tasks
+}
+
 func TestWorkflowTasks_NewWorkflowTasks(t *testing.T) {
 	t.Run("creates tasks adapter", func(t *testing.T) {
 		wf := newTestWorkflow("test-wf")
@@ -372,7 +381,7 @@ func TestWorkflowTasks_NewWorkflowTasks(t *testing.T) {
 			{Name: "taskB", Depends: "taskA"},
 		}
 
-		tasks := NewWorkflowTasks(dagTasks, store, wf)
+		tasks := NewWorkflowTasks(toTasks(dagTasks), store, wf)
 
 		assert.NotNil(t, tasks)
 		assert.Len(t, tasks.Tasks, 2)
@@ -386,11 +395,11 @@ func TestWorkflowTasks_GetTask(t *testing.T) {
 		dagTasks := []wfv1.DAGTask{
 			{Name: "taskA"},
 		}
-		tasks := NewWorkflowTasks(dagTasks, store, wf)
+		tasks := NewWorkflowTasks(toTasks(dagTasks), store, wf)
 
 		task, ok := tasks.GetTask("taskA")
 		assert.True(t, ok)
-		assert.Equal(t, Key("taskA"), task.Key)
+		assert.Equal(t, genericdag.Key("taskA"), task.Key)
 	})
 
 	t.Run("returns false for nonexistent key", func(t *testing.T) {
@@ -412,15 +421,15 @@ func TestWorkflowTasks_GetDependencies(t *testing.T) {
 			{Name: "taskB"},
 			{Name: "taskC", Depends: "taskA && taskB"},
 		}
-		tasks := NewWorkflowTasks(dagTasks, store, wf)
+		tasks := NewWorkflowTasks(toTasks(dagTasks), store, wf)
 
 		ctx := context.Background()
 		deps, err := tasks.GetDependencies(ctx, "taskC")
 
 		require.NoError(t, err)
 		assert.Len(t, deps, 2)
-		assert.Contains(t, deps, Key("taskA"))
-		assert.Contains(t, deps, Key("taskB"))
+		assert.Contains(t, deps, genericdag.Key("taskA"))
+		assert.Contains(t, deps, genericdag.Key("taskB"))
 	})
 
 	t.Run("parses complex depends expression", func(t *testing.T) {
@@ -431,14 +440,14 @@ func TestWorkflowTasks_GetDependencies(t *testing.T) {
 			{Name: "taskB"},
 			{Name: "taskC", Depends: "taskA.Succeeded && taskB.Failed"},
 		}
-		tasks := NewWorkflowTasks(dagTasks, store, wf)
+		tasks := NewWorkflowTasks(toTasks(dagTasks), store, wf)
 
 		ctx := context.Background()
 		deps, err := tasks.GetDependencies(ctx, "taskC")
 
 		require.NoError(t, err)
-		assert.Contains(t, deps, Key("taskA"))
-		assert.Contains(t, deps, Key("taskB"))
+		assert.Contains(t, deps, genericdag.Key("taskA"))
+		assert.Contains(t, deps, genericdag.Key("taskB"))
 	})
 
 	t.Run("handles legacy dependencies field", func(t *testing.T) {
@@ -449,15 +458,15 @@ func TestWorkflowTasks_GetDependencies(t *testing.T) {
 			{Name: "taskB"},
 			{Name: "taskC", Dependencies: []string{"taskA", "taskB"}},
 		}
-		tasks := NewWorkflowTasks(dagTasks, store, wf)
+		tasks := NewWorkflowTasks(toTasks(dagTasks), store, wf)
 
 		ctx := context.Background()
 		deps, err := tasks.GetDependencies(ctx, "taskC")
 
 		require.NoError(t, err)
 		assert.Len(t, deps, 2)
-		assert.Contains(t, deps, Key("taskA"))
-		assert.Contains(t, deps, Key("taskB"))
+		assert.Contains(t, deps, genericdag.Key("taskA"))
+		assert.Contains(t, deps, genericdag.Key("taskB"))
 	})
 
 	t.Run("returns empty for task with no dependencies", func(t *testing.T) {
@@ -466,7 +475,7 @@ func TestWorkflowTasks_GetDependencies(t *testing.T) {
 		dagTasks := []wfv1.DAGTask{
 			{Name: "taskA"},
 		}
-		tasks := NewWorkflowTasks(dagTasks, store, wf)
+		tasks := NewWorkflowTasks(toTasks(dagTasks), store, wf)
 
 		ctx := context.Background()
 		deps, err := tasks.GetDependencies(ctx, "taskA")
@@ -484,7 +493,7 @@ func TestWorkflowTasks_GetDependsLogic(t *testing.T) {
 			{Name: "taskA"},
 			{Name: "taskB", Depends: "taskA"},
 		}
-		tasks := NewWorkflowTasks(dagTasks, store, wf)
+		tasks := NewWorkflowTasks(toTasks(dagTasks), store, wf)
 
 		ctx := context.Background()
 		logic := tasks.GetDependsLogic(ctx, "taskB")
@@ -500,7 +509,7 @@ func TestWorkflowTasks_GetDependsLogic(t *testing.T) {
 			{Name: "taskA"},
 			{Name: "taskB", Depends: "taskA.Failed || taskA.Succeeded"},
 		}
-		tasks := NewWorkflowTasks(dagTasks, store, wf)
+		tasks := NewWorkflowTasks(toTasks(dagTasks), store, wf)
 
 		ctx := context.Background()
 		logic := tasks.GetDependsLogic(ctx, "taskB")
@@ -519,7 +528,7 @@ func TestWorkflowTasks_TaskNames(t *testing.T) {
 			{Name: "taskA"},
 			{Name: "taskB"},
 		}
-		tasks := NewWorkflowTasks(dagTasks, store, wf)
+		tasks := NewWorkflowTasks(toTasks(dagTasks), store, wf)
 
 		names := tasks.TaskNames()
 
@@ -534,10 +543,13 @@ func TestWorkflowTasks_GetDAGTask(t *testing.T) {
 		dagTasks := []wfv1.DAGTask{
 			{Name: "taskA", Template: "template-a"},
 		}
-		tasks := NewWorkflowTasks(dagTasks, store, wf)
+		tasks := NewWorkflowTasks(toTasks(dagTasks), store, wf)
 
-		dagTask := tasks.GetDAGTask("taskA")
-		require.NotNil(t, dagTask)
+		// This uses GetOriginalTask now and needs casting
+		task := tasks.GetOriginalTask("taskA")
+		require.NotNil(t, task)
+		dagTask, ok := task.(*DAGTask)
+		require.True(t, ok)
 		assert.Equal(t, "template-a", dagTask.Template)
 	})
 
@@ -546,8 +558,8 @@ func TestWorkflowTasks_GetDAGTask(t *testing.T) {
 		store := NewWorkflowStore(wf, "", "dag")
 		tasks := NewWorkflowTasks(nil, store, wf)
 
-		dagTask := tasks.GetDAGTask("nonexistent")
-		assert.Nil(t, dagTask)
+		task := tasks.GetOriginalTask("nonexistent")
+		assert.Nil(t, task)
 	})
 }
 
@@ -678,7 +690,7 @@ func TestDAGEvaluator_EvaluateDAG(t *testing.T) {
 		evaluator := NewDAGEvaluator(wf, tmpl, "", "dag")
 
 		ctx := context.Background()
-		results, err := evaluator.EvaluateDAG(ctx, []Key{"taskA", "taskB"})
+		results, err := evaluator.EvaluateDAG(ctx, []genericdag.Key{"taskA", "taskB"})
 
 		require.NoError(t, err)
 		assert.Len(t, results, 2)
@@ -827,7 +839,7 @@ func TestDAGEvaluator_EvaluateAll(t *testing.T) {
 		wf := newTestWorkflow("test-wf")
 		tmpl := createDAGTemplate([]wfv1.DAGTask{
 			{Name: "taskA"},
-			{Name: "taskB"},
+			{Name: "taskB", Depends: "taskA"},
 			{Name: "taskC"},
 		})
 		evaluator := NewDAGEvaluator(wf, tmpl, "", "dag")

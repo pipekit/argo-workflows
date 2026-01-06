@@ -6,9 +6,8 @@
 //   - Scheduler: Determines the order in which tasks are executed
 //   - Rebuilder: Determines whether a task needs to be re-executed
 //
-// This implementation uses a suspending scheduler which is ideal for Argo Workflows
-// because it handles dynamic dependencies efficiently by suspending task execution
-// when dependencies are not yet available.
+// This implementation uses a suspending scheduler which handles dynamic dependencies
+// efficiently by suspending task execution when dependencies are not yet available.
 package dag
 
 // Key uniquely identifies a task in the DAG.
@@ -20,7 +19,6 @@ type Key = string
 type Hash = string
 
 // TaskState represents the execution state of a task.
-// These states map to Kubernetes pod states and Argo workflow node phases.
 type TaskState int
 
 const (

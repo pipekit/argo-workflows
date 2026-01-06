@@ -61,11 +61,11 @@ func TestSuspendingScheduler_BasicBuild(t *testing.T) {
 		assert.Equal(t, "result-A", result.data)
 
 		// Verify state is Succeeded
-		state := scheduler.Store.GetState("A")
+		state := scheduler.Store.GetState(ctx, "A")
 		assert.Equal(t, TaskStateSucceeded, state)
 
 		// Verify value is stored
-		stored, ok := scheduler.Store.GetValue("A")
+		stored, ok := scheduler.Store.GetValue(ctx, "A")
 		assert.True(t, ok)
 		assert.Equal(t, "result-A", stored.data)
 	})
@@ -168,9 +168,9 @@ func TestSuspendingScheduler_LinearChain(t *testing.T) {
 		assert.Equal(t, []string{"A", "B", "C"}, executionOrder)
 
 		// Verify all tasks succeeded
-		assert.Equal(t, TaskStateSucceeded, scheduler.Store.GetState("A"))
-		assert.Equal(t, TaskStateSucceeded, scheduler.Store.GetState("B"))
-		assert.Equal(t, TaskStateSucceeded, scheduler.Store.GetState("C"))
+		assert.Equal(t, TaskStateSucceeded, scheduler.Store.GetState(ctx, "A"))
+		assert.Equal(t, TaskStateSucceeded, scheduler.Store.GetState(ctx, "B"))
+		assert.Equal(t, TaskStateSucceeded, scheduler.Store.GetState(ctx, "C"))
 	})
 
 	t.Run("building middle of chain fetches upstream", func(t *testing.T) {
@@ -205,7 +205,7 @@ func TestSuspendingScheduler_LinearChain(t *testing.T) {
 		assert.Equal(t, "result-A-B", result.data)
 
 		// A should also be built
-		assert.Equal(t, TaskStateSucceeded, scheduler.Store.GetState("A"))
+		assert.Equal(t, TaskStateSucceeded, scheduler.Store.GetState(ctx, "A"))
 	})
 }
 
@@ -271,7 +271,7 @@ func TestSuspendingScheduler_DiamondDependency(t *testing.T) {
 
 		// All tasks should be succeeded
 		for _, key := range []Key{"A", "B", "C", "D"} {
-			assert.Equal(t, TaskStateSucceeded, scheduler.Store.GetState(key), "task %s should be succeeded", key)
+			assert.Equal(t, TaskStateSucceeded, scheduler.Store.GetState(ctx, key), "task %s should be succeeded", key)
 		}
 	})
 }
@@ -521,8 +521,8 @@ func TestSuspendingScheduler_SuspendAndResume(t *testing.T) {
 		assert.Equal(t, "result-A-B", result.data)
 
 		// Both should be succeeded now
-		assert.Equal(t, TaskStateSucceeded, store.GetState("A"))
-		assert.Equal(t, TaskStateSucceeded, store.GetState("B"))
+		assert.Equal(t, TaskStateSucceeded, store.GetState(ctx, "A"))
+		assert.Equal(t, TaskStateSucceeded, store.GetState(ctx, "B"))
 	})
 
 	t.Run("multiple suspensions resolve correctly", func(t *testing.T) {
@@ -590,7 +590,7 @@ func TestSuspendingScheduler_ErrorPropagation(t *testing.T) {
 		assert.Contains(t, err.Error(), "task A failed")
 
 		// State should be failed
-		assert.Equal(t, TaskStateFailed, scheduler.Store.GetState("A"))
+		assert.Equal(t, TaskStateFailed, scheduler.Store.GetState(ctx, "A"))
 	})
 
 	t.Run("dependency error propagates to dependent", func(t *testing.T) {
@@ -616,8 +616,8 @@ func TestSuspendingScheduler_ErrorPropagation(t *testing.T) {
 		require.Error(t, err)
 
 		// Both should be in failed state
-		assert.Equal(t, TaskStateFailed, scheduler.Store.GetState("A"))
-		assert.Equal(t, TaskStateFailed, scheduler.Store.GetState("B"))
+		assert.Equal(t, TaskStateFailed, scheduler.Store.GetState(ctx, "A"))
+		assert.Equal(t, TaskStateFailed, scheduler.Store.GetState(ctx, "B"))
 	})
 }
 

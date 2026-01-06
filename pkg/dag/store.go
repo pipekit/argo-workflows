@@ -1,6 +1,7 @@
 package dag
 
 import (
+	"context"
 	"sync"
 )
 
@@ -17,26 +18,26 @@ import (
 type Store[I any, K comparable, V any] interface {
 	// GetValue retrieves the stored value for a key.
 	// Returns the value and true if found, or the zero value and false if not found.
-	GetValue(key K) (V, bool)
+	GetValue(ctx context.Context, key K) (V, bool)
 
 	// SetValue stores a value for a key.
-	SetValue(key K, value V)
+	SetValue(ctx context.Context, key K, value V)
 
 	// GetInfo retrieves build information for the entire store.
 	// This is used by rebuilders to track build metadata.
-	GetInfo() I
+	GetInfo(ctx context.Context) I
 
 	// SetInfo stores build information for the entire store.
-	SetInfo(info I)
+	SetInfo(ctx context.Context, info I)
 
 	// GetState returns the current execution state of a task.
-	GetState(key K) TaskState
+	GetState(ctx context.Context, key K) TaskState
 
 	// SetState updates the execution state of a task.
-	SetState(key K, state TaskState)
+	SetState(ctx context.Context, key K, state TaskState)
 
 	// ListKeys returns all keys in the store.
-	ListKeys() []K
+	ListKeys(ctx context.Context) []K
 }
 
 // MapStore is a simple in-memory implementation of Store using maps.
@@ -59,7 +60,7 @@ func NewMapStore[I any, K comparable, V any](initialInfo I) *MapStore[I, K, V] {
 }
 
 // GetValue retrieves the stored value for a key.
-func (s *MapStore[I, K, V]) GetValue(key K) (V, bool) {
+func (s *MapStore[I, K, V]) GetValue(_ context.Context, key K) (V, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	v, ok := s.values[key]
@@ -67,28 +68,28 @@ func (s *MapStore[I, K, V]) GetValue(key K) (V, bool) {
 }
 
 // SetValue stores a value for a key.
-func (s *MapStore[I, K, V]) SetValue(key K, value V) {
+func (s *MapStore[I, K, V]) SetValue(_ context.Context, key K, value V) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.values[key] = value
 }
 
 // GetInfo retrieves build information for the store.
-func (s *MapStore[I, K, V]) GetInfo() I {
+func (s *MapStore[I, K, V]) GetInfo(_ context.Context) I {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.info
 }
 
 // SetInfo stores build information for the store.
-func (s *MapStore[I, K, V]) SetInfo(info I) {
+func (s *MapStore[I, K, V]) SetInfo(_ context.Context, info I) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.info = info
 }
 
 // GetState returns the current execution state of a task.
-func (s *MapStore[I, K, V]) GetState(key K) TaskState {
+func (s *MapStore[I, K, V]) GetState(_ context.Context, key K) TaskState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	state, ok := s.states[key]
@@ -99,7 +100,7 @@ func (s *MapStore[I, K, V]) GetState(key K) TaskState {
 }
 
 // SetState updates the execution state of a task.
-func (s *MapStore[I, K, V]) SetState(key K, state TaskState) {
+func (s *MapStore[I, K, V]) SetState(_ context.Context, key K, state TaskState) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.states[key] = state
@@ -107,7 +108,7 @@ func (s *MapStore[I, K, V]) SetState(key K, state TaskState) {
 
 // ListKeys returns all keys in the store.
 // This includes keys that have values, states, or both.
-func (s *MapStore[I, K, V]) ListKeys() []K {
+func (s *MapStore[I, K, V]) ListKeys(_ context.Context) []K {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -128,7 +129,7 @@ func (s *MapStore[I, K, V]) ListKeys() []K {
 }
 
 // HasValue returns true if the store has a value for the given key.
-func (s *MapStore[I, K, V]) HasValue(key K) bool {
+func (s *MapStore[I, K, V]) HasValue(_ context.Context, key K) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	_, ok := s.values[key]
@@ -136,21 +137,21 @@ func (s *MapStore[I, K, V]) HasValue(key K) bool {
 }
 
 // DeleteValue removes the value for a key from the store.
-func (s *MapStore[I, K, V]) DeleteValue(key K) {
+func (s *MapStore[I, K, V]) DeleteValue(_ context.Context, key K) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.values, key)
 }
 
 // DeleteState removes the state for a key from the store.
-func (s *MapStore[I, K, V]) DeleteState(key K) {
+func (s *MapStore[I, K, V]) DeleteState(_ context.Context, key K) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.states, key)
 }
 
 // Clear removes all values and states from the store, but keeps the info.
-func (s *MapStore[I, K, V]) Clear() {
+func (s *MapStore[I, K, V]) Clear(_ context.Context) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.values = make(map[K]V)
@@ -179,7 +180,7 @@ func NewKeyInfoStore[I any, K comparable, V any]() *KeyInfoStore[I, K, V] {
 }
 
 // GetKeyInfo retrieves build information for a specific key.
-func (s *KeyInfoStore[I, K, V]) GetKeyInfo(key K) (I, bool) {
+func (s *KeyInfoStore[I, K, V]) GetKeyInfo(_ context.Context, key K) (I, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	info, ok := s.info[key]
@@ -187,14 +188,14 @@ func (s *KeyInfoStore[I, K, V]) GetKeyInfo(key K) (I, bool) {
 }
 
 // SetKeyInfo stores build information for a specific key.
-func (s *KeyInfoStore[I, K, V]) SetKeyInfo(key K, info I) {
+func (s *KeyInfoStore[I, K, V]) SetKeyInfo(_ context.Context, key K, info I) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.info[key] = info
 }
 
 // DeleteKeyInfo removes build information for a specific key.
-func (s *KeyInfoStore[I, K, V]) DeleteKeyInfo(key K) {
+func (s *KeyInfoStore[I, K, V]) DeleteKeyInfo(_ context.Context, key K) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.info, key)

@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	genericdag "github.com/argoproj/argo-workflows/v3/pkg/dag"
 )
 
 // WorkflowStore adapts Argo's Workflow.Status.Nodes as a Store for the Build Systems framework.
@@ -23,9 +24,9 @@ type WorkflowStore struct {
 
 	mu sync.RWMutex
 	// info stores per-key build information (for rebuilders that need it)
-	info map[Key]any
+	info map[genericdag.Key]any
 	// states caches the task states (derived from node phases)
-	states map[Key]TaskState
+	states map[genericdag.Key]genericdag.TaskState
 }
 
 // NewWorkflowStore creates a new WorkflowStore from a workflow and DAG context.
@@ -35,8 +36,8 @@ func NewWorkflowStore(wf *wfv1.Workflow, boundaryID, boundaryName string) *Workf
 		BoundaryID:   boundaryID,
 		BoundaryName: boundaryName,
 		Workflow:     wf,
-		info:         make(map[Key]any),
-		states:       make(map[Key]TaskState),
+		info:         make(map[genericdag.Key]any),
+		states:       make(map[genericdag.Key]genericdag.TaskState),
 	}
 }
 
@@ -56,7 +57,7 @@ func (s *WorkflowStore) taskNodeID(taskName string) string {
 
 // GetValue retrieves the stored value for a task key.
 // Returns the NodeValue and true if found, or empty NodeValue and false if not.
-func (s *WorkflowStore) GetValue(key Key) (NodeValue, bool) {
+func (s *WorkflowStore) GetValue(_ context.Context, key genericdag.Key) (NodeValue, bool) {
 	nodeID := s.taskNodeID(key)
 	node, err := s.Nodes.Get(nodeID)
 	if err != nil {
@@ -67,37 +68,37 @@ func (s *WorkflowStore) GetValue(key Key) (NodeValue, bool) {
 
 // SetValue stores a value for a task key.
 // In practice, this updates the node status in the workflow.
-func (s *WorkflowStore) SetValue(key Key, value NodeValue) {
+func (s *WorkflowStore) SetValue(ctx context.Context, key genericdag.Key, value NodeValue) {
 	if value.NodeStatus == nil {
 		return
 	}
 	nodeID := s.taskNodeID(key)
-	s.Nodes.Set(context.Background(), nodeID, *value.NodeStatus)
+	s.Nodes.Set(ctx, nodeID, *value.NodeStatus)
 }
 
 // GetInfo retrieves build information for the entire store.
-func (s *WorkflowStore) GetInfo() any {
+func (s *WorkflowStore) GetInfo(_ context.Context) any {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.info
 }
 
 // SetInfo stores build information for the entire store.
-func (s *WorkflowStore) SetInfo(info any) {
+func (s *WorkflowStore) SetInfo(_ context.Context, info any) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if infoMap, ok := info.(map[Key]any); ok {
+	if infoMap, ok := info.(map[genericdag.Key]any); ok {
 		s.info = infoMap
 	}
 }
 
 // GetState returns the current execution state of a task.
 // This maps Argo node phases to Build Systems TaskStates.
-func (s *WorkflowStore) GetState(key Key) TaskState {
+func (s *WorkflowStore) GetState(_ context.Context, key genericdag.Key) genericdag.TaskState {
 	nodeID := s.taskNodeID(key)
 	node, err := s.Nodes.Get(nodeID)
 	if err != nil {
-		return TaskStatePending // Node doesn't exist, treat as pending
+		return genericdag.TaskStatePending // Node doesn't exist, treat as pending
 	}
 	return PhaseToTaskState(node.Phase)
 }
@@ -105,7 +106,7 @@ func (s *WorkflowStore) GetState(key Key) TaskState {
 // SetState updates the execution state of a task.
 // This is primarily used by the scheduler to track internal state;
 // actual node phase updates happen through SetValue.
-func (s *WorkflowStore) SetState(key Key, state TaskState) {
+func (s *WorkflowStore) SetState(_ context.Context, key genericdag.Key, state genericdag.TaskState) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.states[key] = state
@@ -113,8 +114,8 @@ func (s *WorkflowStore) SetState(key Key, state TaskState) {
 
 // ListKeys returns all task keys in the store.
 // This returns task names derived from node names in the DAG.
-func (s *WorkflowStore) ListKeys() []Key {
-	keys := make([]Key, 0)
+func (s *WorkflowStore) ListKeys(_ context.Context) []genericdag.Key {
+	keys := make([]genericdag.Key, 0)
 	prefix := s.BoundaryName + "."
 
 	for _, node := range s.Nodes {
@@ -142,43 +143,43 @@ func (s *WorkflowStore) GetNode(taskName string) *wfv1.NodeStatus {
 }
 
 // PhaseToTaskState converts an Argo NodePhase to a Build Systems TaskState.
-func PhaseToTaskState(phase wfv1.NodePhase) TaskState {
+func PhaseToTaskState(phase wfv1.NodePhase) genericdag.TaskState {
 	switch phase {
 	case wfv1.NodePending:
-		return TaskStatePending
+		return genericdag.TaskStatePending
 	case wfv1.NodeRunning:
-		return TaskStateRunning
+		return genericdag.TaskStateRunning
 	case wfv1.NodeSucceeded:
-		return TaskStateSucceeded
+		return genericdag.TaskStateSucceeded
 	case wfv1.NodeFailed:
-		return TaskStateFailed
+		return genericdag.TaskStateFailed
 	case wfv1.NodeError:
-		return TaskStateError
+		return genericdag.TaskStateError
 	case wfv1.NodeSkipped:
-		return TaskStateSkipped
+		return genericdag.TaskStateSkipped
 	case wfv1.NodeOmitted:
-		return TaskStateOmitted
+		return genericdag.TaskStateOmitted
 	default:
-		return TaskStatePending
+		return genericdag.TaskStatePending
 	}
 }
 
 // TaskStateToPhase converts a Build Systems TaskState to an Argo NodePhase.
-func TaskStateToPhase(state TaskState) wfv1.NodePhase {
+func TaskStateToPhase(state genericdag.TaskState) wfv1.NodePhase {
 	switch state {
-	case TaskStatePending:
+	case genericdag.TaskStatePending:
 		return wfv1.NodePending
-	case TaskStateRunning:
+	case genericdag.TaskStateRunning:
 		return wfv1.NodeRunning
-	case TaskStateSucceeded:
+	case genericdag.TaskStateSucceeded:
 		return wfv1.NodeSucceeded
-	case TaskStateFailed:
+	case genericdag.TaskStateFailed:
 		return wfv1.NodeFailed
-	case TaskStateError:
+	case genericdag.TaskStateError:
 		return wfv1.NodeError
-	case TaskStateSkipped:
+	case genericdag.TaskStateSkipped:
 		return wfv1.NodeSkipped
-	case TaskStateOmitted:
+	case genericdag.TaskStateOmitted:
 		return wfv1.NodeOmitted
 	default:
 		return wfv1.NodePending

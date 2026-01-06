@@ -7,8 +7,40 @@ import (
 	"strings"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	genericdag "github.com/argoproj/argo-workflows/v3/pkg/dag"
 	"github.com/argoproj/argo-workflows/v3/util/expr/argoexpr"
 )
+
+// TaskState re-exports genericdag.TaskState for convenience.
+type TaskState = genericdag.TaskState
+
+// Key re-exports genericdag.Key for convenience.
+type Key = genericdag.Key
+
+// Value re-exports genericdag.Value for convenience.
+type Value = genericdag.Value
+
+const (
+	TaskStatePending   = genericdag.TaskStatePending
+	TaskStateRunning   = genericdag.TaskStateRunning
+	TaskStateSucceeded = genericdag.TaskStateSucceeded
+	TaskStateFailed    = genericdag.TaskStateFailed
+	TaskStateSkipped   = genericdag.TaskStateSkipped
+	TaskStateOmitted   = genericdag.TaskStateOmitted
+	TaskStateError     = genericdag.TaskStateError
+)
+
+// TaskResult represents the result state of a dependency task.
+type TaskResult struct {
+	Succeeded    bool `json:"Succeeded"`
+	Failed       bool `json:"Failed"`
+	Errored      bool `json:"Errored"`
+	Skipped      bool `json:"Skipped"`
+	Omitted      bool `json:"Omitted"`
+	Daemoned     bool `json:"Daemoned"`
+	AnySucceeded bool `json:"AnySucceeded"`
+	AllFailed    bool `json:"AllFailed"`
+}
 
 // EvaluationResult contains the evaluation result for a single task.
 // This is the output of the DAGEvaluator for integration with the workflow controller.
@@ -28,7 +60,7 @@ type EvaluationResult struct {
 	// Error contains any error from evaluation.
 	Error error
 	// CurrentState is the task's current state.
-	CurrentState TaskState
+	CurrentState genericdag.TaskState
 }
 
 // DAGEvaluator provides a high-level API for evaluating DAG workflows.
@@ -40,9 +72,9 @@ type DAGEvaluator struct {
 	// Tasks is the workflow tasks adapter.
 	Tasks *WorkflowTasks
 	// Scheduler is the suspending scheduler for the DAG.
-	Scheduler *SuspendingScheduler[Key, NodeValue]
+	Scheduler *genericdag.SuspendingScheduler[genericdag.Key, NodeValue]
 	// Rebuilder is the phase-based rebuilder for the DAG.
-	Rebuilder *PhaseBasedRebuilder[Key, NodeValue]
+	Rebuilder *PhaseBasedRebuilder[genericdag.Key, NodeValue]
 	// Workflow is the underlying workflow.
 	Workflow *wfv1.Workflow
 	// Template is the DAG template being evaluated.
@@ -52,7 +84,12 @@ type DAGEvaluator struct {
 // NewDAGEvaluator creates a new DAGEvaluator for a workflow and DAG template.
 func NewDAGEvaluator(wf *wfv1.Workflow, tmpl *wfv1.Template, boundaryID, boundaryName string) *DAGEvaluator {
 	store := NewWorkflowStore(wf, boundaryID, boundaryName)
-	tasks := NewWorkflowTasks(tmpl.DAG.Tasks, store, wf)
+
+	dagTasks := make([]Task, len(tmpl.DAG.Tasks))
+	for i := range tmpl.DAG.Tasks {
+		dagTasks[i] = &DAGTask{DAGTask: &tmpl.DAG.Tasks[i]}
+	}
+	tasks := NewWorkflowTasks(dagTasks, store, wf)
 
 	evaluator := &DAGEvaluator{
 		Store:    store,
@@ -62,11 +99,11 @@ func NewDAGEvaluator(wf *wfv1.Workflow, tmpl *wfv1.Template, boundaryID, boundar
 	}
 
 	// Create phase-based rebuilder with depends logic evaluation
-	rebuilder := NewPhaseBasedRebuilder[Key, NodeValue](
-		func(key Key) TaskState {
-			return store.GetState(key)
+	rebuilder := NewPhaseBasedRebuilder[genericdag.Key, NodeValue](
+		func(ctx context.Context, key genericdag.Key) genericdag.TaskState {
+			return store.GetState(ctx, key)
 		},
-		func(ctx context.Context, key Key, fetch Fetch[Key, NodeValue]) (bool, bool, error) {
+		func(ctx context.Context, key genericdag.Key, fetch genericdag.Fetch[genericdag.Key, NodeValue]) (bool, bool, error) {
 			should, err := evaluator.evaluateDependsLogic(ctx, key)
 			if err != nil {
 				return false, false, err
@@ -76,7 +113,7 @@ func NewDAGEvaluator(wf *wfv1.Workflow, tmpl *wfv1.Template, boundaryID, boundar
 	)
 
 	// Create the scheduler
-	scheduler := NewSuspendingScheduler[Key, NodeValue](
+	scheduler := genericdag.NewSuspendingScheduler[genericdag.Key, NodeValue](
 		rebuilder,
 		tasks,
 		store,
@@ -91,7 +128,7 @@ func NewDAGEvaluator(wf *wfv1.Workflow, tmpl *wfv1.Template, boundaryID, boundar
 // EvaluateDAG evaluates all target tasks and returns which tasks should be executed.
 // This maps to the existing dagContext.evaluateDependsLogic but uses the
 // Build Systems à la Carte framework.
-func (e *DAGEvaluator) EvaluateDAG(ctx context.Context, targets []Key) ([]EvaluationResult, error) {
+func (e *DAGEvaluator) EvaluateDAG(ctx context.Context, targets []genericdag.Key) ([]EvaluationResult, error) {
 	results := make([]EvaluationResult, 0, len(targets))
 
 	// Batch build all targets
@@ -147,7 +184,7 @@ func (e *DAGEvaluator) EvaluateDAG(ctx context.Context, targets []Key) ([]Evalua
 
 // EvaluateTask evaluates a single task and returns its evaluation result.
 func (e *DAGEvaluator) EvaluateTask(ctx context.Context, taskName string) EvaluationResult {
-	results, _ := e.EvaluateDAG(ctx, []Key{taskName})
+	results, _ := e.EvaluateDAG(ctx, []genericdag.Key{taskName})
 	if len(results) > 0 {
 		return results[0]
 	}
@@ -171,19 +208,19 @@ func (e *DAGEvaluator) evaluateDependsLogic(ctx context.Context, taskName string
 		depNode := e.Store.GetNode(depName)
 
 		if depNode == nil {
-			return false, NewSuspendErrorWithReason(depName, "dependency does not exist")
+			return false, genericdag.NewSuspendErrorWithReason(depName, "dependency does not exist")
 		}
 		if depNode.IsDaemoned() {
 			// Daemoned nodes are considered fulfilled for dependency purposes if they are not pending
 			// But wait, IsDaemoned() check in NodeValue logic includes IsDaemoned && !Pending
 			// proceed to logic evaluation
 		} else if !depNode.Fulfilled() {
-			return false, NewSuspendErrorWithReason(depName, "dependency not fulfilled")
+			return false, genericdag.NewSuspendErrorWithReason(depName, "dependency not fulfilled")
 		}
 
 		// Check hooks completion (if workflow is available)
 		if e.Workflow != nil && !checkAllHooksFulfilled(depNode, e.Workflow.Status.Nodes) {
-			return false, NewSuspendErrorWithReason(depName, "dependency hooks not fulfilled")
+			return false, genericdag.NewSuspendErrorWithReason(depName, "dependency hooks not fulfilled")
 		}
 
 		// Normalize task name for expression evaluation
@@ -244,10 +281,10 @@ func (e *DAGEvaluator) FindLeafTaskNames(ctx context.Context) []string {
 	taskIsLeaf := make(map[string]bool)
 
 	for _, task := range e.Tasks.Tasks {
-		if _, ok := taskIsLeaf[task.Name]; !ok {
-			taskIsLeaf[task.Name] = true
+		if _, ok := taskIsLeaf[task.GetName()]; !ok {
+			taskIsLeaf[task.GetName()] = true
 		}
-		deps, _ := e.Tasks.GetDependencies(ctx, task.Name)
+		deps, _ := e.Tasks.GetDependencies(ctx, task.GetName())
 		for _, dep := range deps {
 			taskIsLeaf[dep] = false
 		}
@@ -317,13 +354,13 @@ func (e *DAGEvaluator) GetReadyTasks(ctx context.Context) []string {
 	var readyTasks []string
 	for _, task := range e.Tasks.Tasks {
 		// Only consider tasks that haven't started yet
-		if e.Store.GetNode(task.Name) != nil {
+		if e.Store.GetNode(task.GetName()) != nil {
 			continue
 		}
 
-		result := e.EvaluateTask(ctx, task.Name)
+		result := e.EvaluateTask(ctx, task.GetName())
 		if result.Error == nil && result.ShouldRun && !result.Suspended {
-			readyTasks = append(readyTasks, task.Name)
+			readyTasks = append(readyTasks, task.GetName())
 		}
 	}
 	return readyTasks
@@ -344,6 +381,6 @@ func (e *DAGEvaluator) GetWaitingTasks(ctx context.Context) map[string][]string 
 }
 
 // Ensure adapters implement the required interfaces
-var _ Store[any, Key, NodeValue] = (*WorkflowStore)(nil)
-var _ Tasks[Key, NodeValue] = (*WorkflowTasks)(nil)
-var _ Value = NodeValue{}
+var _ genericdag.Store[any, genericdag.Key, NodeValue] = (*WorkflowStore)(nil)
+var _ genericdag.Tasks[genericdag.Key, NodeValue] = (*WorkflowTasks)(nil)
+var _ genericdag.Value = NodeValue{}

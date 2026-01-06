@@ -2,6 +2,7 @@
 package dag
 
 import (
+	"context"
 	"sync"
 	"testing"
 
@@ -30,46 +31,51 @@ func TestMapStore_NewMapStore(t *testing.T) {
 	t.Run("creates empty store with initial info", func(t *testing.T) {
 		initialInfo := "initial"
 		store := NewMapStore[string, Key, storeTestValue](initialInfo)
+		ctx := context.Background()
 
 		assert.NotNil(t, store)
-		assert.Equal(t, initialInfo, store.GetInfo())
-		assert.Empty(t, store.ListKeys())
+		assert.Equal(t, initialInfo, store.GetInfo(ctx))
+		assert.Empty(t, store.ListKeys(ctx))
 	})
 
 	t.Run("creates store with nil initial info", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 
 		assert.NotNil(t, store)
-		assert.Nil(t, store.GetInfo())
+		assert.Nil(t, store.GetInfo(ctx))
 	})
 }
 
 func TestMapStore_GetSetValue(t *testing.T) {
 	t.Run("set and get value", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 
 		value := newStoreTestValue("test-data")
-		store.SetValue("key1", value)
+		store.SetValue(ctx, "key1", value)
 
-		retrieved, ok := store.GetValue("key1")
+		retrieved, ok := store.GetValue(ctx, "key1")
 		assert.True(t, ok)
 		assert.Equal(t, value.data, retrieved.data)
 	})
 
 	t.Run("get nonexistent value returns false", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 
-		_, ok := store.GetValue("nonexistent")
+		_, ok := store.GetValue(ctx, "nonexistent")
 		assert.False(t, ok)
 	})
 
 	t.Run("overwrite existing value", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 
-		store.SetValue("key1", newStoreTestValue("original"))
-		store.SetValue("key1", newStoreTestValue("updated"))
+		store.SetValue(ctx, "key1", newStoreTestValue("original"))
+		store.SetValue(ctx, "key1", newStoreTestValue("updated"))
 
-		retrieved, ok := store.GetValue("key1")
+		retrieved, ok := store.GetValue(ctx, "key1")
 		assert.True(t, ok)
 		assert.Equal(t, "updated", retrieved.data)
 	})
@@ -78,11 +84,12 @@ func TestMapStore_GetSetValue(t *testing.T) {
 func TestMapStore_GetSetInfo(t *testing.T) {
 	t.Run("get and set info", func(t *testing.T) {
 		store := NewMapStore[string, Key, storeTestValue]("initial")
+		ctx := context.Background()
 
-		assert.Equal(t, "initial", store.GetInfo())
+		assert.Equal(t, "initial", store.GetInfo(ctx))
 
-		store.SetInfo("updated")
-		assert.Equal(t, "updated", store.GetInfo())
+		store.SetInfo(ctx, "updated")
+		assert.Equal(t, "updated", store.GetInfo(ctx))
 	})
 
 	t.Run("set complex info type", func(t *testing.T) {
@@ -91,10 +98,11 @@ func TestMapStore_GetSetInfo(t *testing.T) {
 			version int
 		}
 		store := NewMapStore[*complexInfo, Key, storeTestValue](&complexInfo{name: "test", version: 1})
+		ctx := context.Background()
 
-		store.SetInfo(&complexInfo{name: "updated", version: 2})
+		store.SetInfo(ctx, &complexInfo{name: "updated", version: 2})
 
-		info := store.GetInfo()
+		info := store.GetInfo(ctx)
 		assert.Equal(t, "updated", info.name)
 		assert.Equal(t, 2, info.version)
 	})
@@ -103,44 +111,48 @@ func TestMapStore_GetSetInfo(t *testing.T) {
 func TestMapStore_GetSetState(t *testing.T) {
 	t.Run("get state returns pending for unknown key", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 
-		state := store.GetState("nonexistent")
+		state := store.GetState(ctx, "nonexistent")
 		assert.Equal(t, TaskStatePending, state)
 	})
 
 	t.Run("set and get state", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 
-		store.SetState("key1", TaskStateRunning)
-		assert.Equal(t, TaskStateRunning, store.GetState("key1"))
+		store.SetState(ctx, "key1", TaskStateRunning)
+		assert.Equal(t, TaskStateRunning, store.GetState(ctx, "key1"))
 
-		store.SetState("key1", TaskStateSucceeded)
-		assert.Equal(t, TaskStateSucceeded, store.GetState("key1"))
+		store.SetState(ctx, "key1", TaskStateSucceeded)
+		assert.Equal(t, TaskStateSucceeded, store.GetState(ctx, "key1"))
 	})
 
 	t.Run("different states for different keys", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 
-		store.SetState("key1", TaskStateRunning)
-		store.SetState("key2", TaskStateSucceeded)
-		store.SetState("key3", TaskStateFailed)
+		store.SetState(ctx, "key1", TaskStateRunning)
+		store.SetState(ctx, "key2", TaskStateSucceeded)
+		store.SetState(ctx, "key3", TaskStateFailed)
 
-		assert.Equal(t, TaskStateRunning, store.GetState("key1"))
-		assert.Equal(t, TaskStateSucceeded, store.GetState("key2"))
-		assert.Equal(t, TaskStateFailed, store.GetState("key3"))
+		assert.Equal(t, TaskStateRunning, store.GetState(ctx, "key1"))
+		assert.Equal(t, TaskStateSucceeded, store.GetState(ctx, "key2"))
+		assert.Equal(t, TaskStateFailed, store.GetState(ctx, "key3"))
 	})
 }
 
 func TestMapStore_ListKeys(t *testing.T) {
 	t.Run("lists keys from values and states", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 
-		store.SetValue("key1", newStoreTestValue("data1"))
-		store.SetState("key2", TaskStateRunning)
-		store.SetValue("key3", newStoreTestValue("data3"))
-		store.SetState("key3", TaskStateSucceeded)
+		store.SetValue(ctx, "key1", newStoreTestValue("data1"))
+		store.SetState(ctx, "key2", TaskStateRunning)
+		store.SetValue(ctx, "key3", newStoreTestValue("data3"))
+		store.SetState(ctx, "key3", TaskStateSucceeded)
 
-		keys := store.ListKeys()
+		keys := store.ListKeys(ctx)
 
 		// Should have 3 unique keys
 		assert.Len(t, keys, 3)
@@ -151,8 +163,9 @@ func TestMapStore_ListKeys(t *testing.T) {
 
 	t.Run("empty store returns empty list", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 
-		keys := store.ListKeys()
+		keys := store.ListKeys(ctx)
 		assert.Empty(t, keys)
 	})
 }
@@ -160,92 +173,101 @@ func TestMapStore_ListKeys(t *testing.T) {
 func TestMapStore_HasValue(t *testing.T) {
 	t.Run("returns true when value exists", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 
-		store.SetValue("key1", newStoreTestValue("data"))
+		store.SetValue(ctx, "key1", newStoreTestValue("data"))
 
-		assert.True(t, store.HasValue("key1"))
+		assert.True(t, store.HasValue(ctx, "key1"))
 	})
 
 	t.Run("returns false when value does not exist", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 
-		assert.False(t, store.HasValue("nonexistent"))
+		assert.False(t, store.HasValue(ctx, "nonexistent"))
 	})
 
 	t.Run("returns false after delete", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 
-		store.SetValue("key1", newStoreTestValue("data"))
-		assert.True(t, store.HasValue("key1"))
+		store.SetValue(ctx, "key1", newStoreTestValue("data"))
+		assert.True(t, store.HasValue(ctx, "key1"))
 
-		store.DeleteValue("key1")
-		assert.False(t, store.HasValue("key1"))
+		store.DeleteValue(ctx, "key1")
+		assert.False(t, store.HasValue(ctx, "key1"))
 	})
 }
 
 func TestMapStore_DeleteValue(t *testing.T) {
 	t.Run("deletes existing value", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 
-		store.SetValue("key1", newStoreTestValue("data"))
-		store.DeleteValue("key1")
+		store.SetValue(ctx, "key1", newStoreTestValue("data"))
+		store.DeleteValue(ctx, "key1")
 
-		_, ok := store.GetValue("key1")
+		_, ok := store.GetValue(ctx, "key1")
 		assert.False(t, ok)
 	})
 
 	t.Run("delete nonexistent key is no-op", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 
 		// Should not panic
-		store.DeleteValue("nonexistent")
+		store.DeleteValue(ctx, "nonexistent")
 	})
 }
 
 func TestMapStore_DeleteState(t *testing.T) {
 	t.Run("deletes existing state", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 
-		store.SetState("key1", TaskStateSucceeded)
-		store.DeleteState("key1")
+		store.SetState(ctx, "key1", TaskStateSucceeded)
+		store.DeleteState(ctx, "key1")
 
 		// After delete, should return default (Pending)
-		assert.Equal(t, TaskStatePending, store.GetState("key1"))
+		assert.Equal(t, TaskStatePending, store.GetState(ctx, "key1"))
 	})
 
 	t.Run("delete nonexistent state is no-op", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 
 		// Should not panic
-		store.DeleteState("nonexistent")
+		store.DeleteState(ctx, "nonexistent")
 	})
 }
 
 func TestMapStore_Clear(t *testing.T) {
 	t.Run("clears all values and states but keeps info", func(t *testing.T) {
 		store := NewMapStore[string, Key, storeTestValue]("my-info")
+		ctx := context.Background()
 
-		store.SetValue("key1", newStoreTestValue("data1"))
-		store.SetValue("key2", newStoreTestValue("data2"))
-		store.SetState("key1", TaskStateSucceeded)
-		store.SetState("key3", TaskStateFailed)
+		store.SetValue(ctx, "key1", newStoreTestValue("data1"))
+		store.SetValue(ctx, "key2", newStoreTestValue("data2"))
+		store.SetState(ctx, "key1", TaskStateSucceeded)
+		store.SetState(ctx, "key3", TaskStateFailed)
 
-		store.Clear()
+		store.Clear(ctx)
 
-		assert.Empty(t, store.ListKeys())
-		assert.False(t, store.HasValue("key1"))
-		assert.False(t, store.HasValue("key2"))
-		assert.Equal(t, TaskStatePending, store.GetState("key1"))
-		assert.Equal(t, TaskStatePending, store.GetState("key3"))
+		assert.Empty(t, store.ListKeys(ctx))
+		assert.False(t, store.HasValue(ctx, "key1"))
+		assert.False(t, store.HasValue(ctx, "key2"))
+		assert.Equal(t, TaskStatePending, store.GetState(ctx, "key1"))
+		assert.Equal(t, TaskStatePending, store.GetState(ctx, "key3"))
 
 		// Info should be preserved
-		assert.Equal(t, "my-info", store.GetInfo())
+		assert.Equal(t, "my-info", store.GetInfo(ctx))
 	})
 }
 
 func TestMapStore_ThreadSafety(t *testing.T) {
 	t.Run("concurrent reads and writes", func(t *testing.T) {
 		store := NewMapStore[int, Key, storeTestValue](0)
+		ctx := context.Background()
 		const goroutines = 100
 		const iterations = 100
 
@@ -258,9 +280,9 @@ func TestMapStore_ThreadSafety(t *testing.T) {
 				defer wg.Done()
 				key := Key("key")
 				for j := 0; j < iterations; j++ {
-					store.SetValue(key, newStoreTestValue("data"))
-					store.SetState(key, TaskState(j%7))
-					store.SetInfo(id*iterations + j)
+					store.SetValue(ctx, key, newStoreTestValue("data"))
+					store.SetState(ctx, key, TaskState(j%7))
+					store.SetInfo(ctx, id*iterations + j)
 				}
 			}(i)
 		}
@@ -271,11 +293,11 @@ func TestMapStore_ThreadSafety(t *testing.T) {
 				defer wg.Done()
 				key := Key("key")
 				for j := 0; j < iterations; j++ {
-					store.GetValue(key)
-					store.GetState(key)
-					store.GetInfo()
-					store.ListKeys()
-					store.HasValue(key)
+					store.GetValue(ctx, key)
+					store.GetState(ctx, key)
+					store.GetInfo(ctx)
+					store.ListKeys(ctx)
+					store.HasValue(ctx, key)
 				}
 			}()
 		}
@@ -285,6 +307,7 @@ func TestMapStore_ThreadSafety(t *testing.T) {
 
 	t.Run("concurrent operations on different keys", func(t *testing.T) {
 		store := NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 		const goroutines = 50
 
 		var wg sync.WaitGroup
@@ -294,9 +317,9 @@ func TestMapStore_ThreadSafety(t *testing.T) {
 			go func(id int) {
 				defer wg.Done()
 				key := Key(string(rune('A' + id)))
-				store.SetValue(key, newStoreTestValue(key))
-				store.SetState(key, TaskStateSucceeded)
-				v, ok := store.GetValue(key)
+				store.SetValue(ctx, key, newStoreTestValue(key))
+				store.SetState(ctx, key, TaskStateSucceeded)
+				v, ok := store.GetValue(ctx, key)
 				if ok && v.data != key {
 					t.Errorf("unexpected value for key %s: got %s", key, v.data)
 				}
@@ -306,7 +329,7 @@ func TestMapStore_ThreadSafety(t *testing.T) {
 		wg.Wait()
 
 		// All keys should be present
-		keys := store.ListKeys()
+		keys := store.ListKeys(ctx)
 		assert.Len(t, keys, goroutines)
 	})
 }
@@ -316,43 +339,47 @@ func TestMapStore_ThreadSafety(t *testing.T) {
 func TestKeyInfoStore_NewKeyInfoStore(t *testing.T) {
 	t.Run("creates empty store", func(t *testing.T) {
 		store := NewKeyInfoStore[string, Key, storeTestValue]()
+		ctx := context.Background()
 
 		assert.NotNil(t, store)
-		assert.Empty(t, store.ListKeys())
+		assert.Empty(t, store.ListKeys(ctx))
 	})
 }
 
 func TestKeyInfoStore_GetSetKeyInfo(t *testing.T) {
 	t.Run("set and get key info", func(t *testing.T) {
 		store := NewKeyInfoStore[string, Key, storeTestValue]()
+		ctx := context.Background()
 
-		store.SetKeyInfo("key1", "info1")
-		store.SetKeyInfo("key2", "info2")
+		store.SetKeyInfo(ctx, "key1", "info1")
+		store.SetKeyInfo(ctx, "key2", "info2")
 
-		info1, ok1 := store.GetKeyInfo("key1")
+		info1, ok1 := store.GetKeyInfo(ctx, "key1")
 		assert.True(t, ok1)
 		assert.Equal(t, "info1", info1)
 
-		info2, ok2 := store.GetKeyInfo("key2")
+		info2, ok2 := store.GetKeyInfo(ctx, "key2")
 		assert.True(t, ok2)
 		assert.Equal(t, "info2", info2)
 	})
 
 	t.Run("get nonexistent key info", func(t *testing.T) {
 		store := NewKeyInfoStore[string, Key, storeTestValue]()
+		ctx := context.Background()
 
-		info, ok := store.GetKeyInfo("nonexistent")
+		info, ok := store.GetKeyInfo(ctx, "nonexistent")
 		assert.False(t, ok)
 		assert.Equal(t, "", info)
 	})
 
 	t.Run("overwrite existing key info", func(t *testing.T) {
 		store := NewKeyInfoStore[string, Key, storeTestValue]()
+		ctx := context.Background()
 
-		store.SetKeyInfo("key1", "original")
-		store.SetKeyInfo("key1", "updated")
+		store.SetKeyInfo(ctx, "key1", "original")
+		store.SetKeyInfo(ctx, "key1", "updated")
 
-		info, ok := store.GetKeyInfo("key1")
+		info, ok := store.GetKeyInfo(ctx, "key1")
 		assert.True(t, ok)
 		assert.Equal(t, "updated", info)
 	})
@@ -361,40 +388,43 @@ func TestKeyInfoStore_GetSetKeyInfo(t *testing.T) {
 func TestKeyInfoStore_DeleteKeyInfo(t *testing.T) {
 	t.Run("deletes key info", func(t *testing.T) {
 		store := NewKeyInfoStore[string, Key, storeTestValue]()
+		ctx := context.Background()
 
-		store.SetKeyInfo("key1", "info1")
-		store.DeleteKeyInfo("key1")
+		store.SetKeyInfo(ctx, "key1", "info1")
+		store.DeleteKeyInfo(ctx, "key1")
 
-		_, ok := store.GetKeyInfo("key1")
+		_, ok := store.GetKeyInfo(ctx, "key1")
 		assert.False(t, ok)
 	})
 
 	t.Run("delete nonexistent key info is no-op", func(t *testing.T) {
 		store := NewKeyInfoStore[string, Key, storeTestValue]()
+		ctx := context.Background()
 
 		// Should not panic
-		store.DeleteKeyInfo("nonexistent")
+		store.DeleteKeyInfo(ctx, "nonexistent")
 	})
 }
 
 func TestKeyInfoStore_InheritsMapStore(t *testing.T) {
 	t.Run("can use inherited MapStore methods", func(t *testing.T) {
 		store := NewKeyInfoStore[string, Key, storeTestValue]()
+		ctx := context.Background()
 
 		// Set value using inherited method
-		store.SetValue("key1", newStoreTestValue("data"))
+		store.SetValue(ctx, "key1", newStoreTestValue("data"))
 
 		// Get value using inherited method
-		value, ok := store.GetValue("key1")
+		value, ok := store.GetValue(ctx, "key1")
 		assert.True(t, ok)
 		assert.Equal(t, "data", value.data)
 
 		// Set state using inherited method
-		store.SetState("key1", TaskStateSucceeded)
-		assert.Equal(t, TaskStateSucceeded, store.GetState("key1"))
+		store.SetState(ctx, "key1", TaskStateSucceeded)
+		assert.Equal(t, TaskStateSucceeded, store.GetState(ctx, "key1"))
 
 		// List keys
-		keys := store.ListKeys()
+		keys := store.ListKeys(ctx)
 		assert.Contains(t, keys, Key("key1"))
 	})
 }
@@ -407,13 +437,14 @@ func TestKeyInfoStore_ComplexInfoType(t *testing.T) {
 		}
 
 		store := NewKeyInfoStore[*traceInfo, Key, storeTestValue]()
+		ctx := context.Background()
 
-		store.SetKeyInfo("taskA", &traceInfo{
+		store.SetKeyInfo(ctx, "taskA", &traceInfo{
 			dependencies: []string{"dep1", "dep2"},
 			hash:         "abc123",
 		})
 
-		info, ok := store.GetKeyInfo("taskA")
+		info, ok := store.GetKeyInfo(ctx, "taskA")
 		require.True(t, ok)
 		assert.Equal(t, []string{"dep1", "dep2"}, info.dependencies)
 		assert.Equal(t, "abc123", info.hash)
@@ -425,38 +456,40 @@ func TestKeyInfoStore_ComplexInfoType(t *testing.T) {
 func TestStoreInterfaceCompliance(t *testing.T) {
 	t.Run("MapStore implements Store interface", func(t *testing.T) {
 		var store Store[any, Key, storeTestValue] = NewMapStore[any, Key, storeTestValue](nil)
+		ctx := context.Background()
 		assert.NotNil(t, store)
 
 		// Test all interface methods
-		store.SetValue("key1", newStoreTestValue("data"))
-		val, ok := store.GetValue("key1")
+		store.SetValue(ctx, "key1", newStoreTestValue("data"))
+		val, ok := store.GetValue(ctx, "key1")
 		assert.True(t, ok)
 		assert.Equal(t, "data", val.data)
 
-		store.SetInfo("info")
-		assert.Equal(t, "info", store.GetInfo())
+		store.SetInfo(ctx, "info")
+		assert.Equal(t, "info", store.GetInfo(ctx))
 
-		store.SetState("key1", TaskStateSucceeded)
-		assert.Equal(t, TaskStateSucceeded, store.GetState("key1"))
+		store.SetState(ctx, "key1", TaskStateSucceeded)
+		assert.Equal(t, TaskStateSucceeded, store.GetState(ctx, "key1"))
 
-		keys := store.ListKeys()
+		keys := store.ListKeys(ctx)
 		assert.Contains(t, keys, Key("key1"))
 	})
 
 	t.Run("KeyInfoStore implements Store interface", func(t *testing.T) {
 		var store Store[map[Key]string, Key, storeTestValue] = NewKeyInfoStore[string, Key, storeTestValue]()
+		ctx := context.Background()
 		assert.NotNil(t, store)
 
 		// Test all interface methods
-		store.SetValue("key1", newStoreTestValue("data"))
-		val, ok := store.GetValue("key1")
+		store.SetValue(ctx, "key1", newStoreTestValue("data"))
+		val, ok := store.GetValue(ctx, "key1")
 		assert.True(t, ok)
 		assert.Equal(t, "data", val.data)
 
-		store.SetState("key1", TaskStateSucceeded)
-		assert.Equal(t, TaskStateSucceeded, store.GetState("key1"))
+		store.SetState(ctx, "key1", TaskStateSucceeded)
+		assert.Equal(t, TaskStateSucceeded, store.GetState(ctx, "key1"))
 
-		keys := store.ListKeys()
+		keys := store.ListKeys(ctx)
 		assert.Contains(t, keys, Key("key1"))
 	})
 }

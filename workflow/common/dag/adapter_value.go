@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	genericdag "github.com/argoproj/argo-workflows/v3/pkg/dag"
 )
 
 // NodeValue wraps an Argo node status as a Value in the Build Systems framework.
@@ -16,7 +17,7 @@ type NodeValue struct {
 
 // Hash implements Value.Hash for NodeValue.
 // The hash is computed from the node phase and outputs for change detection.
-func (n NodeValue) Hash() Hash {
+func (n NodeValue) Hash() genericdag.Hash {
 	if n.NodeStatus == nil {
 		return ""
 	}
@@ -49,7 +50,7 @@ func (n NodeValue) Hash() Hash {
 		}
 	}
 
-	return Hash(hex.EncodeToString(h.Sum(nil)))
+	return genericdag.Hash(hex.EncodeToString(h.Sum(nil)))
 }
 
 // Phase returns the node phase.

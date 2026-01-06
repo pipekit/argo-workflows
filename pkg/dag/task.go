@@ -40,10 +40,10 @@ type Fetch[K comparable, V any] func(key K) (V, error)
 //
 // Example:
 //
-//	task := &Task[string, *NodeOutput]{
+//	task := &Task[string, *MyValue]{
 //	    Key: "process-data",
 //	    Dependencies: []string{"load-data"},  // Static dependency
-//	    Run: func(fetch Fetch[string, *NodeOutput]) (*NodeOutput, error) {
+//	    Run: func(fetch Fetch[string, *MyValue]) (*MyValue, error) {
 //	        // Fetch the static dependency
 //	        data, err := fetch("load-data")
 //	        if err != nil {

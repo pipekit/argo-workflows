@@ -8,8 +8,9 @@ import (
 	"strings"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
-	"github.com/argoproj/argo-workflows/v3/util/expr/argoexpr"
 	"github.com/argoproj/argo-workflows/v3/errors"
+	genericdag "github.com/argoproj/argo-workflows/v3/pkg/dag"
+	"github.com/argoproj/argo-workflows/v3/util/expr/argoexpr"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -17,7 +18,7 @@ import (
 // We want to be lazy with expanding. Unfortunately this is not quite possible as the When field might rely on
 // expansion to work with the shouldExecute function. To address this we apply a trick, we try to expand, if we fail, we then
 // check shouldExecute, if shouldExecute returns false, we continue on as normal else error out
-func (e *DAGEvaluator) ExpandTask(ctx context.Context, task wfv1.DAGTask, scope map[string]string, substitutor Substitutor) ([]wfv1.DAGTask, error) {
+func (e *DAGEvaluator) ExpandTask(ctx context.Context, task wfv1.DAGTask, scope map[string]string, substitutor genericdag.Substitutor) ([]wfv1.DAGTask, error) {
 	var err error
 	var items []wfv1.Item
 	if len(task.WithItems) > 0 {
@@ -155,7 +156,7 @@ func expandSequence(seq *wfv1.Sequence) ([]wfv1.Item, error) {
 	return items, nil
 }
 
-func processItem(ctx context.Context, taskBytes []byte, taskName string, i int, item wfv1.Item, newTask *wfv1.DAGTask, when string, globalScope map[string]string, substitutor Substitutor) (string, error) {
+func processItem(ctx context.Context, taskBytes []byte, taskName string, i int, item wfv1.Item, newTask *wfv1.DAGTask, when string, globalScope map[string]string, substitutor genericdag.Substitutor) (string, error) {
 	var newTaskName string
 
 	err := json.Unmarshal(taskBytes, newTask)

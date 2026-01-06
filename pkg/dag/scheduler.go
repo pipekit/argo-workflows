@@ -11,7 +11,7 @@ import (
 // Different scheduler implementations provide different strategies for handling dependencies:
 //   - Topological: Pre-computes execution order from static dependencies (not suitable for dynamic deps)
 //   - Restarting: Starts tasks, restarts from beginning if dependency missing (inefficient)
-//   - Suspending: Suspends task execution when dependency isn't ready (ideal for Argo)
+//   - Suspending: Suspends task execution when dependency isn't ready
 //
 // The Scheduler is one of two core abstractions in the framework, the other being the Rebuilder.
 type Scheduler[K comparable, V Value] interface {
@@ -74,10 +74,10 @@ type BuildResult[K comparable, V Value] struct {
 //   - Builds the dependency
 //   - Resumes the original task
 //
-// This is ideal for Argo Workflows because:
-//   - Dependencies can be computed based on runtime values (dynamic dependencies)
-//   - Tasks suspend rather than restart when dependencies are unavailable (efficient)
-//   - Naturally maps to Kubernetes pod states (Pending, Running, Succeeded, Failed)
+// This is ideal for systems with:
+//   - Dynamic dependencies that are discovered at runtime
+//   - Long-running tasks where restarting is expensive
+//   - Stateful task execution
 type SuspendingScheduler[K comparable, V Value] struct {
 	// Rebuilder determines whether tasks need to be rebuilt.
 	Rebuilder Rebuilder[K, V]
@@ -169,7 +169,7 @@ func (s *SuspendingScheduler[K, V]) buildWithDepth(ctx context.Context, target K
 	}()
 
 	// Get current value from store (may be zero value if not present)
-	currentValue, hasValue := s.Store.GetValue(target)
+	currentValue, hasValue := s.Store.GetValue(ctx, target)
 
 	// Create a fetch function for the task
 	// This is the "suspending" part - if a dependency isn't ready, we return SuspendError
@@ -200,7 +200,7 @@ func (s *SuspendingScheduler[K, V]) buildWithDepth(ctx context.Context, target K
 	}
 
 	// Mark as running in the store
-	s.Store.SetState(target, TaskStateRunning)
+	s.Store.SetState(ctx, target, TaskStateRunning)
 
 	// Execute the task with retry logic for suspensions
 	return s.executeWithRetry(ctx, target, task, depth, path)
@@ -208,16 +208,16 @@ func (s *SuspendingScheduler[K, V]) buildWithDepth(ctx context.Context, target K
 
 // fetchDependency attempts to fetch a dependency value.
 // Returns SuspendError if the dependency is not available.
-func (s *SuspendingScheduler[K, V]) fetchDependency(_ context.Context, depKey K) (V, error) {
+func (s *SuspendingScheduler[K, V]) fetchDependency(ctx context.Context, depKey K) (V, error) {
 	var zero V
 
 	// Get the dependency's current state
-	state := s.Store.GetState(depKey)
+	state := s.Store.GetState(ctx, depKey)
 
 	switch state {
 	case TaskStateSucceeded:
 		// Dependency completed successfully, return its value
-		value, found := s.Store.GetValue(depKey)
+		value, found := s.Store.GetValue(ctx, depKey)
 		if found {
 			return value, nil
 		}
@@ -225,10 +225,10 @@ func (s *SuspendingScheduler[K, V]) fetchDependency(_ context.Context, depKey K)
 		return zero, NewSuspendErrorWithReason(Key(keyToString(depKey)), "dependency succeeded but value not found")
 
 	case TaskStateFailed, TaskStateError:
-		// Dependency failed. In some systems (like Argo), we still need the value
-		// to evaluate "on exit" or "continue on fail" logic.
+		// Dependency failed. Some systems still need the value
+		// to evaluate failure handlers or "continue on fail" logic.
 		// If value exists, return it.
-		value, found := s.Store.GetValue(depKey)
+		value, found := s.Store.GetValue(ctx, depKey)
 		if found {
 			return value, nil
 		}
@@ -249,8 +249,8 @@ func (s *SuspendingScheduler[K, V]) fetchDependency(_ context.Context, depKey K)
 		return zero, NewSuspendErrorWithReason(Key(keyToString(depKey)), "dependency was omitted")
 
 	case TaskStateRunning:
-		// Dependency is running, suspend and wait
-		return zero, NewSuspendErrorWithReason(Key(keyToString(depKey)), "dependency is running")
+		// Dependency is running. In a synchronous scheduler, this means a cycle.
+		return zero, NewCycleError([]Key{Key(keyToString(depKey))})
 
 	case TaskStatePending:
 		// Dependency not started, need to build it
@@ -281,7 +281,7 @@ func (s *SuspendingScheduler[K, V]) executeWithRetry(
 	for retry := 0; retry <= maxRetries; retry++ {
 		// Check context
 		if ctx.Err() != nil {
-			s.Store.SetState(target, TaskStateFailed)
+			s.Store.SetState(ctx, target, TaskStateFailed)
 			return zero, ctx.Err()
 		}
 
@@ -305,8 +305,8 @@ func (s *SuspendingScheduler[K, V]) executeWithRetry(
 		// Handle the result
 		if err == nil {
 			// Task completed successfully
-			s.Store.SetValue(target, value)
-			s.Store.SetState(target, TaskStateSucceeded)
+			s.Store.SetValue(ctx, target, value)
+			s.Store.SetState(ctx, target, TaskStateSucceeded)
 
 			// Clear waiting state
 			s.mu.Lock()
@@ -332,11 +332,11 @@ func (s *SuspendingScheduler[K, V]) executeWithRetry(
 			waitingOn = suspendedDeps
 			if len(waitingOn) == 0 {
 				// Add the dependency from the suspend error
-				// Try to cast directly if K is string-compatible (Argo case)
+				// Try to cast directly if K is string-compatible
 				if key, ok := any(se.WaitingFor).(K); ok {
 					waitingOn = append(waitingOn, key)
 				} else {
-					for _, k := range s.Store.ListKeys() {
+					for _, k := range s.Store.ListKeys(ctx) {
 						if keyToString(k) == se.WaitingFor {
 							waitingOn = append(waitingOn, k)
 							break
@@ -349,7 +349,7 @@ func (s *SuspendingScheduler[K, V]) executeWithRetry(
 			s.mu.Lock()
 			s.waiting[target] = waitingOn
 			s.mu.Unlock()
-			s.Store.SetState(target, TaskStatePending) // Keep as pending until deps ready
+			s.Store.SetState(ctx, target, TaskStatePending) // Keep as pending until deps ready
 
 			// Build all waiting dependencies
 			for _, depKey := range waitingOn {
@@ -359,49 +359,48 @@ func (s *SuspendingScheduler[K, V]) executeWithRetry(
 				if depErr != nil {
 					// Check if it's a cycle - need to propagate cycle errors
 					if _, isCycle := IsCycleError(depErr); isCycle {
-						s.Store.SetState(target, TaskStateFailed)
+						s.Store.SetState(ctx, target, TaskStateFailed)
 						return zero, depErr
 					}
 					// Other errors from dependency build
 					if _, isDep := IsDependencyError(depErr); isDep {
-						s.Store.SetState(target, TaskStateFailed)
+						s.Store.SetState(ctx, target, TaskStateFailed)
 						return zero, NewDependencyError(Key(keyToString(target)), Key(keyToString(depKey)), depErr)
 					}
 					// Propagate other errors
-					s.Store.SetState(target, TaskStateFailed)
+					s.Store.SetState(ctx, target, TaskStateFailed)
 					return zero, fmt.Errorf("failed to build dependency %v for %v: %w", depKey, target, depErr)
 				}
 			}
 
 			// Dependencies built, retry the task
-			s.Store.SetState(target, TaskStateRunning)
+			s.Store.SetState(ctx, target, TaskStateRunning)
 			continue
 		}
 
 		// Check if this is a dependency failure (propagated from fetch)
 		if de, ok := IsDependencyError(err); ok {
-			s.Store.SetState(target, TaskStateFailed)
+			s.Store.SetState(ctx, target, TaskStateFailed)
 			return zero, de
 		}
 
 		// Actual task error (not a suspension)
-		s.Store.SetState(target, TaskStateFailed)
+		s.Store.SetState(ctx, target, TaskStateFailed)
 		return zero, err
 	}
 
 	// Exceeded retry limit
-	s.Store.SetState(target, TaskStateFailed)
+	s.Store.SetState(ctx, target, TaskStateFailed)
 	return zero, fmt.Errorf("exceeded maximum retries (%d) for target %v, waiting on: %v", maxRetries, target, waitingOn)
 }
 
 // BatchBuild builds multiple targets, returning results for all of them.
-// This is useful for Argo's DAG where we want to evaluate all tasks at once.
 // The results are returned in the same order as the targets.
 //
 // Unlike Build, BatchBuild:
 //   - Continues building remaining targets even if one fails
 //   - Returns a result for each target (success, failure, or suspended)
-//   - Is suitable for the Argo controller's reconciliation loop
+//   - Is suitable for systems that need to evaluate multiple tasks in parallel or in a loop
 func (s *SuspendingScheduler[K, V]) BatchBuild(ctx context.Context, targets []K) []BuildResult[K, V] {
 	results := make([]BuildResult[K, V], len(targets))
 
@@ -422,11 +421,11 @@ func (s *SuspendingScheduler[K, V]) BatchBuild(ctx context.Context, targets []K)
 					result.WaitingOn = waiting
 				} else {
 					// Add the key from suspend error
-					// Try to cast directly if K is string-compatible (Argo case)
+					// Try to cast directly if K is string-compatible
 					if key, ok := any(se.WaitingFor).(K); ok {
 						result.WaitingOn = append(result.WaitingOn, key)
 					} else {
-						for _, k := range s.Store.ListKeys() {
+						for _, k := range s.Store.ListKeys(ctx) {
 							if keyToString(k) == se.WaitingFor {
 								result.WaitingOn = append(result.WaitingOn, k)
 								break
@@ -448,7 +447,7 @@ func (s *SuspendingScheduler[K, V]) BatchBuild(ctx context.Context, targets []K)
 			}
 		} else {
 			result.Value = value
-			result.State = s.Store.GetState(target)
+			result.State = s.Store.GetState(ctx, target)
 		}
 
 		results[i] = result
@@ -547,11 +546,11 @@ func (s *TopologicalScheduler[K, V]) Build(ctx context.Context, target K) (V, er
 		}
 
 		// Get current value
-		currentValue, _ := s.Store.GetValue(key)
+		currentValue, _ := s.Store.GetValue(ctx, key)
 
 		// Create fetch function (all deps should be available at this point)
 		fetch := func(depKey K) (V, error) {
-			value, found := s.Store.GetValue(depKey)
+			value, found := s.Store.GetValue(ctx, depKey)
 			if !found {
 				return zero, NewSuspendErrorWithReason(Key(keyToString(depKey)), "dependency not available in topological scheduler")
 			}
@@ -574,20 +573,20 @@ func (s *TopologicalScheduler[K, V]) Build(ctx context.Context, target K) (V, er
 			return zero, NewTaskNotFoundError(Key(keyToString(key)))
 		}
 
-		s.Store.SetState(key, TaskStateRunning)
+		s.Store.SetState(ctx, key, TaskStateRunning)
 
 		value, err := task.Run(fetch)
 		if err != nil {
-			s.Store.SetState(key, TaskStateFailed)
+			s.Store.SetState(ctx, key, TaskStateFailed)
 			return zero, err
 		}
 
-		s.Store.SetValue(key, value)
-		s.Store.SetState(key, TaskStateSucceeded)
+		s.Store.SetValue(ctx, key, value)
+		s.Store.SetState(ctx, key, TaskStateSucceeded)
 	}
 
 	// Return target value
-	value, found := s.Store.GetValue(target)
+	value, found := s.Store.GetValue(ctx, target)
 	if !found {
 		return zero, fmt.Errorf("target %v was not built", target)
 	}

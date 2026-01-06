@@ -9,8 +9,8 @@ import (
 	"github.com/Knetic/govaluate"
 	"github.com/argoproj/argo-workflows/v3/errors"
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
-	"github.com/argoproj/argo-workflows/v3/pkg/dag"
 	"github.com/argoproj/argo-workflows/v3/util/logging"
+	"github.com/argoproj/argo-workflows/v3/workflow/common/dag"
 	"github.com/argoproj/argo-workflows/v3/workflow/templateresolution"
 )
 
