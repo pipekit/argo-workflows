@@ -22,6 +22,7 @@ permissions:
 jobs:
   build-linux:
     name: Build & push linux
+    needs: [ build-clis ]
     if: github.repository == 'argoproj/argo-workflows'
     # Available runners are listable here if you have access https://github.com/organizations/argoproj/settings/actions/runners
     # Current oracle runners are:
@@ -48,6 +49,29 @@ jobs:
         target: [ workflow-controller, argocli, argoexec, argoexec-nonroot ]
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Download artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          pattern: argo-*
+          path: dist/
+          merge-multiple: true
+
+      - name: Prepare binaries
+        run: |
+          mkdir -p dist/linux/amd64 dist/linux/arm64
+          
+          # Linux AMD64
+          mv dist/argo-linux-amd64 dist/linux/amd64/argo
+          mv dist/argoexec-linux-amd64 dist/linux/amd64/argoexec
+          mv dist/workflow-controller-linux-amd64 dist/linux/amd64/workflow-controller
+          chmod +x dist/linux/amd64/*
+
+          # Linux ARM64
+          mv dist/argo-linux-arm64 dist/linux/arm64/argo
+          mv dist/argoexec-linux-arm64 dist/linux/arm64/argoexec
+          mv dist/workflow-controller-linux-arm64 dist/linux/arm64/workflow-controller
+          chmod +x dist/linux/arm64/*
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
@@ -110,6 +134,7 @@ jobs:
             --platform="${PLATFORM}" \
             --target $TARGET \
             --provenance=false \
+            -f Dockerfile.release \
             --tag $image_name \
             --tag quay.io/$image_name .
 
@@ -381,12 +406,21 @@ jobs:
             ${{ runner.os }}-go-build-${{ matrix.goos }}-${{ matrix.goarch }}-
       - name: Build CLI for ${{ matrix.goos }}-${{ matrix.goarch }}
         run: make dist/argo-${{ matrix.goos }}-${{ matrix.goarch }}.gz STATIC_FILES=true VERSION=$VERSION
+      - name: Build Executor and Controller for ${{ matrix.goos }}-${{ matrix.goarch }}
+        if: ${{ matrix.goos == 'linux' && (matrix.goarch == 'amd64' || matrix.goarch == 'arm64') }}
+        run: |
+           make dist/argoexec-${{ matrix.goos }}-${{ matrix.goarch }} STATIC_FILES=true VERSION=$VERSION
+           make dist/workflow-controller-${{ matrix.goos }}-${{ matrix.goarch }} STATIC_FILES=true VERSION=$VERSION
       - name: Upload CLI artifact
         uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
           name: argo-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: dist/argo-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}.gz
-          if-no-files-found: error
+          path: |
+            dist/argo-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}.gz
+            dist/argo-${{ matrix.goos }}-${{ matrix.goarch }}
+            dist/argoexec-${{ matrix.goos }}-${{ matrix.goarch }}
+            dist/workflow-controller-${{ matrix.goos }}-${{ matrix.goarch }}
+          if-no-files-found: warn
 
   publish-release:
     permissions:

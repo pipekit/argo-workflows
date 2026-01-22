@@ -1,0 +1,54 @@
+# syntax=docker/dockerfile:1
+# Dockerfile.release
+# Used for building images from pre-built binaries (cross-compiled via Makefile).
+# Expects build context to contain:
+#   dist/${TARGETOS}/${TARGETARCH}/argo
+#   dist/${TARGETOS}/${TARGETARCH}/argoexec
+#   dist/${TARGETOS}/${TARGETARCH}/workflow-controller
+#   hack/ssh_known_hosts
+#   hack/nsswitch.conf
+
+# --- Helper to get mime.types ---
+FROM alpine:3.19 as mime-source
+RUN apk add --no-cache mailcap
+
+# --- Shared Base ---
+FROM gcr.io/distroless/static as base
+COPY hack/ssh_known_hosts /etc/ssh/
+COPY hack/nsswitch.conf /etc/
+
+# --- argoexec-base (adds mime.types) ---
+FROM base as argoexec-base
+COPY --from=mime-source /etc/mime.types /etc/mime.types
+
+# --- argoexec (root) ---
+FROM argoexec-base as argoexec
+ARG TARGETOS
+ARG TARGETARCH
+COPY dist/${TARGETOS}/${TARGETARCH}/argoexec /bin/argoexec
+ENTRYPOINT [ "argoexec" ]
+
+# --- argoexec-nonroot ---
+FROM argoexec-base as argoexec-nonroot
+USER 8737
+ARG TARGETOS
+ARG TARGETARCH
+COPY --chown=8737 dist/${TARGETOS}/${TARGETARCH}/argoexec /bin/argoexec
+ENTRYPOINT [ "argoexec" ]
+
+# --- workflow-controller ---
+FROM base as workflow-controller
+USER 8737
+ARG TARGETOS
+ARG TARGETARCH
+COPY --chown=8737 dist/${TARGETOS}/${TARGETARCH}/workflow-controller /bin/workflow-controller
+ENTRYPOINT [ "workflow-controller" ]
+
+# --- argocli ---
+FROM base as argocli
+USER 8737
+WORKDIR /home/argo
+ARG TARGETOS
+ARG TARGETARCH
+COPY --chown=8737 dist/${TARGETOS}/${TARGETARCH}/argo /bin/argo
+ENTRYPOINT [ "argo" ]

@@ -195,6 +195,19 @@ dist/argo-darwin-amd64: GOARGS = GOOS=darwin GOARCH=amd64
 dist/argo-darwin-arm64: GOARGS = GOOS=darwin GOARCH=arm64
 dist/argo-windows-amd64: GOARGS = GOOS=windows GOARCH=amd64
 
+dist/argoexec-linux-amd64: GOARGS = GOOS=linux GOARCH=amd64
+dist/argoexec-linux-arm64: GOARGS = GOOS=linux GOARCH=arm64
+dist/argoexec-linux-ppc64le: GOARGS = GOOS=linux GOARCH=ppc64le
+dist/argoexec-linux-riscv64: GOARGS = GOOS=linux GOARCH=riscv64
+dist/argoexec-linux-s390x: GOARGS = GOOS=linux GOARCH=s390x
+dist/argoexec-windows-amd64: GOARGS = GOOS=windows GOARCH=amd64
+
+dist/workflow-controller-linux-amd64: GOARGS = GOOS=linux GOARCH=amd64
+dist/workflow-controller-linux-arm64: GOARGS = GOOS=linux GOARCH=arm64
+dist/workflow-controller-linux-ppc64le: GOARGS = GOOS=linux GOARCH=ppc64le
+dist/workflow-controller-linux-riscv64: GOARGS = GOOS=linux GOARCH=riscv64
+dist/workflow-controller-linux-s390x: GOARGS = GOOS=linux GOARCH=s390x
+
 dist/argo-windows-%.gz: dist/argo-windows-%
 	gzip --force --keep dist/argo-windows-$*.exe
 
@@ -206,6 +219,12 @@ dist/argo-%.gz: dist/argo-%
 
 dist/argo-%: server/static/files.go $(CLI_PKG_FILES) go.sum
 	CGO_ENABLED=0 $(GOARGS) go build -v -gcflags '${GCFLAGS}' -ldflags '${LDFLAGS} -extldflags -static' -o $@ ./cmd/argo
+
+dist/argoexec-%: $(ARGOEXEC_PKG_FILES) go.sum
+	CGO_ENABLED=0 $(GOARGS) go build -v -gcflags '${GCFLAGS}' -ldflags '${LDFLAGS} -extldflags -static' -o $@ ./cmd/argoexec
+
+dist/workflow-controller-%: $(CONTROLLER_PKG_FILES) go.sum
+	CGO_ENABLED=0 $(GOARGS) go build -v -gcflags '${GCFLAGS}' -ldflags '${LDFLAGS} -extldflags -static' -o $@ ./cmd/workflow-controller
 
 dist/argo: server/static/files.go $(CLI_PKG_FILES) go.sum
 ifeq ($(shell uname -s),Darwin)
