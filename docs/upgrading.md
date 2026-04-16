@@ -3,6 +3,79 @@
 Breaking changes  typically (sometimes we don't realise they are breaking) have "!" in the commit message, as per
 the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/#summary).
 
+## Upgrading to v3.7
+
+See also the list of [new features in 3.7](new-features.md).
+
+### Docker Hub images discontinued ([#14457](https://github.com/argoproj/argo-workflows/pull/14457))
+
+Argo Workflows images are no longer published to Docker Hub. They are only available on Quay.io.
+
+Update your image references:
+
+| Old (Docker Hub) | New (Quay.io) |
+|---|---|
+| `argoproj/argocli:<tag>` | `quay.io/argoproj/argocli:<tag>` |
+| `argoproj/argoexec:<tag>` | `quay.io/argoproj/argoexec:<tag>` |
+| `argoproj/workflow-controller:<tag>` | `quay.io/argoproj/workflow-controller:<tag>` |
+
+If your image references omit the registry prefix (e.g. `argoproj/argocli`), they default to Docker Hub and will fail to pull.
+
+### `podPriority` and `Template.priority` fields removed ([#14277](https://github.com/argoproj/argo-workflows/pull/14277))
+
+The `spec.podPriority` and `template.priority` integer fields have been removed. These were deprecated in v3.6.
+
+Use `spec.podPriorityClassName` or `template.priorityClassName` instead, which reference a Kubernetes `PriorityClass` object.
+
+### Parameter value overriding fix ([#14462](https://github.com/argoproj/argo-workflows/pull/14462))
+
+When a Workflow overrides a WorkflowTemplate parameter that uses `valueFrom.configMapKeyRef`, `value` now takes precedence over `valueFrom`. Previously, the ConfigMap value would win even when an explicit `value` was set.
+
+If you relied on `valueFrom` winning over `value`:
+
+* To keep using the ConfigMap, remove the `value` field so only `valueFrom` is set.
+* If you wanted the explicit `value` to win, no changes needed -- this is now the correct behavior.
+
+### Retried persisted workflows API change ([#15030](https://github.com/argoproj/argo-workflows/pull/15030))
+
+When retrieving an archived workflow by namespace and name (not UID), and multiple archived entries exist from retries, the API now returns the most recently started workflow instead of returning an error. If your tooling caught that multi-record error, that code path is gone -- use UID-based lookups to retrieve a specific retry.
+
+### Kubernetes versions
+
+Kubernetes client libraries have been bumped to v1.33.
+This version is tested against Kubernetes v1.31 and v1.33.
+
+### Prometheus metrics naming change ([#14879](https://github.com/argoproj/argo-workflows/pull/14879))
+
+The OTel Prometheus exporter now uses UTF-8 validation for metric names by default.
+Custom metrics with dots (`.`) or dashes (`-`) in their names will no longer have those characters replaced with underscores.
+
+If your dashboards or alerts reference custom metrics using the old underscore-substituted names, update them.
+
+To restore the old behavior, set `PROMETHEUS_LEGACY_NAME_VALIDATION_SCHEME=true` on the workflow controller.
+
+Built-in Argo Workflows metrics already use underscores in their names, so those don't change.
+
+### Custom counter metrics type change ([#14700](https://github.com/argoproj/argo-workflows/pull/14700))
+
+Custom counter metrics now use `Float64ObservableCounter` (monotonically increasing) instead of `Float64ObservableUpDownCounter`.
+In Prometheus this means custom counters are emitted as type `counter` (with `_total` suffix) rather than `gauge`.
+
+Check your dashboards and alerts if you use custom counter metrics -- the names and types will look different.
+
+### Retry strategy now respected on daemon containers ([#13738](https://github.com/argoproj/argo-workflows/pull/13738))
+
+`retryStrategy` was previously ignored for daemoned containers. It is now applied.
+
+Daemon pods that exit cleanly are now treated as `NodeFailed` rather than `NodeSucceeded`, since daemons are expected to run indefinitely. So if you have daemoned steps with `retryStrategy`, those retries will now fire. And if a daemon pod occasionally exits cleanly, that step will fail unless a `retryStrategy` handles it.
+
+### Database schema migration ([#14103](https://github.com/argoproj/argo-workflows/pull/14103))
+
+On startup, the controller now adds a primary key to the `schema_history` table if one is missing.
+The controller's database user needs `ALTER TABLE` privileges for this.
+
+If your database user has restricted DDL permissions, either grant `ALTER TABLE` temporarily for the upgrade, or run `ALTER TABLE schema_history ADD PRIMARY KEY(schema_version)` manually before upgrading.
+
 ## Upgrading to v3.6
 
 See also the list of [new features in 3.6](new-features.md).
