@@ -122,7 +122,7 @@ func (d *dagContext) taskNodeName(taskName string) string {
 // taskNodeID formulates the node ID for a dag task
 func (d *dagContext) taskNodeID(taskName string) string {
 	nodeName := d.taskNodeName(taskName)
-	return d.wf.NodeID(nodeName)
+	return d.wf.ResolveNodeID(nodeName)
 }
 
 // getTaskNode returns the node status of a task.
